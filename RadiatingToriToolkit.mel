@@ -1,1440 +1,0 @@
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_evoCreate()
-{
-
-	float $tRad = `floatFieldGrp -q -v1 rt_torusSpecGrp`;
-	float $HR = `floatFieldGrp -q -v2 rt_torusSpecGrp`;
-	int $NumLoops = `intSliderGrp -q -v rt_fldLoops`;
-	float $CentRot = `floatSliderGrp -q -v rt_fldRot`;
-	int $speed = `intSliderGrp -q -v rt_fldCycle`;
-
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-
-
-	float $i = (($NumLoops + 1) * 360 / $CentRot);
-	float $AxisRot = $NumLoops * 360/($i);
-	float $WRad = ($tRad*$HR) + $tRad;
-
-	print($i + " - " + $AxisRot + " - " + $WRad + "\n");	
-
-	$centerLoc = `spaceLocator -p 0 0 0`;	setAttr ($centerLoc[0] + ".localScaleX") .1;	setAttr ($centerLoc[0] + ".localScaleY") .1;	setAttr ($centerLoc[0] + ".localScaleZ") .1;	$rotateLoc = `spaceLocator -p 0 0 0`;	xform -t $tRad 0 0;	CenterPivot;	setAttr ($rotateLoc[0] + ".localScaleX") .1;	setAttr ($rotateLoc[0] + ".localScaleY") .1;	setAttr ($rotateLoc[0] + ".localScaleZ") .1;	$waveLoc = `spaceLocator -p 0 0 0`;	xform -t $WRad 0 0;	CenterPivot;	setAttr ($waveLoc[0] + ".localScaleX") .7;	setAttr ($waveLoc[0] + ".localScaleY") .7;	setAttr ($waveLoc[0] + ".localScaleZ") .7;	parent $waveLoc[0] $rotateLoc[0];	parent $rotateLoc[0] $centerLoc[0];	$locGroup = `group $centerLoc[0]`;
-
-	//----------------------------------------------------------------------	//		part 2	//		setup animation keyframes, and setDrivenKeys for other nodes	//----------------------------------------------------------------------	//----------------------------------------------------------------------	//	setup the initial keyframes for RotateLocator1	//----------------------------------------------------------------------		currentTime 1;	setAttr ($rotateLoc[0] + ".rotateZ") 0;	setKeyframe ($rotateLoc[0] + ".rz");	currentTime $speed ;	setAttr ($rotateLoc[0] + ".rotateZ") 360;	setKeyframe ($rotateLoc[0] + ".rz");	setInfinity -poi cycle ($rotateLoc[0] + ".rz");	currentTime 1;
-
-	//----------------------------------------------------------------------	//DUPLICATE LOCATORS AND ROTATE INTO STARTING POSITION	//----------------------------------------------------------------------	for($x=1;$x<$i;$x++)	{		select -r $centerLoc[0];		duplicate;		rotate 0 ($CentRot * $x) 0;		pickWalk -d down;		pickWalk -d right;		rotate -r 0 0 ($AxisRot * $x);	}
-
-	//----------------------------------------------------------------------	//RENAME LOCATORS AND GROUP	//CONNECT ROTATE LOCATORS .rotateZ	//----------------------------------------------------------------------	$grpNum = 0;	$editMode = `radioButtonGrp -q -sl editRadio`;	if( `objExists "RT_locatorGroup_*"` != 0 && $editMode == 2)	{		select -r "RT_locatorGroup_*";		$grpNumArray = `ls -sl`;		$grpNum = (`size($grpNumArray)` + 1);	}	else if( `objExists "RT_locatorGroup_*"` != 0 && $editMode == 1)	{		$grpNum = `intFieldGrp -q -v1 evoEditFld` - 1;	}
-	else if(`objExists "RT_locatorGroup_*"` == 0)
-	{
-		$grpNum = 1;
-	}	print ($grpNum + "\n");	$groupArray = `listRelatives -c $locGroup`;	$groupSize = `size($groupArray)`;
-
-	print($groupSize + "\n");	for($e=0;$e<$groupSize;$e++)	{		select -r $groupArray[$e];		rename ("RT_centerLoc_" + $grpNum + "_" + ($e+1));		pickWalk -d down;		pickWalk -d right;		rename ("RT_rotateLoc_" + $grpNum + "_" + ($e+1));		pickWalk -d down;		pickWalk -d right;		rename ("RT_waveLoc_" + $grpNum + "_" + ($e+1));
-	
-
-		//----------------------------------------------------------------------
-		//set driven keys for rotate and wave locators
-		//----------------------------------------------------------------------
-		if($e>0)		{			setAttr ("RT_rotateLoc_" + $grpNum + "_1.rotate") -type "double3" 0 0 0;			$CurrentRot = `getAttr ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz")` + 360;			setDrivenKeyframe -currentDriver ("RT_rotateLoc_" + $grpNum + "_1.rz") ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz");					setAttr ("RT_rotateLoc_" + $grpNum + "_1.rz") 360;			setAttr -k 0 ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz") $CurrentRot;			setDrivenKeyframe -currentDriver ("RT_rotateLoc_" + $grpNum + "_1.rz") ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz");			connectAttr ("RT_rotateLoc_" + $grpNum + "_1.tx") ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".tx");			connectAttr ("RT_waveLoc_" + $grpNum + "_1.tx") ("RT_waveLoc_" + $grpNum + "_" + ($e+1) + ".tx");		}
-	}	rename $locGroup ("RT_locatorGroup_" + $grpNum);
-	select -cl;	if(`objExists RT_locatorGrp` == 0)	{		$locGrp = `group -em`; 		xform -os -piv 0 0 0;		parent ("RT_locatorGroup_" + $grpNum) $locGrp;			select -r $locGrp;		$torusGrp = `group`;		xform -os -piv 0 0 0;		setAttr ($locGrp + ".v") 0;		rename $locGrp "RT_locatorGrp";		rename $torusGrp "RT_evoGrp";	}	else	{		parent ("RT_locatorGroup_" + $grpNum) RT_locatorGrp;	}
-
-	rt_EvoCurveCreate($grpNum);	
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------//EVOCURVE CREATION PROCEDURE//--------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_EvoCurveCreate(int $grpNum){
-
-	//----------------------------------------------------------------------	//----------------------------------------------------------------------	//	-	Create a NURBS curve with enough CVs to match to WaveLocators.  	//	-	select each CV and make it into a cluster.  (name clusters "C1", "C2", ect...)  	//	-	pointConstrain Cluster to WaveLocator	//	-	parent Cluster to WaveLocator1;	//	- 	cleanup point constraints (delete)	//----------------------------------------------------------------------	//----------------------------------------------------------------------
-
-	float $tRad = `floatFieldGrp -q -v1 rt_torusSpecGrp`;
-	float $HR = `floatFieldGrp -q -v2 rt_torusSpecGrp`;
-
-	float $RT_torusTransY = $tRad * $HR;
-	float $RT_instScale = `floatSliderGrp -q -v rt_fldInstScale`;
-	float $RT_instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-	float $RT_Radius = `floatSliderGrp -q -v rt_fldRadius`;
-	float $RT_Cycle = `intSliderGrp -q -v rt_fldCycle`;
-	int $RT_Instances = `intSliderGrp -query -v rt_fldInstances`;
-	int $RT_singleCheck = `checkBox -q -v rt_fldSingleCheck`;
-	float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;	float $instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-	string  $allObjects[];	//----------------------------------------------------------------------	//		Create a NURBS curve with enough CVs  	//----------------------------------------------------------------------	$evoCurve = `curve -p 0 0 0` ;	$x = 1;	select -r ("RT_waveLoc_" + $grpNum + "_Shape*");	string  $obj;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ) 	{		if ( `nodeType $obj` == "locator" ) 		{			float $tx[] = `getAttr $obj.lpx`;			float $ty[] = `getAttr $obj.lpy`;			float $tz[] = `getAttr $obj.lpz`;			curve -a -p  $tx[0] $ty[0] $tz[0] $evoCurve;		}		$x++;	}	//----------------------------------------------------------------------	//	create a cluster around the curve.cv and constrain to WaveLocators. 	//----------------------------------------------------------------------	select -r ("RT_waveLoc_" + $grpNum + "_*");	select -d ("RT_waveLoc_" + $grpNum + "_Shape*");	$x = 1;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ) 	{		if ( `nodeType $obj` != "locator" ) 		{			select -cl;			string $nm = ("rt_C_" + $grpNum + "_" + $x);			cluster -n $nm ($evoCurve + ".cv[" + $x + "]");			$nm = $nm + "Handle";			pointConstraint -offset 0 0 0 -weight 1 $obj $nm;		}		$x++;	}	//----------------------------------------------------------------------	//	final CV handling	//----------------------------------------------------------------------	float $sz = `size $allObjects`;	string $nm = ("rt_C_" + $grpNum + "_" + $x);	cluster -n $nm ($evoCurve + ".cv[0]");	$nm = $nm + "Handle";	pointConstraint -offset 0 0 0 -weight 1 $obj $nm;	
-	closeCurve -ch 1 -ps 0 -rpo 1 -bb 0.9 -bki 1 -p 0.1 $evoCurve;	//----------------------------------------------------------------------	//	parenting pass	//----------------------------------------------------------------------	select -r ("RT_waveLoc_" + $grpNum + "_*");	select -d ("RT_waveLoc_" + $grpNum + "_Shape*");	$x = 1;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ) 	{		if ($x == 1)		{			string $nm = ("rt_C_" + $grpNum + "_" + $x + "Handle");			parent  $nm $obj;		}		$x++;		if ( `nodeType $obj` != "locator" ) 		{			string $nm = ("rt_C_" + $grpNum + "_" + $x + "Handle");			parent  $nm $obj;		}	}	//	group and notate	rename $evoCurve ("RT_evoCurveA_" + $grpNum + "_1");	select -cl;	if(`objExists RT_curveGrp` == 0)	{		$curveNumGrp = `group -em`; 		xform -os -piv 0 0 0;
-
-		$curveGrp = `group -em`; 		xform -os -piv 0 0 0;		parent ("RT_evoCurveA_" + $grpNum + "_1") $curveNumGrp;		parent $curveNumGrp $curveGrp;		parent $curveGrp RT_evoGrp;		rename $curveGrp "RT_curveGrp";
-		rename $curveNumGrp ("RT_curveGroup_" + $grpNum);	}	else	{
-		$curveNumGrp = `group -em`; 		xform -os -piv 0 0 0;
-
-		parent $curveNumGrp RT_curveGrp;
-		rename $curveNumGrp ("RT_curveGroup_" + $grpNum);
-		parent ("RT_evoCurveA_" + $grpNum + "_1") ("RT_curveGroup_" + $grpNum);	}
-
-	//------------------------------------------
-	//instance and scale RT_evoCurve
-	//------------------------------------------
-	setAttr ("RT_evoCurveA_" + $grpNum + "_1.translateY") $RT_torusTransY;	move -r 0 ($RT_torusTransY * -1) 0 ("RT_evoCurveA_" + $grpNum + "_1.scalePivot") ("RT_evoCurveA_" + $grpNum + "_1.rotatePivot");	select -r ("RT_evoCurveA_" + $grpNum + "_1");	instance; scale -r $RT_instScale $RT_instScale $RT_instScale; rotate -r 0 $RT_instRot 0; for ($i=1; $i<$RT_Instances; ++$i) instance -st;	$lbs_circle = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $RT_Radius -d 3 -ut 0 -tol 0.01 -s 8 -ch 1`; 	objectMoveCommand;	playbackOptions -e -min 1.00 -max $RT_Cycle;
-
-	//-------------------	//create extrudeA group	//-------------------
-	for($i=1; $i<=$RT_Instances+1; $i++)	{		$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 $lbs_circle[0] ("RT_evoCurveA_" + $grpNum + "_" + $i)`;		rename $lbs_extrude[0] ("RT_extrudeA_" + $grpNum + "_" + $i);	}	select -cl;	for($i=1;$i<=$RT_Instances+1;$i++)	{		select -add ("RT_evoCurveA_" + $grpNum + "_" + $i);	}	group; xform -os -piv 0 0 0;	rename "group1" ("RT_curveA_group_" + $grpNum);	select -cl;		for($i=1;$i<=$RT_Instances+1;$i++)	{		select -add ("RT_extrudeA_" + $grpNum + "_" + $i);	}	$extrudeGrp = `group`; 	xform -os -piv 0 0 0;	rename $extrudeGrp ("RT_extrudeA_group_" + $grpNum);
-
-	if(`objExists RT_extrude_group` == 0)
-	{
-		$extGrp = `group -em`; 		xform -os -piv 0 0 0;
-	
-		$extAGrp = `group -em`; 		xform -os -piv 0 0 0;
-
-		parent $extAGrp $extGrp;
-		parent $extGrp RT_evoGrp;
-
-		rename $extGrp RT_extrude_group;
-		rename $extAGrp RT_extrudeA_group;
-
-		parent ("RT_extrudeA_group_" + $grpNum) RT_extrudeA_group;
-	}
-	else if(`objExists RT_extrude_group` == 0)
-	{
-		$extAGrp = `group -em`; 		xform -os -piv 0 0 0;
-
-		parent $extAGrp RT_extrude_group;
-		rename $extAGrp RT_extrudeA_group;
-
-		parent ("RT_extrudeA_group_" + $grpNum) RT_extrudeA_group;
-	}
-	else
-	{
-		parent ("RT_extrudeA_group_" + $grpNum) RT_extrudeA_group;
-	}
-
-	//------------------------------------------------------------------------------------------
-
-	if(`objExists RT_circle_group` == 0)
-	{
-		$circleGrp = `group -em`;
-		xform -os -piv 0 0 0;
-
-		parent $circleGrp RT_evoGrp;
-		parent $lbs_circle[0] $circleGrp;
-		rename $circleGrp RT_circle_group;
-	}
-	else
-	{
-		parent $lbs_circle[0] RT_circle_group;
-	}
-
-	rename $lbs_circle[0] ("RT_circle_" + $grpNum);
-	rename $lbs_circle[1] ("make_RT_circle_" + $grpNum);
-
-	if( $RT_singleCheck == 0 )	{		int $Instances = `intSliderGrp -query -v rt_fldInstances`;		select -r ("RT_evoCurveA_" + $grpNum + "_1") ;		$curveInst = `instance`;		rename $curveInst ("RT_evoCurveB_" + $grpNum + "_1");
-		
-		select -r ("RT_evoCurveB_" + $grpNum + "_1");
-		$grp1 = `group`;
-		xform -os -piv 0 0 0;
-
-		rename $grp1 ("RT_curveB_group_" + $grpNum);
-		parent ("RT_curveB_group_" + $grpNum) ("RT_curveGroup_" + $grpNum);
-				select -r ("RT_evoCurveB_" + $grpNum + "_1");		instance; scale -r $instScale $instScale $instScale; rotate -r 0 $instRot 0; for ($i=1; $i<$Instances; ++$i) instance -st;
-
-		//-------------------		//create extrudeB group		//-------------------		for($i=1; $i<=$Instances+1; $i++)		{			$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum) ("RT_evoCurveB_" + $grpNum + "_" + $i)`;			rename $lbs_extrude[0] ("RT_extrudeB_" + $grpNum + "_" + $i);
-
-			if(`objExists RT_extrudeB_group` == 0)
-			{
-				$extB = `group -em`;
-				xform -os -piv 0 0 0;
-
-				$extB_1 = `group -em`;
-				xform -os -piv 0 0 0;
-
-				parent $extB_1 $extB;
-				parent $extB RT_extrude_group;
-				rename $extB RT_extrudeB_group;
-				rename $extB_1 ("RT_extrudeB_group_" + $grpNum);
-			
-				parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-			}
-			else if(`objExists ("RT_extrudeB_group_" + $grpNum)` == 0)
-			{
-				$extB_1 = `group -em`;
-				xform -os -piv 0 0 0;
-				rename $extB_1 ("RT_extrudeB_group_" + $grpNum);
-				parent ("RT_extrudeB_group_" + $grpNum) RT_extrudeB_group;
-				parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-			}
-			else
-			{
-				parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-			}		}
-
-		setAttr ("RT_curveB_group_" + $grpNum + ".rx") 180;		
-
-	}
-
-	rt_updateTextList;}
-
-
-//-------------------------------------------------------------------------------------------------------------------------------------//show/hide extra scale options//-------------------------------------------------------------------------------------------------------------------------------------global proc scaleCheckBox(){	$checked = `checkBoxGrp -q -v1 rt_fldExtraOpt`;	if($checked == 1)	{		floatSliderGrp -e -en 1 rt_fldExtraScaleX;		floatSliderGrp -e -en 1 rt_fldExtraScaleY;		floatSliderGrp -e -en 1 rt_fldExtraScaleZ;		checkBoxGrp -e -en 1 rt_fldUniformScale;		button -e -en 1 rt_resetScaleButton;				floatSliderGrp -e -en 0 rt_fldInstScale;	}	else	{		floatSliderGrp -e -en 0 rt_fldExtraScaleX;		floatSliderGrp -e -en 0 rt_fldExtraScaleY;		floatSliderGrp -e -en 0 rt_fldExtraScaleZ;		checkBoxGrp -e -en 0 rt_fldUniformScale;		button -e -en 0 rt_resetScaleButton;				floatSliderGrp -e -en 1 rt_fldInstScale;	}}//-------------------------------------------------------------------------------------------------------------------------------------//updates extrude radius //-------------------------------------------------------------------------------------------------------------------------------------global proc updateRadius(){
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-	if( `objExists RT_evoGrp` == 1 && $ed == 1)	{		float $Radius = `floatSliderGrp -query -v rt_fldRadius`;		setAttr ("make_RT_circle_" + $grpNum + ".radius") $Radius;		print("radius updated" + "\n");	}}//-------------------------------------------------------------------------------------------------------------------------------------//updates single input scale//-------------------------------------------------------------------------------------------------------------------------------------global proc updateScale(){
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-
-	$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum)`;
-	if($veCheck == 1)
-	{
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_1");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_2");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_3");
-		delete ("RT_VE_extrude_group_" + $grpNum);
-	}
-	if( `objExists RT_evoGrp` == 1 && $ed ==1)
-	{  		float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;		select -cl;		select -r ("RT_evoCurveA_" + $grpNum + "_*");		string $lbs_evoCurves[] = `ls -sl`;		int $lbs_evoCurveGroupSize = `size($lbs_evoCurves)`;		print("--evo curves in group:  " + $lbs_evoCurveGroupSize + "\n");		for($i=1;$i<=$lbs_evoCurveGroupSize;$i++)		{			$lbs_scale = `pow $instScale ($i - 1)`;			setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleX") $lbs_scale;			setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleY") $lbs_scale;			setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleZ") $lbs_scale;			if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)			{				setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleX") $lbs_scale;				setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleY") $lbs_scale;				setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleZ") $lbs_scale;			}		}		floatSliderGrp -e -v $instScale rt_fldExtraScaleX;		floatSliderGrp -e -v $instScale rt_fldExtraScaleY;		floatSliderGrp -e -v $instScale rt_fldExtraScaleZ;		print("scale updated" + "\n");	}		else{		float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;		floatSliderGrp -e -v $instScale rt_fldExtraScaleX;		floatSliderGrp -e -v $instScale rt_fldExtraScaleY;		floatSliderGrp -e -v $instScale rt_fldExtraScaleZ;	}
-
-	if($veCheck == 1)
-	{
-		rt_VE;
-	}}//-------------------------------------------------------------------------------------------------------------------------------------//updates extra scale options//-------------------------------------------------------------------------------------------------------------------------------------global proc extraScale(){
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-
-	$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum)`;
-	if($veCheck == 1)
-	{
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_1");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_2");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_3");
-		delete ("RT_VE_extrude_group_" + $grpNum);
-	}
-	if( `objExists RT_evoGrp` == 1 && $ed == 1)	{		float $xScale = `floatSliderGrp -query -v rt_fldExtraScaleX`;		float $yScale = `floatSliderGrp -query -v rt_fldExtraScaleY`;		float $zScale = `floatSliderGrp -query -v rt_fldExtraScaleZ`;		$uniformCheck = `checkBoxGrp -q -v1 rt_fldUniformScale`;		select -cl;		select -r ("RT_evoCurveA_" + $grpNum + "_*");		string $lbs_evoCurves[] = `ls -sl`;		int $lbs_evoCurveGroupSize = `size($lbs_evoCurves)`;		print("--evo curves in group:  " + $lbs_evoCurveGroupSize + "\n");			if($uniformCheck == 0)		{			for($i=1;$i<=$lbs_evoCurveGroupSize;$i++)			{				$lbs_scaleX = `pow $xScale ($i - 1)`;				$lbs_scaleY = `pow $yScale ($i - 1)`;				$lbs_scaleZ = `pow $zScale ($i - 1)`;				setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleX") $lbs_scaleX;				setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleY") $lbs_scaleY;				setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleZ") $lbs_scaleZ;				if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)				{					setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleX") $lbs_scaleX;					setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleY") $lbs_scaleY;					setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleZ") $lbs_scaleZ;				}			}		}		else		{			setAttr ("RT_curveGroup_" + $grpNum + ".sx") $xScale;			setAttr ("RT_curveGroup_" + $grpNum + ".sy") $yScale;			setAttr ("RT_curveGroup_" + $grpNum + ".sz") $zScale;		}		print("updated scale with extra options" + "\n");		}
-
-	if($veCheck == 1)
-	{
-		rt_VE;
-	}}//-------------------------------------------------------------------------------------------------------------------------------------//reset scale options to value in "instance scale" field//-------------------------------------------------------------------------------------------------------------------------------------global proc resetScale(){
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-
-	$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum)`;
-	if($veCheck == 1)
-	{
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_1");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_2");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_3");
-		delete ("RT_VE_extrude_group_" + $grpNum);
-	}
-	if( `objExists RT_evoGrp` == 1 && $ed == 1)	{		setAttr ("RT_curveGroup_" + $grpNum + ".sx") 1;		setAttr ("RT_curveGroup_" + $grpNum + ".sy") 1;		setAttr ("RT_curveGroup_" + $grpNum + ".sz") 1;		float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;		select -cl;		select -r ("RT_evoCurveA_" + $grpNum + "_*");		string $lbs_evoCurves[] = `ls -sl`;		int $lbs_evoCurveGroupSize = `size($lbs_evoCurves)`;		print("--evo curves in group:  " + $lbs_evoCurveGroupSize + "\n");		for($i=1;$i<=$lbs_evoCurveGroupSize;$i++)		{			$lbs_scale = `pow $instScale ($i - 1)`;			setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleX") $lbs_scale;			setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleY") $lbs_scale;			setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".scaleZ") $lbs_scale;			if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)			{				setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleX") $lbs_scale;				setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleY") $lbs_scale;				setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".scaleZ") $lbs_scale;			}		}		floatSliderGrp -e -v $instScale rt_fldExtraScaleX;		floatSliderGrp -e -v $instScale rt_fldExtraScaleY;		floatSliderGrp -e -v $instScale rt_fldExtraScaleZ;		checkBoxGrp -e -v1 0 rt_fldExtraOpt;		floatSliderGrp -e -en 0 rt_fldExtraScaleX;		floatSliderGrp -e -en 0 rt_fldExtraScaleY;		floatSliderGrp -e -en 0 rt_fldExtraScaleZ;		checkBoxGrp -e -en 0 rt_fldUniformScale;		checkBoxGrp -e -v1 0 rt_fldUniformScale;		button -e -en 0 rt_resetScaleButton;				floatSliderGrp -e -en 1 rt_fldInstScale;		print("scale options reset" + "\n");	}	else
-	{		float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;		floatSliderGrp -e -v $instScale rt_fldExtraScaleX;		floatSliderGrp -e -v $instScale rt_fldExtraScaleY;		floatSliderGrp -e -v $instScale rt_fldExtraScaleZ;	}
-
-	if($veCheck == 1)
-	{
-		rt_VE;
-	}}//-------------------------------------------------------------------------------------------------------------------------------------//updates rotation of each instance//-------------------------------------------------------------------------------------------------------------------------------------global proc updateRotation(){	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-
-	$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum)`;
-	if($veCheck == 1)
-	{
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_1");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_2");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_3");
-		delete ("RT_VE_extrude_group_" + $grpNum);
-	}
-	if( `objExists RT_evoGrp` == 1 && $ed == 1)	{		float $instRot = `floatSliderGrp -query -v rt_fldInstRotation`;		select -cl;		select -r ("RT_evoCurveA_" + $grpNum + "_*") ;		string $lbs_evoCurves[] = `ls -sl`;		int $lbs_evoCurveGroupSize = `size($lbs_evoCurves)`;		print("--evo curves in group:  " + $lbs_evoCurveGroupSize + "\n");		for($i=1;$i<=$lbs_evoCurveGroupSize;$i++)		{			setAttr ("RT_evoCurveA_" + $grpNum + "_" + $i + ".rotateY") ($instRot * ($i -1));			if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)			{				setAttr ("RT_evoCurveB_" + $grpNum + "_" + $i + ".rotateY") ($instRot * ($i -1));			}		}		print("rotation updated" + "\n");	}
-
-	if($veCheck == 1)
-	{
-		rt_VE;
-	}}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-//switches between single and double tori
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc singleToriCheck()
-{
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-	$single = `checkBox -q -v rt_fldSingleCheck`;
-
-	$singleShader = `checkBox -q -v rt_singleShader`;
-
-	if( $single == 1 && $ed == 1 && `objExists ("RT_curveB_group_" + $grpNum)` == 1)	{
-		select -r ("RT_curveB_group_" + $grpNum) ("RT_extrudeB_group_" + $grpNum);
-		doDelete;
-	}
-	if( $single == 0 && $ed == 1 && `objExists ("RT_curveB_group_" + $grpNum)` == 0)	{
-		float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;
-		float $instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-		int $Instances = `intSliderGrp -query -v rt_fldInstances`;		select -r ("RT_evoCurveA_" + $grpNum + "_1") ;		$curveInst = `instance`;		rename $curveInst ("RT_evoCurveB_" + $grpNum + "_1");
-		
-		select -r ("RT_evoCurveB_" + $grpNum + "_1");
-		$grp1 = `group`;
-		xform -os -piv 0 0 0;
-
-		rename $grp1 ("RT_curveB_group_" + $grpNum);
-		parent ("RT_curveB_group_" + $grpNum) ("RT_curveGroup_" + $grpNum);
-				select -r ("RT_evoCurveB_" + $grpNum + "_1");		instance; scale -r $instScale $instScale $instScale; rotate -r 0 $instRot 0; for ($i=1; $i<$Instances; ++$i) instance -st;
-
-		for($i=1; $i<=$Instances+1; $i++)		{			$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum) ("RT_evoCurveB_" + $grpNum + "_" + $i)`;			rename $lbs_extrude[0] ("RT_extrudeB_" + $grpNum + "_" + $i);
-
-			if(`objExists RT_extrudeB_group` == 0)
-			{
-				$extB = `group -em`;
-				xform -os -piv 0 0 0;
-
-				$extB_1 = `group -em`;
-				xform -os -piv 0 0 0;
-
-				parent $extB_1 $extB;
-				parent $extB RT_extrude_group;
-				rename $extB RT_extrudeB_group;
-				rename $extB_1 ("RT_extrudeB_group_" + $grpNum);
-			
-				parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-			}
-			else if(`objExists ("RT_extrudeB_group_" + $grpNum)` == 0)
-			{
-				$extB_1 = `group -em`;
-				xform -os -piv 0 0 0;
-				rename $extB_1 ("RT_extrudeB_group_" + $grpNum);
-				parent ("RT_extrudeB_group_" + $grpNum) RT_extrudeB_group;
-				parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-			}
-			else
-			{
-				parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-			}		}
-
-		setAttr ("RT_curveB_group_" + $grpNum + ".rx") 180;		
-		extraScale;
-		if($singleShader != 1)
-		{
-			rt_applyShader;
-		}
-		if($singleShader == 1)
-		{
-			rt_useSingleShader;
-		}
-	}
-}//-------------------------------------------------------------------------------------------------------------------------------------//options for inverting stack and rotating system//-------------------------------------------------------------------------------------------------------------------------------------global proc lbs_transRot(){	if( `objExists RT_evoGrp` == 1)	{		$ed = `radioButtonGrp -q -sl rt_editRadio`;
-		int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-		$grpNum = $evoNumArray[0];
-		float $tRad = `floatFieldGrp -query -v1 rt_torusSpecGrp`;		float $tHR = `floatFieldGrp -query -v2 rt_torusSpecGrp`;		float $torusTransY = $tRad * $tHR;		int $lbs_invert = `checkBox -q -v rt_invertStackCheck`;		int $lbs_rotate = `checkBox -q -v rt_rotateEvoluteCheck`;		if($lbs_invert == 0 && $lbs_rotate == 0 && $ed == 1)		{			setAttr ("RT_curveA_group_" + $grpNum + ".tx") 0;			setAttr ("RT_curveA_group_" + $grpNum + ".ty") 0;			if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)			{				setAttr ("RT_curveB_group_" + $grpNum + ".tx") 0;				setAttr ("RT_curveB_group_" + $grpNum + ".ty") 0;			}			setAttr ("RT_curveGroup_" + $grpNum + ".rz") 0;		}		else if($lbs_invert == 1 && $lbs_rotate == 0 && $ed == 1)		{			setAttr ("RT_curveA_group_" + $grpNum + ".tx") 0;			setAttr ("RT_curveA_group_" + $grpNum + ".ty") ($torusTransY * -1.87);			if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)			{				setAttr ("RT_curveB_group_" + $grpNum + ".tx") 0;				setAttr ("RT_curveB_group_" + $grpNum + ".ty") ($torusTransY * 1.87);			}			setAttr ("RT_curveGroup_" + $grpNum + ".rz") 0;		}		else if($lbs_invert == 0 && $lbs_rotate == 1 && $ed == 1)		{			setAttr ("RT_curveA_group_" + $grpNum + ".tx") 0;			setAttr ("RT_curveA_group_" + $grpNum + ".ty") 0;			if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)			{				setAttr ("RT_curveB_group_" + $grpNum + ".tx") 0;				setAttr ("RT_curveB_group_" + $grpNum + ".ty") 0;			}			setAttr ("RT_curveGroup_" + $grpNum + ".rz") 90;		}		else if($lbs_invert == 1 && $lbs_rotate == 1&& $ed == 1)		{			setAttr ("RT_curveA_group_" + $grpNum + ".tx") 0;			setAttr ("RT_curveA_group_" + $grpNum + ".ty") ($torusTransY * -1.6);			if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)			{				setAttr ("RT_curveB_group_" + $grpNum + ".tx") 0;				setAttr ("RT_curveB_group_" + $grpNum + ".ty") ($torusTransY * 1.6);			}			setAttr ("RT_curveGroup_" + $grpNum + ".rz") 90;		}	}}//-------------------------------------------------------------------------------------------------------------------------------------//create/edit radio button//-------------------------------------------------------------------------------------------------------------------------------------global proc rt_editCheck(){	$edit = `radioButtonGrp -q -sl rt_editRadio`;		print("edit mode selected: " + $edit + "\n");		if($edit == 1)	{		button -e -en 0 evoCurveButtonRT;		print("edit mode" + "\n");	}	else	{		button -e -en 1 evoCurveButtonRT;
-		textScrollList -e -da rt_textList;		print("create mode" + "\n");	}}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-//evo number field update//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_evoEdit()
-{
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-	
-	$circleR = `getAttr ("make_RT_circle_" + $grpNum + ".radius")`;
-	floatSliderGrp -e -v $circleR rt_fldRadius;
-
-	$rot = `getAttr ("RT_evoCurveA_" + $grpNum + "_2.ry")`;
-	floatSliderGrp -e -v $rot rt_fldInstRotation;
-
-	$hr = `getAttr ("RT_rotateLoc_" + $grpNum + "_1.tx")`;
-	$r = (`getAttr ("RT_waveLoc_" + $grpNum + "_1.tx")`/$hr);
-	floatFieldGrp -e -v1 $hr -v2 $r rt_torusSpecGrp;
-
-	$iArray = `listRelatives -c ("RT_locatorGroup_" + $grpNum)`;
-	$i = `size($iArray)`;
-	$c = `getAttr ("RT_centerLoc_" + $grpNum + "_2.ry")`;
-	$loops = ((($i * $c)/360)-.999);
-	int $iLoop;
-	$iLoop = $loops;
-	intSliderGrp -e -v $iLoop rt_fldLoops;
-
-	$locRot = `getAttr ("RT_centerLoc_" + $grpNum + "_2.ry")`;
-	floatSliderGrp -e -v $locRot rt_fldRot;
-
-	$extList = `listRelatives -c ("RT_extrudeA_group_" + $grpNum)`;
-	$extNum = (`size($extList)` - 1);
-	intSliderGrp -e -v $extNum rt_fldInstances;
-
-	$anim = `keyframe -index 1 -q ("RT_rotateLoc_" + $grpNum + "_1.rz")`;
-	intSliderGrp -e -v $anim[0] rt_fldCycle;
-
-	$xS = `getAttr ("RT_evoCurveA_" + $grpNum + "_2.sx")`;
-	$yS = `getAttr ("RT_evoCurveA_" + $grpNum + "_2.sy")`;
-	$zS = `getAttr ("RT_evoCurveA_" + $grpNum + "_2.sz")`;
-
-	$grpSx = `getAttr ("RT_curveGroup_" + $grpNum + ".sx")`;
-	$grpSy = `getAttr ("RT_curveGroup_" + $grpNum + ".sy")`;
-	$grpSz = `getAttr ("RT_curveGroup_" + $grpNum + ".sz")`;
-
-	if(`objExists ("RT_extrudeB_group_" + $grpNum)` == 1)
-	{
-		checkBox -e -v 0 rt_fldSingleCheck;
-	}
-	else
-	{
-		checkBox -e -v 1 rt_fldSingleCheck;
-
-	}
-
-	if($grpSx == 1 && $grpSy == 1 && $grpSz == 1 && $xS == $yS && $xS == $zS)
-	{
-		checkBoxGrp -e -v1 0 rt_fldExtraOpt;
-
-		checkBoxGrp -e -en 0 rt_fldUniformScale;		button -e -en 0 rt_resetScaleButton;
-
-		floatSliderGrp -e -en 0 rt_fldExtraScaleX;		floatSliderGrp -e -en 0 rt_fldExtraScaleY;		floatSliderGrp -e -en 0 rt_fldExtraScaleZ;
-		floatSliderGrp -e -en 1 rt_fldInstScale;
-
-		floatSliderGrp -e -v $xS rt_fldExtraScaleX;
-		floatSliderGrp -e -v $xS rt_fldExtraScaleY;
-		floatSliderGrp -e -v $xS rt_fldExtraScaleZ;
-		floatSliderGrp -e -v $xS rt_fldInstScale;
-		checkBoxGrp -e -v1 0 rt_fldUniformScale;
-	}
-
-	else if($grpSx != 1 || $grpSy != 1 || $grpSz != 1)
-	{
-		checkBoxGrp -e -v1 1 rt_fldExtraOpt;
-
-		checkBoxGrp -e -en 1 rt_fldUniformScale;		button -e -en 1 rt_resetScaleButton;
-
-		floatSliderGrp -e -en 1 rt_fldExtraScaleX;		floatSliderGrp -e -en 1 rt_fldExtraScaleY;		floatSliderGrp -e -en 1 rt_fldExtraScaleZ;
-		floatSliderGrp -e -en 0 rt_fldInstScale;
-
-		floatSliderGrp -e -v $grpSx rt_fldExtraScaleX;
-		floatSliderGrp -e -v $grpSy rt_fldExtraScaleY;
-		floatSliderGrp -e -v $grpSz rt_fldExtraScaleZ;
-		floatSliderGrp -e -v $xS rt_fldInstScale;
-		checkBoxGrp -e -v1 1 rt_fldUniformScale;
-	}
-
-	else if($grpSx == 1 && $grpSy == 1 && $grpSz == 1 && $xS != $yS || $xS != $zS)
-	{
-		checkBoxGrp -e -v1 1 rt_fldExtraOpt;
-
-		checkBoxGrp -e -en 1 rt_fldUniformScale;		button -e -en 1 rt_resetScaleButton;
-
-		floatSliderGrp -e -en 1 rt_fldExtraScaleX;		floatSliderGrp -e -en 1 rt_fldExtraScaleY;		floatSliderGrp -e -en 1 rt_fldExtraScaleZ;
-		floatSliderGrp -e -en 0 rt_fldInstScale;
-
-		floatSliderGrp -e -v $xS rt_fldExtraScaleX;
-		floatSliderGrp -e -v $yS rt_fldExtraScaleY;
-		floatSliderGrp -e -v $zS rt_fldExtraScaleZ;
-		floatSliderGrp -e -v $xS rt_fldInstScale;
-		checkBoxGrp -e -v1 0 rt_fldUniformScale;
-	}
-	int $rt_UVal = `getAttr ("RT_extrudeA_" + $grpNum + "_Shape1.numberU")`;	intSliderGrp -e -v $rt_UVal rt_fldTessU;
-
-	int $rt_VVal = `getAttr ("RT_extrudeA_" + $grpNum + "_Shape1.numberV")`;	intSliderGrp -e -v $rt_VVal rt_fldTessV;
-
-	select -r ("RT_extrudeA_" + $grpNum + "_1");
-	hyperShade -smn "";
-	$shader = `ls -sl`;
-	if($shader[0] == "rt_shader_single")
-	{
-		checkBox -e -v 1 rt_singleShader;
-		checkBox -e -v 1 rt_thriveColor;
-		checkBox -e -en 0 rt_invertColor;
-		$glow = `getAttr "rt_shader_single.glowIntensity"`;
-		if($glow != 0)
-		{
-			checkBox -e -v 1 rt_shaderGlow;
-		}
-	}
-	else if($shader[0] == "lambert1")
-	{
-		checkBox -e -v 0 rt_thriveColor;
-	}
-
-	if(`objExists rt_shader_glow_1` == 1 || `objExists rt_shader_noGlow_1` == 1)
-	{
-		select -r ("RT_extrudeA_" + $grpNum + "_1");
-		hyperShade -smn "";
-		$shaderCheck = `ls -sl`;
-
-		print($shaderCheck[0] + " assigned" + "\n");
-
-		for($i=1;$i<=12;$i++)		{			if($shaderCheck[0] == ("rt_shader_glow_" + $i) || $shaderCheck[0] == ("rt_shader_noGlow_" + $i))
-			{
-				checkBox -e -v 1 rt_thriveColor;
-
-				if($shaderCheck[0] == "rt_shader_glow_1" || $shaderCheck[0] == "rt_shader_noGlow_1")
-				{
-					checkBox -e -v 0 rt_invertColor;
-				}
-				else
-				{
-					checkBox -e -v 1 rt_invertColor;
-				}
-				if($shaderCheck[0] == ("rt_shader_glow_" + $i))
-				{
-					checkBox -e -v 1 rt_shaderGlow;
-				}
-				else
-				{
-					checkBox -e -v 0 rt_shaderGlow;
-				}
-			}
-		}
-	}
-
-	if(`objExists ("RT_evoCurve_VE_group_" + $grpNum + "_1")` == 1)
-	{
-		checkBox -e -v 1 rt_VECheck;
-		checkBox -e -en 0 rt_fldSingleCheck;
-		checkBox -e -en 0 rt_invertStackCheck; 
-	}
-	else
-	{
-		checkBox -e -v 0 rt_VECheck;
-		checkBox -e -en 1 rt_fldSingleCheck;
-		checkBox -e -en 1 rt_invertStackCheck; 
-	}
-
-}
-//-------------------------------------------------------------------------------------------------------------------------------------//setting render tessellation //-------------------------------------------------------------------------------------------------------------------------------------global proc lbs_tessU(){
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-	if( `objExists RT_evoGrp` == 1 && $ed == 1)	{		$lbs_Uval = `intSliderGrp -q -v rt_fldTessU`;		print("tessellation U: " + $lbs_Uval + "\n");		$lbs_extrudes1 = `listRelatives -c ("RT_extrudeA_group_" + $grpNum)`;		int $lbs_counter = `size($lbs_extrudes1)`;		print("number of extrudes in group: " + $lbs_counter + "\n");		for($i=1;$i<=$lbs_counter;$i++)		{			setAttr ("RT_extrudeA_" + $grpNum + "_Shape" + $i + ".explicitTessellationAttributes") 1;			setAttr ("RT_extrudeA_" + $grpNum + "_Shape" + $i + ".numberU") $lbs_Uval;				if(`objExists ("RT_extrudeB_group_" + $grpNum)` == 1)			{				setAttr ("RT_extrudeB_" + $grpNum + "_Shape" + $i + ".explicitTessellationAttributes") 1;				setAttr ("RT_extrudeB_" + $grpNum + "_Shape" + $i + ".numberU") $lbs_Uval;			}
-			if(`objExists ("RT_VE_extrude_group_" + $grpNum)` == 1)
-			{
-				for($e=1;$e<=3;$e++)
-				{
-					setAttr ("RT_VE_extrudeA_" + $grpNum + "_" + $e + "_Shape" + $i + ".explicitTessellationAttributes") 1;					setAttr ("RT_VE_extrudeA_" + $grpNum + "_" + $e + "_Shape" + $i + ".numberU") $lbs_Uval;
-
-					setAttr ("RT_VE_extrudeB_" + $grpNum + "_" + $e + "_Shape" + $i + ".explicitTessellationAttributes") 1;					setAttr ("RT_VE_extrudeB_" + $grpNum + "_" + $e + "_Shape" + $i + ".numberU") $lbs_Uval;
-				}
-			}		}	}}global proc lbs_tessV(){
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-	if( `objExists RT_evoGrp` == 1 && $ed == 1)	{		$lbs_Vval = `intSliderGrp -q -v rt_fldTessV`;		print("tessellation V: " + $lbs_Vval + "\n");		$lbs_extrudes1 = `listRelatives -c ("RT_extrudeA_group_" + $grpNum)`;		int $lbs_counter = `size($lbs_extrudes1)`;		print("number of extrudes in group: " + $lbs_counter + "\n");		for($i=1;$i<=$lbs_counter;$i++)		{			setAttr ("RT_extrudeA_" + $grpNum + "_Shape" + $i + ".explicitTessellationAttributes") 1;			setAttr ("RT_extrudeA_" + $grpNum + "_Shape" + $i + ".numberV") $lbs_Vval;				if(`objExists ("RT_extrudeB_group_" + $grpNum)` == 1)			{					setAttr ("RT_extrudeB_" + $grpNum + "_Shape" + $i + ".explicitTessellationAttributes") 1;				setAttr ("RT_extrudeB_" + $grpNum + "_Shape" + $i + ".numberV") $lbs_Vval;			}
-			if(`objExists ("RT_VE_extrude_group_" + $grpNum)` == 1)
-			{
-				for($e=1;$e<=3;$e++)
-				{
-					setAttr ("RT_VE_extrudeA_" + $grpNum + "_" + $e + "_Shape" + $i + ".explicitTessellationAttributes") 1;					setAttr ("RT_VE_extrudeA_" + $grpNum + "_" + $e + "_Shape" + $i + ".numberV") $lbs_Vval;
-
-					setAttr ("RT_VE_extrudeB_" + $grpNum + "_" + $e + "_Shape" + $i + ".explicitTessellationAttributes") 1;					setAttr ("RT_VE_extrudeB_" + $grpNum + "_" + $e + "_Shape" + $i + ".numberV") $lbs_Vval;
-				}
-			}		}	}}//-------------------------------------------------------------------------------------------------------------------------------------//delete evo system if it exists//-------------------------------------------------------------------------------------------------------------------------------------global proc deleteEvos(){	if(`objExists RT_evoGrp` == 1) delete RT_evoGrp;}//-------------------------------------------------------------------------------------------------------------------------------------//phi scaling procedures//-------------------------------------------------------------------------------------------------------------------------------------global proc phiScale(){	floatSliderGrp -e -v 1.618 rt_fldInstScale;	updateScale();}global proc phiNegScale(){	floatSliderGrp -e -v 0.618 rt_fldInstScale;	updateScale();}//-------------------------------------------------------------------------------------------------------------------------------------//update number of instances//-------------------------------------------------------------------------------------------------------------------------------------global proc rt_updateInst(){	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-
-	$shaderCheck = `checkBox -q -v rt_thriveColor`;
-	$singleShader = `checkBox -q -v rt_singleShader`;
-
-	float $RT_instScale = `floatSliderGrp -q -v rt_fldInstScale`;
-	float $RT_instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-	int $RT_Instances = `intSliderGrp -query -v rt_fldInstances`;
-	int $RT_singleCheck = `checkBox -q -v rt_fldSingleCheck`;
-
-	$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum)`;
-	if($veCheck == 1)
-	{
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_1");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_2");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_3");
-		delete ("RT_VE_extrude_group_" + $grpNum);
-	}
-
-	if(`objExists ("RT_curveGroup_" + $grpNum)` == 1 && $ed == 1)
-	{
-		$curveList = `listRelatives -c ("RT_curveA_group_" + $grpNum)`;
-		$curveNum = `size($curveList)`;
-		
-		select -r ("RT_extrudeA_group_" + $grpNum);  
-		if(`objExists ("RT_curveB_group_" + $grpNum)` == 1)
-		{
-			select -add ("RT_extrudeB_group_" + $grpNum) ("RT_curveB_group_" + $grpNum);
-		}
-		doDelete;
-		
-		for($i=2;$i<=$curveNum;$i++)
-		{
-			select -r ("RT_evoCurveA_" + $grpNum + "_" + $i);
-			doDelete;
-		}
-
-		select -r ("RT_evoCurveA_" + $grpNum + "_1");		instance; 
-		scale -r $RT_instScale $RT_instScale $RT_instScale; 	
-		rotate -r 0 $RT_instRot 0; 
-		for ($i=1; $i<$RT_Instances; ++$i) 
-		instance -st;
-
-		//-------------------		//create extrudeA group		//-------------------
-		for($i=1; $i<=$RT_Instances+1; $i++)		{			$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum) ("RT_evoCurveA_" + $grpNum + "_" + $i)`;			rename $lbs_extrude[0] ("RT_extrudeA_" + $grpNum + "_" + $i);		}		select -cl;			for($i=1;$i<=$RT_Instances+1;$i++)		{			select -add ("RT_extrudeA_" + $grpNum + "_" + $i);		}		$extrudeGrp = `group`; 		xform -os -piv 0 0 0;		rename $extrudeGrp ("RT_extrudeA_group_" + $grpNum);
-
-		parent ("RT_extrudeA_group_" + $grpNum) RT_extrudeA_group;
-
-		if( $RT_singleCheck == 0 )		{			select -r ("RT_evoCurveA_" + $grpNum + "_1") ;			$curveInst = `instance`;			rename $curveInst ("RT_evoCurveB_" + $grpNum + "_1");
-		
-			select -r ("RT_evoCurveB_" + $grpNum + "_1");
-			$grp1 = `group`;
-			xform -os -piv 0 0 0;
-
-			rename $grp1 ("RT_curveB_group_" + $grpNum);
-			parent ("RT_curveB_group_" + $grpNum) ("RT_curveGroup_" + $grpNum);
-					select -r ("RT_evoCurveB_" + $grpNum + "_1");			instance; scale -r $RT_instScale $RT_instScale $RT_instScale; rotate -r 0 $RT_instRot 0; for ($i=1; $i<$RT_Instances; ++$i) instance -st;
-
-			//-------------------			//create extrudeB group			//-------------------
-			$newGrp = `group -em`;
-			xform -os -piv 0 0 0;
-			rename $newGrp ("RT_extrudeB_group_" + $grpNum);
-			parent ("RT_extrudeB_group_" + $grpNum) RT_extrudeB_group;
-			for($i=1; $i<=$RT_Instances+1; $i++)			{				$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum) ("RT_evoCurveB_" + $grpNum + "_" + $i)`;				rename $lbs_extrude[0] ("RT_extrudeB_" + $grpNum + "_" + $i);
-
-				parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-							}
-
-			setAttr ("RT_curveB_group_" + $grpNum + ".rx") 180;	
-		}
-	}
-
-	if($veCheck == 1)
-	{
-		rt_VE;
-	}
-
-	if($shaderCheck == 1 && $singleShader != 1)
-	{
-		rt_applyShader;
-	}	
-	if($shaderCheck == 1 && $singleShader == 1)
-	{
-		rt_useSingleShader;
-	}		}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-//updates radius and height ratio of evo
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_radiusUpdate()
-{
-
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	$tRad = `floatFieldGrp -q -v1 rt_torusSpecGrp`;	$HR = `floatFieldGrp -q -v2 rt_torusSpecGrp`;	$WRad =  ($tRad*$HR);
-
-	$shaderCheck = `checkBox -q -v rt_thriveColor`;
-
-	$singleCheck = `checkBox -q -v rt_fldSingleCheck`;
-	$singleShader =`checkBox -q -v rt_singleShader`;	
-	if($grpNum[0] != 0)
-	{
-		$curveList = `listRelatives ("RT_curveA_group_" + $grpNum[0])`;
-		$curveNum = `size($curveList)`;
-
-		$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum[0])`;
-		if($veCheck == 1)
-		{
-			delete ("RT_evoCurve_VE_group_" + $grpNum[0] + "_1");
-			delete ("RT_evoCurve_VE_group_" + $grpNum[0] + "_2");
-			delete ("RT_evoCurve_VE_group_" + $grpNum[0] + "_3");
-			delete ("RT_VE_extrude_group_" + $grpNum[0]);
-		}
-		if($ed == 1 && $grpNum[0] > 0)		{			float $RT_instScale = `floatSliderGrp -q -v rt_fldInstScale`;
-			float $RT_instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-			int $RT_Instances = `intSliderGrp -query -v rt_fldInstances`;			print("Radius: " + $tRad + "\n");			print("HR: " + $HR + "\n");			print("WRad: " + $WRad + "\n");			setAttr ("RT_rotateLoc_" + $grpNum[0] + "_1.tx") $tRad; 			setAttr ("RT_waveLoc_" + $grpNum[0] + "_1.tx") $WRad;
-
-			select -r ("RT_extrudeA_" + $grpNum[0] + "_*");
-			doDelete;
-
-			if(`objExists ("RT_extrudeB_group_" + $grpNum[0])` == 1)
-			{
-				select -r ("RT_extrudeB_" + $grpNum[0] + "_*");
-				doDelete;
-				print("extrudes B deleted." + "\n");
-			}
-	
-			for($i=2;$i<=$curveNum;$i++)
-			{
-				select -r ("RT_evoCurveA_" + $grpNum[0] + "_" + $i);
-				doDelete;
-			}
-
-			if(`objExists ("RT_curveB_group_" + $grpNum[0])` == 1)
-			{
-				for($i=1;$i<=$curveNum;$i++)
-				{
-					select -r ("RT_evoCurveB_" + $grpNum[0] + "_" + $i);
-					doDelete;
-				}
-				setAttr ("RT_curveB_group_" + $grpNum[0] + ".rx") 0;
-			}
-
-			$piv = (`getAttr ("RT_evoCurveA_" + $grpNum[0] + "_1.ty")` - $WRad);
-			setAttr ("RT_evoCurveA_" + $grpNum[0] + "_1.ty") $WRad;
-			move -r 0 $piv 0 ("RT_evoCurveA_" + $grpNum[0] + "_1.scalePivot") ("RT_evoCurveA_" + $grpNum[0] + "_1.rotatePivot");
-
-			select -r ("RT_evoCurveA_" + $grpNum[0] + "_1");			instance; scale -r $RT_instScale $RT_instScale $RT_instScale; rotate -r 0 $RT_instRot 0; for ($i=1; $i<$RT_Instances; ++$i) instance -st;
-
-			//-------------------			//create extrudeA group			//-------------------
-			for($i=1; $i<=$RT_Instances+1; $i++)			{				$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum[0]) ("RT_evoCurveA_" + $grpNum[0] + "_" + $i)`;				rename $lbs_extrude[0] ("RT_extrudeA_" + $grpNum[0] + "_" + $i);			}			select -cl;			for($i=1;$i<=$RT_Instances+1;$i++)			{				parent ("RT_extrudeA_" + $grpNum[0] + "_" + $i) ("RT_extrudeA_group_" + $grpNum[0]);			}
-
-			//-------------------			//create extrudeB group			//-------------------
-
-			if($singleCheck == 0)
-			{
-				float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;
-				float $instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-				int $Instances = `intSliderGrp -query -v rt_fldInstances`;					select -r ("RT_evoCurveA_" + $grpNum[0] + "_1") ;				$curveInst = `instance`;				rename $curveInst ("RT_evoCurveB_" + $grpNum[0] + "_1");
-		
-				parent ("RT_evoCurveB_" + $grpNum[0] + "_1") ("RT_curveB_group_" + $grpNum[0]);				select -r ("RT_evoCurveB_" + $grpNum[0] + "_1");				instance; scale -r $instScale $instScale $instScale; rotate -r 0 $instRot 0; for ($i=1; $i<$Instances; ++$i) instance -st;
-
-				for($i=1; $i<=$Instances+1; $i++)				{					$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum[0]) ("RT_evoCurveB_" + $grpNum[0] + "_" + $i)`;					rename $lbs_extrude[0] ("RT_extrudeB_" + $grpNum[0] + "_" + $i);
-
-
-					parent ("RT_extrudeB_" + $grpNum[0] + "_" + $i) ("RT_extrudeB_group_" + $grpNum[0]);
-							}
-
-				setAttr ("RT_curveB_group_" + $grpNum[0] + ".rx") 180;		
-			}
-
-			if($veCheck == 1)
-			{
-				rt_VE;
-			}
-
-			if($shaderCheck == 1 && $singleShader != 1)
-			{
-				rt_applyShader;
-			}
-			else if($shaderCheck == 1 && $singleShader == 1)
-			{
-				rt_useSingleShader;
-			}		}
-	}}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-//updates animation cycle
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc RT_animUpdate()
-{
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-	int $speed = `intSliderGrp -q -v rt_fldCycle`;
-
-	if($ed == 1 && $grpNum > 0)
-	{
-		CBdeleteConnection ("RT_rotateLoc_" + $grpNum + "_1.rz");
-
-		currentTime 1;		setAttr ("RT_rotateLoc_" + $grpNum + "_1.rz") 0;		setKeyframe ("RT_rotateLoc_" + $grpNum + "_1.rz");		currentTime $speed ;		setAttr ("RT_rotateLoc_" + $grpNum + "_1.rz") 360;		setKeyframe ("RT_rotateLoc_" + $grpNum + "_1.rz");		setInfinity -poi cycle ("RT_rotateLoc_" + $grpNum + "_1.rz");		currentTime 1;
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-//updates loops and rotation of torus
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc RT_toriUpdate()
-{
-	$ed = `radioButtonGrp -q -sl rt_editRadio`;
-	int $evoNumArray[] = `textScrollList -q -sii rt_textList`;
-	$grpNum = $evoNumArray[0];
-
-	$shaderCheck = `checkBox -q -v rt_thriveColor`;
-	$singleShader = `checkBox -q -v rt_singleShader`;
-
-	$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum)`;
-	if($veCheck == 1)
-	{
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_1");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_2");
-		delete ("RT_evoCurve_VE_group_" + $grpNum + "_3");
-		delete ("RT_VE_extrude_group_" + $grpNum);
-	}
-
-	if($ed == 1 && $grpNum > 0)
-	{
-	
-		$locXT = `xform -q -t ("RT_curveGroup_" + $grpNum)`;
-		$locXR = `xform -q -ro ("RT_curveGroup_" + $grpNum)`;
-		$locXS = `xform -q -s ("RT_curveGroup_" + $grpNum)`;
-		
-		select -r ("RT_locatorGroup_" + $grpNum) ("RT_curveGroup_" + $grpNum) ("RT_extrudeA_group_" + $grpNum);
-		if(`objExists ("RT_extrudeB_group_" + $grpNum)` == 1)
-		{
-			select -add ("RT_extrudeB_group_" + $grpNum);
-		}
-		doDelete;
-
-		float $tRad = `floatFieldGrp -q -v1 rt_torusSpecGrp`;
-		float $HR = `floatFieldGrp -q -v2 rt_torusSpecGrp`;
-		int $NumLoops = `intSliderGrp -q -v rt_fldLoops`;
-		float $CentRot = `floatSliderGrp -q -v rt_fldRot`;
-		int $speed = `intSliderGrp -q -v rt_fldCycle`;
-
-		$ed = `radioButtonGrp -q -sl rt_editRadio`;
-
-		float $i = (($NumLoops + 1) * 360 / $CentRot);
-		float $AxisRot = $NumLoops * 360/($i);
-		float $WRad = ($tRad*$HR) + $tRad;
-
-		print($i + " - " + $AxisRot + " - " + $WRad + "\n");	
-
-		$centerLoc = `spaceLocator -p 0 0 0`;		setAttr ($centerLoc[0] + ".localScaleX") .1;		setAttr ($centerLoc[0] + ".localScaleY") .1;		setAttr ($centerLoc[0] + ".localScaleZ") .1;		$rotateLoc = `spaceLocator -p 0 0 0`;		xform -t $tRad 0 0;		CenterPivot;		setAttr ($rotateLoc[0] + ".localScaleX") .1;		setAttr ($rotateLoc[0] + ".localScaleY") .1;		setAttr ($rotateLoc[0] + ".localScaleZ") .1;		$waveLoc = `spaceLocator -p 0 0 0`;		xform -t $WRad 0 0;		CenterPivot;		setAttr ($waveLoc[0] + ".localScaleX") .7;		setAttr ($waveLoc[0] + ".localScaleY") .7;		setAttr ($waveLoc[0] + ".localScaleZ") .7;		parent $waveLoc[0] $rotateLoc[0];		parent $rotateLoc[0] $centerLoc[0];		$locGroup = `group $centerLoc[0]`;
-
-		//----------------------------------------------------------------------		//		part 2		//		setup animation keyframes, and setDrivenKeys for other nodes		//----------------------------------------------------------------------		//----------------------------------------------------------------------		//	setup the initial keyframes for RotateLocator1		//----------------------------------------------------------------------			currentTime 1;		setAttr ($rotateLoc[0] + ".rotateZ") 0;		setKeyframe ($rotateLoc[0] + ".rz");		currentTime $speed ;		setAttr ($rotateLoc[0] + ".rotateZ") 360;		setKeyframe ($rotateLoc[0] + ".rz");		setInfinity -poi cycle ($rotateLoc[0] + ".rz");		currentTime 1;
-
-		//----------------------------------------------------------------------		//DUPLICATE LOCATORS AND ROTATE INTO STARTING POSITION		//----------------------------------------------------------------------		for($x=1;$x<$i;$x++)		{			select -r $centerLoc[0];			duplicate;			rotate 0 ($CentRot * $x) 0;			pickWalk -d down;			pickWalk -d right;			rotate -r 0 0 ($AxisRot * $x);		}
-
-		//----------------------------------------------------------------------		//RENAME LOCATORS AND GROUP		//CONNECT ROTATE LOCATORS .rotateZ		//----------------------------------------------------------------------		$groupArray = `listRelatives -c $locGroup`;		$groupSize = `size($groupArray)`;
-
-		print($groupSize + "\n");		for($e=0;$e<$groupSize;$e++)		{			select -r $groupArray[$e];			rename ("RT_centerLoc_" + $grpNum + "_" + ($e+1));			pickWalk -d down;			pickWalk -d right;			rename ("RT_rotateLoc_" + $grpNum + "_" + ($e+1));			pickWalk -d down;			pickWalk -d right;			rename ("RT_waveLoc_" + $grpNum + "_" + ($e+1));
-
-			//----------------------------------------------------------------------
-			//set driven keys for rotate and wave locators
-			//----------------------------------------------------------------------
-			if($e>0)			{				setAttr ("RT_rotateLoc_" + $grpNum + "_1.rotate") -type "double3" 0 0 0;				$CurrentRot = `getAttr ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz")` + 360;				setDrivenKeyframe -currentDriver ("RT_rotateLoc_" + $grpNum + "_1.rz") ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz");						setAttr ("RT_rotateLoc_" + $grpNum + "_1.rz") 360;				setAttr -k 0 ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz") $CurrentRot;				setDrivenKeyframe -currentDriver ("RT_rotateLoc_" + $grpNum + "_1.rz") ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".rz");				connectAttr ("RT_rotateLoc_" + $grpNum + "_1.tx") ("RT_rotateLoc_" + $grpNum + "_" + ($e+1) + ".tx");				connectAttr ("RT_waveLoc_" + $grpNum + "_1.tx") ("RT_waveLoc_" + $grpNum + "_" + ($e+1) + ".tx");			}
-
-		}
-	
-		rename $locGroup ("RT_locatorGroup_" + $grpNum);
-		select -cl;
-
-		parent ("RT_locatorGroup_" + $grpNum) RT_locatorGrp;
-
-		//----------------------------------------------------- curve creation --------------------------------------------------------
-
-		float $tRad = `floatFieldGrp -q -v1 rt_torusSpecGrp`;
-		float $HR = `floatFieldGrp -q -v2 rt_torusSpecGrp`;
-
-		float $RT_torusTransY = $tRad * $HR;
-		float $RT_instScale = `floatSliderGrp -q -v rt_fldInstScale`;
-		float $RT_instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-		float $RT_Radius = `floatSliderGrp -q -v rt_fldRadius`;
-		float $RT_Cycle = `intSliderGrp -q -v rt_fldCycle`;
-		int $RT_Instances = `intSliderGrp -query -v rt_fldInstances`;
-		int $RT_singleCheck = `checkBox -q -v rt_fldSingleCheck`;
-		float $instScale = `floatSliderGrp -query -v rt_fldInstScale`;		float $instRot = `floatSliderGrp -query -v rt_fldInstRotation`;
-		string  $allObjects[];		//----------------------------------------------------------------------		//		Create a NURBS curve with enough CVs  		//----------------------------------------------------------------------		$evoCurve = `curve -p 0 0 0` ;		$x = 1;		select -r ("RT_waveLoc_" + $grpNum + "_Shape*");		string  $obj;		$allObjects = `ls -sl`;
-		for ( $obj in $allObjects ) 		{			if ( `nodeType $obj` == "locator" ) 			{				float $tx[] = `getAttr $obj.lpx`;				float $ty[] = `getAttr $obj.lpy`;				float $tz[] = `getAttr $obj.lpz`;				curve -a -p  $tx[0] $ty[0] $tz[0] $evoCurve;			}			$x++;		}
-
-		//----------------------------------------------------------------------		//	create a cluster around the curve.cv and constrain to WaveLocators. 		//----------------------------------------------------------------------		select -r ("RT_waveLoc_" + $grpNum + "_*");		select -d ("RT_waveLoc_" + $grpNum + "_Shape*");		$x = 1;		$allObjects = `ls -sl`;		for ( $obj in $allObjects ) 		{			if ( `nodeType $obj` != "locator" ) 			{				select -cl;				string $nm = ("rt_C_" + $grpNum + "_" + $x);				cluster -n $nm ($evoCurve + ".cv[" + $x + "]");				$nm = $nm + "Handle";				pointConstraint -offset 0 0 0 -weight 1 $obj $nm;			}		$x++;		}
-
-		//----------------------------------------------------------------------		//	final CV handling		//----------------------------------------------------------------------		float $sz = `size $allObjects`;		string $nm = ("rt_C_" + $grpNum + "_" + $x);		cluster -n $nm ($evoCurve + ".cv[0]");		$nm = $nm + "Handle";		pointConstraint -offset 0 0 0 -weight 1 $obj $nm;			closeCurve -ch 1 -ps 0 -rpo 1 -bb 0.9 -bki 1 -p 0.1 $evoCurve;
-
-		//----------------------------------------------------------------------		//	parenting pass		//----------------------------------------------------------------------		select -r ("RT_waveLoc_" + $grpNum + "_*");		select -d ("RT_waveLoc_" + $grpNum + "_Shape*");		$x = 1;		$allObjects = `ls -sl`;		for ( $obj in $allObjects ) 		{			if ($x == 1)			{				string $nm = ("rt_C_" + $grpNum + "_" + $x + "Handle");				parent  $nm $obj;			}			$x++;			if ( `nodeType $obj` != "locator" ) 			{				string $nm = ("rt_C_" + $grpNum + "_" + $x + "Handle");				parent  $nm $obj;			}		}		rename $evoCurve ("RT_evoCurveA_" + $grpNum + "_1");
-
-		select -cl;
-		$curveNumGrp = `group -em`; 		xform -os -piv 0 0 0;
-
-		parent $curveNumGrp RT_curveGrp;
-		rename $curveNumGrp ("RT_curveGroup_" + $grpNum);
-		parent ("RT_evoCurveA_" + $grpNum + "_1") ("RT_curveGroup_" + $grpNum);
-
-		//------------------------------------------
-		//instance and scale RT_evoCurve
-		//------------------------------------------
-		setAttr ("RT_evoCurveA_" + $grpNum + "_1.translateY") $RT_torusTransY;		move -r 0 ($RT_torusTransY * -1) 0 ("RT_evoCurveA_" + $grpNum + "_1.scalePivot") ("RT_evoCurveA_" + $grpNum + "_1.rotatePivot");		select -r ("RT_evoCurveA_" + $grpNum + "_1");		instance; scale -r $RT_instScale $RT_instScale $RT_instScale; rotate -r 0 $RT_instRot 0; for ($i=1; $i<$RT_Instances; ++$i) instance -st;		playbackOptions -e -min 1.00 -max $RT_Cycle;
-
-		//-------------------		//create extrudeA group		//-------------------
-		for($i=1; $i<=$RT_Instances+1; $i++)		{			$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum) ("RT_evoCurveA_" + $grpNum + "_" + $i)`;			rename $lbs_extrude[0] ("RT_extrudeA_" + $grpNum + "_" + $i);		}		select -cl;		for($i=1;$i<=$RT_Instances+1;$i++)		{			select -add ("RT_evoCurveA_" + $grpNum + "_" + $i);		}		group; xform -os -piv 0 0 0;		rename "group1" ("RT_curveA_group_" + $grpNum);		select -cl;			for($i=1;$i<=$RT_Instances+1;$i++)		{			select -add ("RT_extrudeA_" + $grpNum + "_" + $i);		}		$extrudeGrp = `group`; 		xform -os -piv 0 0 0;		rename $extrudeGrp ("RT_extrudeA_group_" + $grpNum);
-
-		parent ("RT_extrudeA_group_" + $grpNum) RT_extrudeA_group;
-
-		if( $RT_singleCheck == 0 )		{			int $Instances = `intSliderGrp -query -v rt_fldInstances`;			select -r ("RT_evoCurveA_" + $grpNum + "_1") ;			$curveInst = `instance`;			rename $curveInst ("RT_evoCurveB_" + $grpNum + "_1");
-		
-			select -r ("RT_evoCurveB_" + $grpNum + "_1");
-			$grp1 = `group`;
-			xform -os -piv 0 0 0;
-
-			rename $grp1 ("RT_curveB_group_" + $grpNum);
-			parent ("RT_curveB_group_" + $grpNum) ("RT_curveGroup_" + $grpNum);
-					select -r ("RT_evoCurveB_" + $grpNum + "_1");			instance; scale -r $instScale $instScale $instScale; rotate -r 0 $instRot 0; for ($i=1; $i<$Instances; ++$i) instance -st;
-
-			//-------------------			//create extrudeB group			//-------------------			for($i=1; $i<=$Instances+1; $i++)			{				$lbs_extrude = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum) ("RT_evoCurveB_" + $grpNum + "_" + $i)`;				rename $lbs_extrude[0] ("RT_extrudeB_" + $grpNum + "_" + $i);
-
-				if(`objExists RT_extrudeB_group` == 0)
-				{
-					$extB = `group -em`;
-					xform -os -piv 0 0 0;
-
-					$extB_1 = `group -em`;
-					xform -os -piv 0 0 0;
-
-					parent $extB_1 $extB;
-					parent $extB RT_extrude_group;
-					rename $extB RT_extrudeB_group;
-					rename $extB_1 ("RT_extrudeB_group_" + $grpNum);
-			
-					parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-				}
-				else if(`objExists ("RT_extrudeB_group_" + $grpNum)` == 0)
-				{
-					$extB_1 = `group -em`;
-					xform -os -piv 0 0 0;
-					rename $extB_1 ("RT_extrudeB_group_" + $grpNum);
-					parent ("RT_extrudeB_group_" + $grpNum) RT_extrudeB_group;
-					parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-				}
-				else
-				{
-					parent ("RT_extrudeB_" + $grpNum + "_" + $i) ("RT_extrudeB_group_" + $grpNum);
-				}			}
-
-			setAttr ("RT_curveB_group_" + $grpNum + ".rx") 180;	
-		}
-		RT_reorder();
-
-		xform -t $locXT[0] $locXT[1] $locXT[2] ("RT_curveGroup_" + $grpNum);
-		xform -ro $locXR[0] $locXR[1] $locXR[2] ("RT_curveGroup_" + $grpNum);
-		xform -s $locXS[0] $locXS[1] $locXS[2] ("RT_curveGroup_" + $grpNum);
-	}
-
-	if($veCheck == 1)
-	{
-		rt_VE;
-	}
-
-	if($shaderCheck == 1 && $singleShader != 1)
-	{
-		rt_applyShader;
-	}
-	if($shaderCheck == 1 && $singleShader == 1)
-	{
-		rt_useSingleShader;
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-//Reorder curve and extrude groups to be in sequential numeric order
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc RT_reorder()
-{
-	$locA = `listRelatives -c RT_curveGrp`;	$locSize = `size($locA)`;
-
-	for($i=1;$i<=$locSize;$i++)	{		while( $locA[ ($i-1) ] != ("RT_locatorGroup_" + $i))		{			reorder -relative -1 ("RT_locatorGroup_" + $i);			$locA = `listRelatives -c RT_locatorGrp`;		}	}
-
-	$curveA = `listRelatives -c RT_curveGrp`;	$curveSize = `size($curveA)`;
-
-	for($i=1;$i<=$curveSize;$i++)	{		while( $curveA[ ($i-1) ] != ("RT_curveGroup_" + $i))		{			reorder -relative -1 ("RT_curveGroup_" + $i);			$curveA = `listRelatives -c RT_curveGrp`;		}	}
-
-	$extrudeA = `listRelatives -c RT_extrudeA_group`;	$extASize = `size($extrudeA)`;
-
-	for($i=1;$i<=$extASize;$i++)	{		while( $extrudeA[ ($i-1) ] != ("RT_extrudeA_group_" + $i))		{			reorder -relative -1 ("RT_extrudeA_group_" + $i);			$extrudeA = `listRelatives -c RT_extrudeA_group`;		}	}
-
-	if(`objExists RT_extrudeB_group` == 1)
-	{
-		$extrudeB = `listRelatives -c RT_extrudeB_group`;		$extBSize = `size($extrudeB)`;
-
-		for($i=1;$i<=$extBSize;$i++)		{			while( $extrudeB[ ($i-1) ] != ("RT_extrudeB_group_" + $i))			{				reorder -relative -1 ("RT_extrudeB_group_" + $i);				$extrudeB = `listRelatives -c RT_extrudeB_group`;			}		}
-	}
-}
-
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_updateTextList()
-{
-	if(`objExists RT_evoGrp` == 1)	{
-		$locArray = `listRelatives -c RT_locatorGrp`;		$locNum = `size($locArray)`;
-
-		textScrollList -e -ra rt_textList;
-
-		for($i=1;$i<=$locNum;$i++)		{
-			textScrollList -e -append ("  -----            " + "Group " + $i + "             -----") rt_textList;
-		}
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_editTextList()
-{
-	int $grpSel[] = `textScrollList -q -sii rt_textList`;
-
-	if($grpSel[0] != 0)
-	{
-		radioButtonGrp -e -sl 1 rt_editRadio;
-		button -e -en 0 evoCurveButtonRT;
-		rt_evoEdit;
-		select -r ("RT_curveGroup_" + $grpSel[0]);
-	}
-	else
-	{
-		radioButtonGrp -e -sl 2 rt_editRadio;
-		button -e -en 1 evoCurveButtonRT;
-
-		checkBox -e -v 0 rt_VECheck;
-
-		checkBox -e -v 0 rt_thriveColor;
-		checkBox -e -v 0 rt_invertColor;
-		checkBox -e -v 0 rt_shaderGlow;
-		checkBox -e -v 0 rt_singleShader;	
-		checkBox -e -en 1 rt_invertColor;
-		intSliderGrp -e -v 3 rt_fldTessU;
-		intSliderGrp -e -v 3 rt_fldTessV;
-		select -cl;
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_VE()
-{
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	int $veCheck = `checkBox -q -v rt_VECheck`;
-	int $shaderCheck = `checkBox -q -v rt_thriveColor`;
-	int $singleShader = `checkBox -q -v rt_singleShader`;
-
-	checkBox -e -v 0 rt_fldSingleCheck;
-	checkBox -e -v 0 rt_invertStackCheck;
-	checkBox -e -v 0 rt_rotateEvoluteCheck;
-
-	singleToriCheck;
-	lbs_transRot;
-
-	if($grpNum[0]>0 && `objExists ("RT_evoCurve_VE_group_" + $grpNum[0] + " _1")` == 0 && $veCheck == 1)
-	{
-		checkBox -e -en 0 rt_fldSingleCheck;
-		checkBox -e -en 0 rt_invertStackCheck;
-
-		$curveListA = `listRelatives -c ("RT_curveA_group_" + $grpNum[0])`;		$curveListB = `listRelatives -c ("RT_curveB_group_" + $grpNum[0])`;		$curveNum = `size($curveListA)`;
-
-		string $VEgroup[] = {};
-		for($i=1;$i<=3;$i++)		{
-			string $curveA[] = {};
-			string $curveB[] = {};
-			for($e=0;$e<$curveNum;$e++)			{				select -r $curveListA[$e];				$inst = `instance`;				rename $inst ("RT_evoCurveA_VE_" + $grpNum[0] + "_" + $i + "_" + ($e+1));				$curveA[$e] = ("RT_evoCurveA_VE_" + $grpNum[0] + "_" + $i + "_" + ($e+1));
-				select -r $curveListB[$e];				$inst = `instance`;				rename $inst ("RT_evoCurveB_VE_" + $grpNum[0] + "_" + $i + "_" + ($e+1));
-				$curveB[$e] = ("RT_evoCurveB_VE_" + $grpNum[0] + "_" + $i + "_" + ($e+1));			}
-			
-			string $extA[] = {};
-			string $extB[] = {};
-
-			for($e=0;$e<$curveNum;$e++)
-			{
-				$extrudeA = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum[0]) $curveA[$e]`;
-				rename $extrudeA[0] ("RT_VE_extrudeA_" + $grpNum[0] + "_" + $i + "_" + ($e+1));
-				$extA[$e] = ("RT_VE_extrudeA_" + $grpNum[0] + "_" + $i + "_" + ($e+1));
-
-				$extrudeB = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 ("RT_circle_" + $grpNum[0]) $curveB[$e]`;
-				rename $extrudeB[0] ("RT_VE_extrudeB_" + $grpNum[0] + "_" + $i + "_" + ($e+1));
-				$extB[$e] = ("RT_VE_extrudeB_" + $grpNum[0] + "_" + $i + "_" + ($e+1));
-			}
-						select -r $curveA;			$grpA = `group`;			xform -os -piv 0 0 0;			rename $grpA ("RT_evoCurveA_VE_group" + $grpNum[0] + "_" + $i);			select -r $curveB;			$grpB = `group`;			xform -os -piv 0 0 0;			rename $grpB ("RT_evoCurveB_VE_group" + $grpNum[0] + "_" + $i);
-			
-			select -r $extA;
-			$extGrpA = `group`;
-			xform -os -piv 0 0 0;
-			rename $extGrpA ("RT_VE_extrudeA_group_" + $grpNum[0] + "_" + $i);
-
-			select -r $extB;
-			$extGrpB = `group`;
-			xform -os -piv 0 0 0;
-			rename $extGrpB ("RT_VE_extrudeB_group_" + $grpNum[0] + "_" + $i);
-			$curve_ve_grp = `group ("RT_evoCurveA_VE_group" + $grpNum[0] + "_" + $i) ("RT_evoCurveB_VE_group" + $grpNum[0] + "_" + $i)`;
-			xform -os -piv 0 0 0;			rename $curve_ve_grp ("RT_evoCurve_VE_group_" + $grpNum[0] + "_" + $i);
-			
-			$ext_ve_grp = `group ("RT_VE_extrudeA_group_" + $grpNum[0] + "_" + $i) ("RT_VE_extrudeB_group_" + $grpNum[0] + "_" + $i)`;
-			xform -os -piv 0 0 0;
-			rename $ext_ve_grp ("RT_VE_extrude_group_" + $grpNum[0] + "_" + $i);
-			setAttr ("RT_evoCurveA_VE_group" + $grpNum[0] + "_" + $i + ".rz") 55.07;
-			setAttr ("RT_evoCurveB_VE_group" + $grpNum[0] + "_" + $i + ".rz") 55.07;			setAttr ("RT_evoCurve_VE_group_" + $grpNum[0] + "_" + $i + ".ry") (120*$i);		}
-		select -r ("RT_VE_extrude_group_" + $grpNum[0] + "_1");
-		select -add ("RT_VE_extrude_group_" + $grpNum[0] + "_2");
-		select -add ("RT_VE_extrude_group_" + $grpNum[0] + "_3");
-		$mainVEGrp = `group`;
-		xform -os -piv 0 0 0;
-		rename $mainVEGrp ("RT_VE_extrude_group_" + $grpNum[0]);	
-		parent ("RT_VE_extrude_group_" + $grpNum[0]) RT_extrude_group;	
-	}
-	else if(`objExists ("RT_evoCurve_VE_group_" + $grpNum[0] +" _1")` == 1 && $veCheck == 0)
-	{
-		checkBox -e -en 1 rt_fldSingleCheck;
-		checkBox -e -en 1 rt_invertStackCheck;
-	
-		delete ("RT_VE_extrude_group_" + $grpNum[0]);
-		for($i=1;$i<=3;$i++)
-		{	
-			delete ("RT_evoCurve_VE_group_" + $grpNum[0] + "_" + $i);
-		}
-	}
-
-	if($shaderCheck == 1 && $singleShader != 1)
-	{
-		rt_applyShader;
-	}
-	if($shaderCheck == 1 && $singleShader == 1)
-	{
-		rt_useSingleShader;
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_thriveShader()
-{
-	$shaderCheck = `checkBox -q -v rt_thriveColor`;
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	$colorCheck = `checkBox -q -v rt_invertColor`;
-	$glowCheck = `checkBox -q -v rt_shaderGlow`;
-	$singleCheck = `checkBox -q -v rt_singleShader`;
-
-	if($shaderCheck == 1)
-	{
-		if(`objExists rt_colorRamp` == 0)
-		{
-			$lbs_ramp = `shadingNode -asTexture ramp`;			$lbs_2d = `shadingNode -asUtility place2dTexture`;			connectAttr ($lbs_2d + ".outUV") ($lbs_ramp + ".uv");			connectAttr ($lbs_2d + ".outUvFilterSize") ($lbs_ramp + ".uvFilterSize");
-	
-			setAttr ($lbs_ramp + ".interpolation") 4;			setAttr ($lbs_ramp + ".colorEntryList[5].position") 0.415;			setAttr ($lbs_ramp + ".colorEntryList[5].color") -type double3 0.325864 0.616 0.384665;			setAttr ($lbs_ramp + ".colorEntryList[6].position") 0.498;			setAttr ($lbs_ramp + ".colorEntryList[6].color") -type double3 0.258876 0.612 0.604172;			setAttr ($lbs_ramp + ".colorEntryList[7].position") 0.581;			setAttr ($lbs_ramp + ".colorEntryList[7].color") -type double3 0.00367199 0.400099 0.612;			setAttr ($lbs_ramp + ".colorEntryList[4].position") 0.332;			setAttr ($lbs_ramp + ".colorEntryList[4].color") -type double3 0.180305 0.349 0.039088;			setAttr ($lbs_ramp + ".colorEntryList[3].position") 0.249;			setAttr ($lbs_ramp + ".colorEntryList[3].color") -type double3 0.266437 0.525 0.00787499;			setAttr ($lbs_ramp + ".colorEntryList[2].position") 0.166;			setAttr ($lbs_ramp + ".colorEntryList[2].color") -type double3 0.678 0.599619 0.156618 ;			setAttr ($lbs_ramp + ".colorEntryList[1].position") 0.083;			setAttr ($lbs_ramp + ".colorEntryList[1].color") -type double3 0.671 0.498395 0.086559;			setAttr ($lbs_ramp + ".colorEntryList[8].position") 0.664;			setAttr ($lbs_ramp + ".colorEntryList[8].color") -type double3 0.08624 0.20778 0.392;			setAttr ($lbs_ramp + ".colorEntryList[9].position") 0.747;			setAttr ($lbs_ramp + ".colorEntryList[9].color") -type double3 0.329458 0.20017 0.541;			setAttr ($lbs_ramp + ".colorEntryList[10].position") 0.83;			setAttr ($lbs_ramp + ".colorEntryList[10].color") -type double3 0.509849 0.32528 0.608;			setAttr ($lbs_ramp + ".colorEntryList[11].position") 0.913;			setAttr ($lbs_ramp + ".colorEntryList[11].color") -type double3 0.639 0.348894 0.439069;			setAttr ($lbs_ramp + ".colorEntryList[0].position") 0.0;			setAttr ($lbs_ramp + ".colorEntryList[0].color") -type double3 0.529 0.1058 0.195942;			setAttr ($lbs_ramp + ".colorEntryList[12].position") 1;			setAttr ($lbs_ramp + ".colorEntryList[12].color") -type double3 0.529 0.1058 0.195942;
-	
-			rename $lbs_ramp "rt_colorRamp";
-			rename $lbs_2d "rt_colorRamp_2d";
-
-			setAttr "shaderGlow1.autoExposure" 0;
-		}
-	
-		for($i=0;$i<12;$i++)
-		{
-			if(`objExists ("rt_shader_noGlow_" + ($i+1))` == 0 && $glowCheck == 0)
-			{
-				$rt_lamb = `shadingNode -asShader lambert`;
-				$rt_sg = `sets -renderable true -empty -name ("rt_shader_noGlow_" + ($i+1) + "_SG")`;
-				connectAttr -f ($rt_lamb + ".outColor") ("rt_shader_noGlow_" + ($i+1) + "_SG.surfaceShader");
-
-				connectAttr ("rt_colorRamp.colorEntryList[" + $i + "].color") ($rt_lamb + ".color");
-				setAttr ($rt_lamb + ".glowIntensity") 0.00;
-				setAttr ($rt_lamb + ".hideSource") 0;
-				rename $rt_lamb ("rt_shader_noGlow_" + ($i+1));
-			}
-			if(`objExists ("rt_shader_glow_" + ($i+1))` == 0 && $glowCheck == 1)
-			{
-				$rt_lamb = `shadingNode -asShader lambert`;
-				$rt_sg = `sets -renderable true -empty -name ("rt_shader_glow_" + ($i+1) + "_SG")`;
-				connectAttr -f ($rt_lamb + ".outColor") ("rt_shader_glow_" + ($i+1) + "_SG.surfaceShader");
-
-				connectAttr ("rt_colorRamp.colorEntryList[" + $i + "].color") ($rt_lamb + ".color");
-				setAttr ($rt_lamb + ".glowIntensity") 0.05;
-				setAttr ($rt_lamb + ".hideSource") 1;
-				rename $rt_lamb ("rt_shader_glow_" + ($i+1));
-			}
-		}
-		
-		if($singleCheck == 0)
-		{
-			rt_applyShader;
-		}
-	}
-	else
-	{
-		rt_unassignShader;
-		checkBox -e -v 0 rt_singleShader;
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_unassignShader()
-{
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	
-	if($grpNum[0] != 0)
-	{
-		$aList = `listRelatives -c ("RT_extrudeA_group_" + $grpNum[0])`;		$aListSize = `size($aList)`;		for($i=1;$i<=$aListSize;$i++)		{			select -add ("RT_extrudeA_" + $grpNum[0] + "_" + $i); 			if(`objExists ("RT_extrudeB_group_" + $grpNum[0])` == 1)			{				select -add ("RT_extrudeB_" + $grpNum[0] + "_" + $i); 			}			if(`objExists ("RT_VE_extrude_group_" + $grpNum[0])` == 1)			{				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_1_" + $i);				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_1_" + $i);				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_2_" + $i);				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_2_" + $i);				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_3_" + $i);				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_3_" + $i);			}			hyperShade -assign lambert1;		}
-		select -cl;
-		rt_deleteShader;
-
-		checkBox -e -v 0 rt_shaderGlow;
-	}
-}
-
-
-global proc rt_checkShader()
-{
-	$shaderCheck = `checkBox -q -v rt_thriveColor`;
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	$colorCheck = `checkBox -q -v rt_invertColor`;
-
-	if($shaderCheck == 0 && $grpNum[0] != 0)
-	{
-		checkBox -e -v 1 rt_thriveColor;
-		rt_thriveShader;
-	}
-	else
-	{
-		rt_applyShader;
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_applyShader()
-{
-	$shaderCheck = `checkBox -q -v rt_thriveColor`;
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	$colorCheck = `checkBox -q -v rt_invertColor`;
-	$glowCheck = `checkBox -q -v rt_shaderGlow`;
-	print("\n" + "thrive colors: " + $shaderCheck + " group selected: " + $grpNum[0] + " invert color order: " + $colorCheck + "\n");
-
-	$veCheck = `objExists ("RT_VE_extrude_group_" + $grpNum[0])`;
-
-	if($grpNum[0] != 0)
-	{
-		$extList = `listRelatives -c ("RT_extrudeA_group_" + $grpNum[0])`;
-		$numOfExt = `size($extList)`;
-		print("number of extrudes: " + $numOfExt + "\n");
-
-		$selSize = $numOfExt/12;
-		if($selSize < 1)
-		{
-			$selSize = 1;
-		}
-	
-		$shaderNum = $numOfExt;
-		if($shaderNum > 12)
-		{
-			$shaderNum = 12;
-		}
-
-		$extraExt = $numOfExt%12;
-
-		int $shaderArray[] = {};
-
-		for($i=1;$i<=$shaderNum;$i++)
-		{
-			for($e=1;$e<=$selSize;$e++)
-			{	
-				$shaderArray[ size($shaderArray) ] = $i;
-				print("shader added to array: " + $i + "\n");
-			}
-		}
-
-		if($extraExt != 0 && $numOfExt > 12)
-		{
-			print("extrudes not included: " + $extraExt + "\n");
-			if($colorCheck == 1)
-			{
-				for($i=($shaderNum+1);$i<=($shaderNum+$extraExt);$i++)
-				{
-					$shaderArray[ size($shaderArray) ] = 1;
-				}
-				$tempArray = $shaderArray;
-				clear ($shaderArray);
-
-				for($i=0;$i<size($tempArray);$i++)
-				{
-					if($i<$extraExt)
-					{
-						$shaderArray[$i] = $tempArray[$i+$shaderNum];
-						print("if " + $i + "\n");
-					}	
-					else
-					{
-						$shaderArray[$i] = $tempArray[$i-$extraExt];
-						print("else " + $i + "\n");
-					}
-				}
-			}
-			else
-			{
-				for($i=($shaderNum+1);$i<=($shaderNum+$extraExt);$i++)
-				{
-					$shaderArray[ size($shaderArray) ] = 12;
-		
-				}
-			}
-			for($i=0;$i<size($shaderArray);$i++)
-			{
-				print($i + " shader: " + $shaderArray[$i] + "\n");
-			}
-		}
-
-
-		$shaderArraySize = `size($shaderArray)`;
-		print("number of shaders used: " + $shaderArraySize + "\n");
-
-		for($i=1;$i<=$shaderArraySize;$i++)
-		{
-			select -cl;	
-			select -r ("RT_extrudeA_" + $grpNum[0] + "_" + $i);
-			if(`objExists ("RT_extrudeB_group_" + $grpNum[0])` == 1)
-			{
-				select -add ("RT_extrudeB_" + $grpNum[0] + "_" + $i);
-			}
-			if($veCheck == 1)
-			{
-				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_1_" + $i);
-				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_1_" + $i);
-				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_2_" + $i);
-				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_2_" + $i);
-				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_3_" + $i);
-				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_3_" + $i);
-			}
-		
-			if($colorCheck == 1)
-			{
-				if($glowCheck == 0)
-				{
-					sets -e -forceElement ("rt_shader_noGlow_" + $shaderArray[ $shaderArraySize - $i ] + "_SG");
-				}
-				else
-				{
-					sets -e -forceElement ("rt_shader_glow_" + $shaderArray[ $shaderArraySize - $i ] + "_SG");
-				}
-				print("RT_extrudeB_group_" + $grpNum[0] + "_" + $i + " - shader " + $shaderArray[$shaderArraySize-$i] + "\n");
-			}
-			else
-			{
-				if($glowCheck == 0)
-				{
-					sets -e -forceElement ("rt_shader_noGlow_" + $shaderArray[ $i-1 ] + "_SG");
-				}
-				else
-				{
-					sets -e -forceElement ("rt_shader_glow_" + $shaderArray[ $i-1 ] + "_SG");
-				}
-				print("RT_extrudeB_group_" + $grpNum[0] + "_" + $i + " - shader " + $shaderArray[$i-1] + "\n");
-			}
-		}
-		select -cl;
-	}	
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_checkGlow()
-{
-	$shaderCheck = `checkBox -q -v rt_thriveColor`;
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	$singleCheck = `checkBox -q -v rt_singleShader`;
-	$glowCheck = `checkBox -q -v rt_shaderGlow`;
-
-	if($grpNum[0] != 0 && $shaderCheck ==1)
-	{
-		if($glowCheck == 0 && `objExists rt_shader_noGlow_1` == 1 && $singleCheck == 0)
-		{
-			rt_applyShader;
-		}
-		if($glowCheck == 1 && `objExists rt_shader_glow_1` == 1 && $singleCheck == 0)
-		{
-			rt_applyShader;
-		}
-		if(`objExists rt_shader_single` == 1 && $singleCheck == 1)
-		{
-			if($glowCheck == 1)
-			{
-				setAttr "rt_shader_single.glowIntensity" 0.05;
-				setAttr "rt_shader_single.hideSource" 1;
-			}
-			else
-			{
-				setAttr "rt_shader_single.glowIntensity" 0;
-				setAttr "rt_shader_single.hideSource" 0;
-			}
-		}
-		else
-		{
-			rt_thriveShader;
-		}
-		rt_deleteShader;
-	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_deleteShader()
-{
-	int $glowShader = `objExists rt_shader_glow_1`;	int $noGlowShader = `objExists rt_shader_noGlow_1`;	if($glowShader == 1)	{		select -r "rt_shader_glow_1";		hyperShade -objects "";		$test1 = `ls -sl`;		select -r "rt_shader_glow_12";		hyperShade -objects "";		$test12 = `ls -sl`;
-		if(`size($test1)` == 0 && `size($test12)` == 0)		{			for($i=1;$i<=12;$i++)			{				delete ("rt_shader_glow_" + $i);
-				delete ("rt_shader_glow_" + $i + "_SG");			}		}	} 	if($noGlowShader == 1)	{		select -r "rt_shader_noGlow_1";		hyperShade -objects "";		$test1 = `ls -sl`;		select -r "rt_shader_noGlow_12";		hyperShade -objects "";		$test12 = `ls -sl`;		if(`size($test1)` == 0 && `size($test12)` == 0)		{			for($i=1;$i<=12;$i++)			{				delete ("rt_shader_noGlow_" + $i);
-				delete ("rt_shader_noGlow_" + $i + "_SG");			}		}	}
-}
-
-//-------------------------------------------------------------------------------------------------------------------------------------
-
-global proc rt_useSingleShader()
-{
-	int $grpNum[] = `textScrollList -q -sii rt_textList`;
-	$singleS = `checkBox -q -v rt_singleShader`;
-	$glow = `checkBox -q -v rt_shaderGlow`;
-	
-	if($singleS == 1 && $grpNum[0] != 0)
-	{
-		checkBox -e -v 1 rt_thriveColor;
-		checkBox -e -en 0 rt_invertColor;
-		if(`objExists rt_ramp` == 0)
-		{
-			rt_thriveShader;
-		}
-		if(`objExists rt_shader_single` == 0)
-		{
-			checkBox -e -v 0 rt_invertColor;
-			rt_unassignShader;
-
-			$rt_lamb = `shadingNode -asShader lambert`;
-			$rt_sg = `sets -renderable true -empty -name ("rt_shader_single_SG")`;
-			connectAttr -f ($rt_lamb + ".outColor") ("rt_shader_single_SG.surfaceShader");
-
-			connectAttr "rt_colorRamp.outColor" ($rt_lamb + ".color");
-			rename $rt_lamb "rt_shader_single";
-		}
-		else
-		{
-			checkBox -e -v 0 rt_invertColor;
-			rt_unassignShader;
-		}
-
-		if($glow == 1)
-		{
-			setAttr "rt_shader_single.glowIntensity" 0.05;
-			setAttr "rt_shader_single.hideSource" 1;
-			checkBox -e -v 1 rt_shaderGlow;
-		}
-		else
-		{
-			setAttr "rt_shader_single.glowIntensity" 0;
-			setAttr "rt_shader_single.hideSource" 0;	
-		}
-
-		$extList = `listRelatives -c ("RT_extrudeA_group_" + $grpNum[0])`;
-		$extNum = `size($extList)`;
-		select -cl;
-
-		for($i=1;$i<=$extNum;$i++)
-		{
-			select -add ("RT_extrudeA_" + $grpNum[0] + "_" + $i);
-			if(`objExists ("RT_extrudeB_group_" + $grpNum[0])` == 1)
-			{
-				select -add ("RT_extrudeB_" + $grpNum[0] + "_" + $i);
-			}
-			if(`objExists ("RT_VE_extrude_group_" + $grpNum[0])` == 1)
-			{
-				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_1_" + $i);
-				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_1_" + $i);
-				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_2_" + $i);
-				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_2_" + $i);
-				select -add ("RT_VE_extrudeA_" + $grpNum[0] + "_3_" + $i);
-				select -add ("RT_VE_extrudeB_" + $grpNum[0] + "_3_" + $i);
-			}
-		}
-		sets -e -forceElement rt_shader_single_SG;
-
-		select -cl;
-	}
-	else if($grpNum[0] != 0)
-	{
-		rt_unassignShader;
-		checkBox -e -v 1 rt_thriveColor;
-		checkBox -e -v $glow rt_shaderGlow;
-		checkBox -e -en 1 rt_invertColor;
-		rt_thriveShader;
-	}
-	
-} 

@@ -1,726 +1,0 @@
-if(`window -ex miniKitWin`) deleteUI miniKitWin;
-
-$miniKitWindow = `window
-	-title "liquidbuddha.studios - miniKit"
-	-s 1
-	-w 10
-	-h 10
-	-rtf 1
-	miniKitWin`;
-
-$mini_Form = `formLayout
-	-nd 100
-	miniForm`;
-
-
-$evo_text = `text
-	-l "Evolute Tool"
-	-fn "boldLabelFont"
-	evoText`;
-
-$evo_radius = `floatFieldGrp
-	-l "Radius: "
-	-v1 10.0
-	-cw2 75 35
-	evoRadius`;
-
-$evo_HR = `floatFieldGrp
-	-l "Height Ratio: "
-	-v1 .9
-	-cw2 75 35
-	evoHR`;
-
-$evo_loops = `intFieldGrp
-	-l "Loops: "
-	-v1 2
-	-cw2 75 60
-	evoLoops`;
-
-$evo_rot = `floatFieldGrp
-	-l "Rotation: "
-	-v1 10
-	-cw2 75 35
-	evoRot`;
-
-$evo_cycle = `intFieldGrp
-	-l "Anim. Cycle: "
-	-v1 100
-	-cw2 75 60
-	evoCycle`;
-
-$evo_sphereCheck = `checkBoxGrp
-	-l "Spheres: "
-	evoSphereCheck`;
-
-$evo_sphereRadius = `floatFieldGrp
-	-l "Sphere Radius: "
-	-v1 1.0
-	-cw2 85 35
-	evoSphereRadius`;
-
-$evo_create = `button
-	-h 25
-	-w 95
-	-l "Create Evolute"
-	-c "CallEvos"
-	evoCreate`;
-
-$evo_sep = `separator
-	-height 260
-	-hr 0
-	evoSep`;
-
-//-----------------------------------------------------------------
-
-$phi_text = `text
-	-l "Phi Tool"
-	-fn "boldLabelFont"
-	phiText`;
-	
-$phi_start = `floatFieldGrp
-	-l "Start Node: "
-	-cw2 75 60
-	phiStart`;
-
-$phi_pivot = `floatFieldGrp
-	-l "Pivot Node: "
-	-cw2 75 60
-	phiPivot`;
-
-$phi_depth = `intFieldGrp
-	-l "Curve Depth: "
-	-v1 14
-	-cw2 75 60
-	phiDepth`;
-
-$phi_curveNum = `intFieldGrp
-	-l "Curve Num: "
-	-v1 12
-	-cw2 75 60
-	phiCurveNum`;
-
-$phi_curveType = `radioButtonGrp
-	-nrb 2
-	-labelArray2 "Single Curve" "Matrix"
-	-sl 2
-	-cw2 90 60
-	phiCurveType`;
-
-$phi_curveDim = `radioButtonGrp
-	-nrb 2
-	-labelArray2 "Flat Curve" "Vortex"
-	-sl 2
-	-cw2 90 60
-	phiCurveDim`;
-
-$phi_matrix = `radioButtonGrp
-	-nrb 2
-	-labelArray2 "Half Matrix" "Full"
-	-cw2 90 60
-	-sl 2
-	phiMatrix`;
-
-$phi_create = `button
-	-h 25
-	-w 95
-	-l "Create Phi"
-	-c "phi_createOptions"
-	phiCreate`;
-
-$phi_sep = `separator
-	-height 260
-	-hr 0
-	phiSep`;
-
-//-----------------------------------------------------------------
-
-$rodin_text = `text
-	-l "Rodin Tool"
-	-fn "boldLabelFont"
-	rodinText`;
-
-$rodin_rotate = `floatFieldGrp
-	-l "Loc Rotate: "
-	-v1 0
-	-cw2 75 60
-	rodinRotate`;
-
-$rodin_radius = `floatFieldGrp
-	-l "Radius: "
-	-v1 10
-	-cw2 75 60
-	rodinRadius`;
-
-$rodin_HR = `floatFieldGrp
-	-l "Height Ratio: "
-	-v1 .2
-	-cw2 75 60
-	rodinHR`;
-
-$rodin_create = `button
-	-h 25
-	-w 95
-	-l "Create Rodin"
-	-c "rodin_createOptions"
-	rodinCreate`;
-
-formLayout -edit
-
-	-attachForm $evo_text "top" 15
-	-attachForm $evo_text "left" 65
-	-attachNone $evo_text "bottom"
-	-attachNone $evo_text "right"
-
-	-attachControl $evo_radius "top" 15 $evo_text
-	-attachForm $evo_radius "left" 25
-	-attachNone $evo_radius "bottom"
-	-attachNone $evo_radius "right"
-
-	-attachControl $evo_HR "top" 3 $evo_radius
-	-attachForm $evo_HR "left" 25
-	-attachNone $evo_HR "bottom"
-	-attachNone $evo_HR "right"
-
-	-attachControl $evo_loops "top" 3 $evo_HR
-	-attachForm $evo_loops "left" 25
-	-attachNone $evo_loops "bottom"
-	-attachNone $evo_loops "right"
-
-	-attachControl $evo_rot "top" 3 $evo_loops
-	-attachForm $evo_rot "left" 25
-	-attachNone $evo_rot "bottom"
-	-attachNone $evo_rot "right"
-
-	-attachControl $evo_cycle "top" 3 $evo_rot
-	-attachForm $evo_cycle "left" 25
-	-attachNone $evo_cycle "bottom"
-	-attachNone $evo_cycle "right"
-
-	-attachControl $evo_sphereCheck "top" 3 $evo_cycle
-	-attachForm $evo_sphereCheck "left" -40
-	-attachNone $evo_sphereCheck "bottom"
-	-attachNone $evo_sphereCheck "right"
-
-	-attachControl $evo_sphereRadius "top" 3 $evo_sphereCheck
-	-attachForm $evo_sphereRadius "left" 15
-	-attachNone $evo_sphereRadius "bottom"
-	-attachNone $evo_sphereRadius "right"
-
-	-attachControl $evo_create "top" 20 $evo_sphereRadius
-	-attachForm $evo_create "left" 55
-	-attachNone $evo_create "bottom"
-	-attachNone $evo_create "right"
-
-	-attachForm $evo_sep "top" 10
-	-attachControl $evo_sep "left" 30 $evo_radius
-	-attachNone $evo_sep "bottom"
-	-attachNone $evo_sep "right"
-
-//-----------------------------------------------------------------
-
-	-attachForm $phi_text "top" 15
-	-attachControl $phi_text "left" 55 $evo_sep
-	-attachNone $phi_text "bottom"
-	-attachNone $phi_text "right"
-
-	-attachControl $phi_start "top" 15 $phi_text
-	-attachControl $phi_start "left" 10 $evo_sep
-	-attachNone $phi_start "bottom"
-	-attachNone $phi_start "right"
-
-	-attachControl $phi_pivot "top" 3 $phi_start
-	-attachControl $phi_pivot "left" 10 $evo_sep
-	-attachNone $phi_pivot "bottom"
-	-attachNone $phi_pivot "right"
-
-	-attachControl $phi_depth "top" 3 $phi_pivot
-	-attachControl $phi_depth "left" 10 $evo_sep
-	-attachNone $phi_depth "bottom"
-	-attachNone $phi_depth "right"
-
-	-attachControl $phi_curveNum "top" 3 $phi_depth
-	-attachControl $phi_curveNum "left" 10 $evo_sep
-	-attachNone $phi_curveNum "bottom"
-	-attachNone $phi_curveNum "right"
-
-	-attachControl $phi_curveType "top" 3 $phi_curveNum
-	-attachControl $phi_curveType "left" 7 $evo_sep
-	-attachNone $phi_curveType "bottom"
-	-attachNone $phi_curveType "right"
-
-	-attachControl $phi_curveDim "top" 3 $phi_curveType
-	-attachControl $phi_curveDim "left" 7 $evo_sep
-	-attachNone $phi_curveDim "bottom"
-	-attachNone $phi_curveDim "right"
-
-	-attachControl $phi_matrix "top" 3 $phi_curveDim
-	-attachControl $phi_matrix "left" 7 $evo_sep
-	-attachNone $phi_matrix "bottom"
-	-attachNone $phi_matrix "right"
-
-	-attachControl $phi_create "top" 20 $phi_matrix
-	-attachControl $phi_create "left" 45 $evo_sep
-	-attachNone $phi_create "bottom"
-	-attachNone $phi_create "right"
-
-	-attachForm $phi_sep "top" 10
-	-attachControl $phi_sep "left" 20 $phi_start
-	-attachNone $phi_sep "bottom"
-	-attachNone $phi_sep "right"
-
-//-----------------------------------------------------------------
-
-	-attachForm $rodin_text "top" 15
-	-attachControl $rodin_text "left" 55 $phi_sep
-	-attachNone $rodin_text "bottom"
-	-attachNone $rodin_text "right"
-
-	-attachControl $rodin_rotate "top" 15 $rodin_text
-	-attachControl $rodin_rotate "left" 20 $phi_sep
-	-attachNone $rodin_rotate "bottom"
-	-attachNone $rodin_rotate "right"
-
-	-attachControl $rodin_radius "top" 3 $rodin_rotate
-	-attachControl $rodin_radius "left" 20 $phi_sep
-	-attachNone $rodin_radius "bottom"
-	-attachNone $rodin_radius "right"
-
-	-attachControl $rodin_HR "top" 3 $rodin_radius
-	-attachControl $rodin_HR "left" 20 $phi_sep
-	-attachNone $rodin_HR "bottom"
-	-attachNone $rodin_HR "right"
-
-	-attachControl $rodin_create "top" 20 $rodin_HR
-	-attachControl $rodin_create "left" 45 $phi_sep
-	-attachNone $rodin_create "bottom"
-	-attachNone $rodin_create "right"
-
-$mini_Form;
-setParent ..;
-
-windowPref -r miniKitWin;
-formLayout -e -h 330 -w 560 miniForm;
-
-showWindow $miniKitWindow;
-
-//----------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------
-
-proc evoSphereCreate(int $grpNum){	$SphereR = `floatFieldGrp -q -v1 evoSphereRadius`;	string  $allObjects[];	select ("waveLoc_" + ($grpNum+1) + "_*");	select -d ("waveLoc_" + ($grpNum+1) + "_Shape*");	$x = 1;	string  $obj;	$allObjects = `ls -sl`;
-	for ( $obj in $allObjects ) 	{		$nm = `sphere -r $SphereR`;
-		rename $nm[0] ("evoSphere_" + ($grpNum+1) + "_" + $x);		rename $nm[1] ("make_evoSphere_" + ($grpNum+1) + "_" + $x);		pointConstraint  $obj ("evoSphere_" + ($grpNum+1) + "_" + $x);		select -r $obj ("evoSphere_" + ($grpNum+1) + "_" + $x);		parentConstraint -mo -weight 1;
-		$x++;	}	select -r ("evoSphere_" + ($grpNum+1) + "_*");	select -d ("evoSphere_" + ($grpNum+1) + "_Shape*");	select -d ("evoSphere_" + ($grpNum+1) + "_*_parentConstraint1");	select -d ("evoSphere_" + ($grpNum+1) + "_*_pointConstraint1");	$sphereArray = `ls -sl`;	$sphereArraySize = `size($sphereArray)`;	select -cl;	for($i=1;$i<=$sphereArraySize;$i++)	{		if(`objExists "sphereGrp"` == 0 && `objExists ("evoSphereGrp_" + ($grpNum+1))` == 0)		{			$sphereGrp = `group -em`; 			xform -os -piv 0 0 0;			$evoSphereGrp = `group -em`; 			xform -os -piv 0 0 0;			parent ("evoSphere_" + ($grpNum+1) + "_" + $i) $evoSphereGrp;			parent $evoSphereGrp $sphereGrp;			parent $sphereGrp evoGrp;			rename $sphereGrp "sphereGrp";			rename $evoSphereGrp ("evoSphereGrp_" + ($grpNum+1));		}
-		else if(`objExists "sphereGrp"` == 1 && `objExists ("evoSphereGrp_" + ($grpNum+1))` == 0)		{			$evoSphereGrp = `group -em`; 			xform -os -piv 0 0 0;			parent ("evoSphere_" + ($grpNum+1) + "_" + $i) $evoSphereGrp;			parent $evoSphereGrp sphereGrp;			rename $evoSphereGrp ("evoSphereGrp_" + ($grpNum+1));		}
-		else		{			parent ("evoSphere_" + ($grpNum+1) + "_" + $i) ("evoSphereGrp_" + ($grpNum+1));		}	}}
-
-proc evoCurveCreate(int $grpNum){	string  $allObjects[];	$evoCurve = `curve -p 0 0 0` ;	$x = 1;	select -r ("waveLoc_" + ($grpNum+1) + "_Shape*");	string  $obj;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ) {
-		if ( `nodeType $obj` == "locator" ){
-			float $tx[] = `getAttr $obj.lpx`;			float $ty[] = `getAttr $obj.lpy`;			float $tz[] = `getAttr $obj.lpz`;			curve -a -p  $tx[0] $ty[0] $tz[0] $evoCurve;		}		$x++;	}//----------------------------------------------------------------------//	create a cluster around the curve.cv and constrain to WaveLocators. //----------------------------------------------------------------------	select -r ("waveLoc_" + ($grpNum+1) + "_*");	select -d ("waveLoc_" + ($grpNum+1) + "_Shape*");	$x = 1;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ){
-		if ( `nodeType $obj` != "locator" ){
-			select -cl;			string $nm = ("C_" + ($grpNum+1) + "_" + $x);			cluster -n $nm ($evoCurve + ".cv[" + $x + "]");			$nm = $nm + "Handle";			pointConstraint -offset 0 0 0 -weight 1 $obj $nm;		}		$x++;	}//----------------------------------------------------------------------//	final CV handling//----------------------------------------------------------------------	float $sz = `size $allObjects`;	string $nm = ("C_" + ($grpNum+1) + "_" + $x);	cluster -n $nm ($evoCurve + ".cv[0]");	$nm = $nm + "Handle";	pointConstraint -offset 0 0 0 -weight 1 $obj $nm;	closeCurve -ch 1 -ps 0 -rpo 1 -bb 0.9 -bki 1 -p 0.1 $evoCurve;//----------------------------------------------------------------------//	parenting pass//----------------------------------------------------------------------	select -r ("waveLoc_" + ($grpNum+1) + "_*");	select -d ("waveLoc_" + ($grpNum+1) + "_Shape*");	$x = 1;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ){
-		if ($x == 1){			string $nm = ("C_" + ($grpNum+1) + "_" + $x + "Handle");			parent  $nm $obj;		}
-		$x++;
-		if ( `nodeType $obj` != "locator" ){
-			string $nm = ("C_" + ($grpNum+1) + "_" + $x + "Handle");			parent  $nm $obj;		}	}	rename $evoCurve ("evoCurve_" + ($grpNum+1));	select -cl;	if(`objExists curveGrp` == 0){
-		$curveGrp = `group -em`; 		xform -os -piv 0 0 0;		parent ("evoCurve_" + ($grpNum+1)) $curveGrp;		parent $curveGrp evoGrp;		rename $curveGrp "curveGrp";	}	else{
-		parent ("evoCurve_" + ($grpNum+1)) curveGrp;	}}
-
-//----------------------------------------------------------------------//START OF EVOCURVE PROCEDURE//----------------------------------------------------------------------
-proc string evoCurve (float $tRad, float $HR, int $NumLoops, float $CentRot, float $speed){//----------------------------------------------------------------------// variables & declarations//----------------------------------------------------------------------	float $AxisRot;	float $i;	float $x = 1;	float $CurrentRot;	float $WRad;
-	int $sphereCheck = `checkBoxGrp -q -v1 evoSphereCheck`;//----------------------------------------------------------------------//	formulas//----------------------------------------------------------------------	$i = (($NumLoops + 1) * 360 / $CentRot);	$AxisRot = $NumLoops * 360/($i);	$WRad =  ($tRad*$HR) + $tRad;
-
-	$confirm = 1;
-	if($i > 699){
-		string $tori_notify = `confirmDialog
-		-title "Risk of slow down"
-		-message ("create " + $i + " nodes?")
-		-button "Continue"
-		-button "Cancel"
-		-defaultButton "Continue"
-		-cancelButton "Cancel"`;
-
-		if($tori_notify == "Cancel"){
-			$confirm = 0;
-		}
-	}
-
-
-	if($confirm == 1){
-		string $notes;		$notes = "Torus Radius/HR: " + $tRad + " / " + $HR + "\n";		$notes = $notes + "Number of loops: " + $NumLoops + "\n";		$notes = $notes + "Rotation: " + $CentRot + "\n";		$notes = $notes + "frames per cycle: " + $speed + "\n";		$centerLoc = `spaceLocator -p 0 0 0`;		setAttr ($centerLoc[0] + ".localScaleX") .1;		setAttr ($centerLoc[0] + ".localScaleY") .1;		setAttr ($centerLoc[0] + ".localScaleZ") .1;		$rotateLoc = `spaceLocator -p 0 0 0`;		xform -t $tRad 0 0;		CenterPivot;		setAttr ($rotateLoc[0] + ".localScaleX") .1;		setAttr ($rotateLoc[0] + ".localScaleY") .1;		setAttr ($rotateLoc[0] + ".localScaleZ") .1;		$waveLoc = `spaceLocator -p 0 0 0`;		xform -t $WRad 0 0;		CenterPivot;		setAttr ($waveLoc[0] + ".localScaleX") .7;		setAttr ($waveLoc[0] + ".localScaleY") .7;		setAttr ($waveLoc[0] + ".localScaleZ") .7;		parent $waveLoc[0] $rotateLoc[0];		parent $rotateLoc[0] $centerLoc[0];		$locGroup = `group $centerLoc[0]`;	//----------------------------------------------------------------------	//		part 2	//		setup animation keyframes, and setDrivenKeys for other nodes	//----------------------------------------------------------------------	//----------------------------------------------------------------------	//	setup the initial keyframes for RotateLocator1	//----------------------------------------------------------------------	
-		$tori_autoKey = `autoKeyframe -q -state`;
-		if($tori_autoKey == 1){
-
-			autoKeyframe -e -state 0;
-		}
-		currentTime 1;	//----------------------------------------------------------------------	//DUPLICATE LOCATORS AND ROTATE INTO STARTING POSITION	//----------------------------------------------------------------------		for($x=1;$x<$i;$x++){
-			select -r $centerLoc[0];			duplicate;			rotate 0 ($CentRot * $x) 0;			pickWalk -d down;			pickWalk -d right;			rotate -r 0 0 ($AxisRot * $x);		}
-	//----------------------------------------------------------------------	//RENAME LOCATORS AND GROUP	//CONNECT ROTATE LOCATORS .rotateZ	//----------------------------------------------------------------------		$grpNum = 0;
-		if(`objExists locatorGrp` != 0){
-
-			$grpArray = `listRelatives -c locatorGrp`;
-			$grpNum = `size($grpArray)`;
-		}		$groupArray = `listRelatives -c $locGroup`;		$groupSize = `size($groupArray)`;		for($e=0;$e<$groupSize;$e++){
-			select -r $groupArray[$e];			rename ("centerLoc_" + ($grpNum+1) + "_" + ($e+1));			pickWalk -d down;			pickWalk -d right;			rename ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1));			pickWalk -d down;			pickWalk -d right;			rename ("waveLoc_" + ($grpNum+1) + "_" + ($e+1));
-
-		//----------------------------------------------------------------------
-		//set driven keys for rotate and wave locators
-		//----------------------------------------------------------------------
-					if($e>0){
-				setAttr ("rotateLoc_" + ($grpNum+1) + "_1.rotate") -type "double3" 0 0 0;				$CurrentRot = `getAttr ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz")` + 360;				setDrivenKeyframe -currentDriver ("rotateLoc_" + ($grpNum+1) + "_1.rz") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz");						setAttr ("rotateLoc_" + ($grpNum+1) + "_1.rz") 360;				setAttr -k 0 ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz") $CurrentRot;				setDrivenKeyframe -currentDriver ("rotateLoc_" + ($grpNum+1) + "_1.rz") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz");				connectAttr ("rotateLoc_" + ($grpNum+1) + "_1.tx") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".tx");				connectAttr ("waveLoc_" + ($grpNum+1) + "_1.tx") ("waveLoc_" + ($grpNum+1) + "_" + ($e+1) + ".tx");			}		}
-
-
-		setKeyframe -t 1 -v 0 ("rotateLoc_" + ($grpNum+1) + "_1.rz"); 
-		setKeyframe -t $speed -v 360 ("rotateLoc_" + ($grpNum+1) + "_1.rz");
-		setInfinity -poi cycle ("rotateLoc_" + ($grpNum+1) + "_1.rz");
-				rename $locGroup ("locatorGroup_" + ($grpNum+1));
-		select -r ("locatorGroup_" + ($grpNum+1));
-
-		addAttr -ln "heightRatio"  -at double -min 0.001 ("locatorGroup_" + ($grpNum+1));
-		setAttr -e-keyable true ("locatorGroup_" + ($grpNum+1) + ".heightRatio");
-		$multDiv = `shadingNode -asUtility multiplyDivide`;
-		connectAttr -f ("locatorGroup_" + ($grpNum+1) + ".heightRatio") ($multDiv + ".input1X");
-		connectAttr -f ($multDiv + ".outputX") ("waveLoc_" + ($grpNum+1) + "_1.translateX");
-		setAttr ("locatorGroup_" + ($grpNum+1) + ".heightRatio") $HR;
-
-		addAttr -ln "radius"  -at double -min 0.001 ("locatorGroup_" + ($grpNum+1));
-		setAttr -e-keyable true ("locatorGroup_" + ($grpNum+1) + ".radius");
-		connectAttr -f ("locatorGroup_" + ($grpNum+1) + ".radius") ("rotateLoc_" + ($grpNum+1) + "_1.translateX");
-		connectAttr -f ("locatorGroup_" + ($grpNum+1) + ".radius") ($multDiv + ".input2X");
-		setAttr ("locatorGroup_" + ($grpNum+1) + ".radius") $tRad;
-
-		setAttr -lock true ("locatorGroup_" + ($grpNum+1) + ".heightRatio");
-		setAttr -lock true ("locatorGroup_" + ($grpNum+1) + ".radius");
-
-		xform -cp;
-		select -cl;		if(`objExists locatorGrp` == 0){
-			$locGrp = `group -em`; 			xform -os -piv 0 0 0;			parent ("locatorGroup_" + ($grpNum+1)) $locGrp;				select -r $locGrp;			$torusGrp = `group`;			xform -os -piv 0 0 0;			setAttr ($locGrp + ".v") 0;			rename $locGrp "locatorGrp";			rename $torusGrp "evoGrp";		}		else{
-			parent ("locatorGroup_" + ($grpNum+1)) locatorGrp;		}
-
-		if($sphereCheck == 0){
-			evoCurveCreate($grpNum);
-		}
-		else{
-			evoSphereCreate($grpNum);
-		}	}
-
-	return "\n evolute curve complete";}
-
-global proc CallEvos () {
-
-	float $tRad = `floatFieldGrp -query -v1 evoRadius`;
-	float $tHR = `floatFieldGrp -query -v1 evoHR`;
-	int $loops = `intFieldGrp -query -v1 evoLoops`;
-	float $dRot = `floatFieldGrp -query -v1 evoRot`;
-	int $Cycle = `intFieldGrp -query -v1 evoCycle `;
-
-	evoCurve ($tRad, $tHR, $loops, $dRot, $Cycle);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------
-
-proc phiMatrix(string $phiCurve, int $nCurves, int $matrixType, int $phiGrpNum){
-
-	float $rot = 360.00/$nCurves;
-	string $curveArray[] = {$phiCurve};
-
-	for($a=1;$a<$nCurves;$a++){
-
-		select -r $phiCurve;
-		$newCurve = `duplicate`;
-		$curveArray[$a]=$newCurve[0];
-		setAttr ($newCurve[0] + ".rz") ($rot*$a);
-	}
-
-	if($matrixType == 2){
-
-		for($b=0;$b<$nCurves;$b++){
-
-			select -r $curveArray[$b];
-			$newMatrixCurve = `duplicate`;
-			setAttr ($newMatrixCurve[0] + ".sx") -1;
-			rename $newMatrixCurve[0] ("phiCurveGrp_" + $phiGrpNum + "_B_" + ($b+1)); 
-		}
-	}
-
-	select -r ("phiCurveGrp_" + $phiGrpNum + "_A_*");
-	$curveGrpA = `group`;
-	xform -os -piv 0 0 0;
-	
-	if($matrixType == 2){
-
-		select -r ("phiCurveGrp_" + $phiGrpNum + "_B_*");
-		$curveGrpB = `group`;	
-		xform -os -piv 0 0 0;
-
-		select -r $curveGrpA $curveGrpB;
-		$curveGrp = `group`;
-		xform -os -piv 0 0 0;
-
-		parent $curveGrp phiCurve_Grp;
-
-		rename $curveGrpA ("phiCurve_grp_" + $phiGrpNum + "_A");
-		rename $curveGrpB ("phiCurve_grp_" + $phiGrpNum + "_B");
-		rename $curveGrp ("phiCurveGrp_" + $phiGrpNum);
-		move 0 0 0 ("phiCurve_grp_" + $phiGrpNum + "_A.scalePivot") ("phiCurve_grp_" + $phiGrpNum + "_A.rotatePivot");
-	}
-	else{
-		select -r $curveGrpA;
-		$grpA = `group`;
-		xform -os -piv 0 0 0;
-		parent $grpA phiCurve_Grp;
-		rename $curveGrpA ("phiCurveGrp_" + $phiGrpNum + "_A");
-		rename $grpA ("phiCurveGrp_" + $phiGrpNum);
-	}
-}
-
-proc phi_creation(int $nCurves, float $sNode, float $pNode, int $pDepth, int $phiType, int $spiralType, int $matrixType){
-
-	int $phiGrpNum = 1;
-	if(`objExists phiCurve_Grp` == 1){
-
-		$phiGrpArray = `listRelatives -c phiCurve_Grp`;
-		$phiGrpNum = `size($phiGrpArray)`+1;
-	}
-
-	string $phiCurveInfo = "curve -d 3 -p 0 0 0";
-	float $phi = (1 + sqrt(5))/2;
-	int $theta = 0;	float $r = 0;	float $x = 0;
-	float $y = 0;
-	string $append;
-
-	for($a=$sNode;$a<$pDepth;$a++){
-
-		$r = pow($phi, $a);
-		$x = $r * cos(deg_to_rad($theta));
-		$y = $r * sin(deg_to_rad($theta));
-
-		$theta = $theta + 90;
-		
-		if($spiralType != 1){
-			string $append = (" -p " + $x  + " " + $y  + " " + $r + " ");
-			$phiCurveInfo = ($phiCurveInfo + $append);
-		}
-
-		if($spiralType == 1){
-			string $append = (" -p " + $x  + " " + $y  + " 0 ");
-			$phiCurveInfo = ($phiCurveInfo + $append);
-		}
-	}
-
-	string $phiCurveInfo = ($phiCurveInfo + "\;");
-
-	string $phiCurve = `eval $phiCurveInfo`;	displaySmoothness -pointsWire 16;
-//------------Move the Pivot Point to the correct node number--------------------	select $phiCurve;	float $epXYZ[] = getAttr(".ep[" + $pNode + "]"); 	move $epXYZ[0] $epXYZ[1] $epXYZ[2]  .scalePivot .rotatePivot ;	move -rpr 0 0 0 ;
-
-	if($pNode != 0){
-
-		$detachedCurves = `detachCurve -ch 1 -cos on -rpo 1 ($phiCurve + ".u[" + $pNode + "]")`;
-		$phiCurve = $detachedCurves[0];
-		move 0 0 0 ($phiCurve + ".scalePivot") ($phiCurve + ".rotatePivot");
-		delete $detachedCurves[1];
-	}
-
-	if(`objExists phiCurve_Grp` == 0){
-
-		$phiGrp = `group -em`;
-		xform -os -piv 0 0 0;
-		rename $phiGrp phiCurve_Grp;
-
-		rename $phiCurve phiCurveGrp_1;
-		$phiCurve = "phiCurveGrp_1";
-	}
-
-	if($phiType != 2){
-
-		parent $phiCurve phiCurve_Grp;
-		rename $phiCurve ("phiCurveGrp_" + $phiGrpNum);
-		$phiCurve = ("phiCurveGrp_" + $phiGrpNum);
-	}
-
-	if($phiType == 2){
-
-		rename $phiCurve ("phiCurveGrp_" + $phiGrpNum + "_A_1");
-		$phiCurve = ("phiCurveGrp_" + $phiGrpNum + "_A_1");
-		phiMatrix($phiCurve, $nCurves, $matrixType , $phiGrpNum);
-	}
-}
-
-global proc phi_createOptions(){
-
-	int $nCurves = `intFieldGrp -query -v1 phiCurveNum`;
-	float $sNode = `floatFieldGrp -query -v1 phiStart`;
-	float $pNode = `floatFieldGrp -query -v1 phiPivot`;
-	int $pDepth = `intFieldGrp -query -v1 phiDepth `;
-
-	int $phiType	= `radioButtonGrp -query -sl phiCurveType`;
-	int $spiralType = `radioButtonGrp -query -sl phiCurveDim`;
-	int $matrixType = `radioButtonGrp -query -sl phiMatrix`;
-
-	phi_creation($nCurves, $sNode, $pNode, $pDepth, $phiType, $spiralType, $matrixType);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------------------------------------------
-
-proc rodinCreate( float $rodinRot, float $rodinRad, float $rodinHR){
-
-	hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");
-	$rodinGrpNum = 1;
-
-	if(`objExists rodinTorusCurve_Grp` == 1){
-
-		$rodinGrpArray = `listRelatives -c rodinTorusCurve_Grp`;
-		$rodinGrpNum = `size($rodinGrpArray)`+1;
-	}
-
-	if(`objExists rodinTorus_Grp` == 0){
-
-		$rodinGrp = `group -em`;
-		xform -os -piv 0 0 0;
-		rename $rodinGrp rodinTorus_Grp;
-	}
-	if(`objExists rodinTorusCurve_Grp` == 0){
-
-		$rodinGrp = `group -em`;
-		xform -os -piv 0 0 0;
-		rename $rodinGrp rodinTorusCurve_Grp;
-		parent rodinTorusCurve_Grp rodinTorus_Grp;
-	}
-	if(`objExists rodinTorusControl_Grp` == 0){
-
-		$rodinGrp = `group -em`;
-		xform -os -piv 0 0 0;
-		rename $rodinGrp rodinTorusControl_Grp;
-		parent rodinTorusControl_Grp rodinTorus_Grp;
-	}
-
-	float $axisRot[] = {-125,-90,-45,0,45,90,125};
-
-	$control = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r 23 -d 3 -ut 0 -tol 2.14944e-08 -s 8 -ch 1`; 
-	objectMoveCommand;
-
-	addAttr -ln "locRotate"  -at double  $control[0];
-	setAttr -e-keyable true ($control[0] + ".locRotate");
-
-	addAttr -ln "radius"  -at double  $control[0];
-	setAttr -e-keyable true ($control[0] + ".radius");
-
-	addAttr -ln "heightRatio"  -at double  $control[0];
-	setAttr -e-keyable true ($control[0] + ".heightRatio");
-
-	setAttr ($control[0] + ".locRotate") $rodinRot;
-	setAttr ($control[0] + ".radius") $rodinRad;
-	setAttr ($control[0] + ".heightRatio") $rodinHR;
-
-	$HRmult = `shadingNode -asUtility multiplyDivide`;
-	connectAttr ($control[0] + ".radius") ($HRmult + ".input1X");
-	connectAttr ($control[0] + ".heightRatio") ($HRmult + ".input2X");
-
-	$HRadd = `shadingNode -asUtility plusMinusAverage`;
-	connectAttr ($HRmult + ".outputX") ($HRadd + ".input1D[0]");
-	connectAttr ($control[0] + ".radius") ($HRadd + ".input1D[1]");
-
-	for($a=0;$a<6;$a++){
-
-		$mult = `shadingNode -asUtility multiplyDivide`;
-		setAttr ($mult+".input1X") (.5*($a+1));
-		connectAttr ($control[0] + ".locRotate") ($mult + ".input2X");
-		rename $mult ("rodinMult_" + ($a+1) + "_" + $rodinGrpNum);
-	}
-
-	for($b=0;$b<12;$b++){
-
-		$pointGrp = `group -em`;
-		xform -os -piv 0 0 0;
-
-		for($c=0;$c<7;$c++){
-
-			$loc1 = `spaceLocator -p 0 0 0`;
-			connectAttr ($HRadd + ".output1D") ($loc1[0] + ".tx");
-
-			$axisGrp = `group`;
-			xform -os -piv 0 0 0;
-			connectAttr ($control[0] + ".radius") ($axisGrp + ".tx");
-			setAttr ($axisGrp + ".rz") $axisRot[$c];
-
-			$yRotGrp = `group`;
-			xform -os -piv 0 0 0;
-		
-			if($c!=0){
-
-				connectAttr ("rodinMult_" + $c + "_" + $rodinGrpNum + ".outputX") ($yRotGrp + ".ry");	
-			}
-
-			parent $yRotGrp $pointGrp;
-			rename $yRotGrp ("rodinGrp_" + $rodinGrpNum + "_point_" + $b + "_yRotGrp_" + $c);
-			rename $axisGrp ("rodinGrp_" + $rodinGrpNum + "_point_" + $b + "_axisRot_" + $c);
-			rename $loc1[0] ("rodinGrp_" + $rodinGrpNum + "_point_" + $b + "_locator_" + $c);
-		}
-	
-		setAttr ($pointGrp + ".ry") (150*$b);
-		rename $pointGrp ("rodinGrp_" + $rodinGrpNum + "_point_" + $b);
-
-		parent ("rodinGrp_" + $rodinGrpNum + "_point_" + $b) $control[0];
-	}
-
-	parent $control[0] rodinTorusControl_Grp;
-	rename $control[0] ("rodinControl_" + $rodinGrpNum);
-
-	float $curveX[];
-	float $curveY[];
-	float $curveZ[];
-	for($d=0;$d<12;$d++){
-
-		for($e=0;$e<7;$e++){
-
-			$loc = `spaceLocator -p 0 0 0`;
-			select -r ("rodinGrp_" + $rodinGrpNum + "_point_" + $d + "_locator_" + $e) $loc[0];
-			$const = `pointConstraint -offset 0 0 0 -weight 1`;
-			delete $const;
-			$curveX[(7*$d+$e)] = `getAttr ($loc[0] + ".tx")`;
-			$curveY[(7*$d+$e)] = `getAttr ($loc[0] + ".ty")`;
-			$curveZ[(7*$d+$e)] = `getAttr ($loc[0] + ".tz")`;
-			delete $loc;
-		}
-	}
-
-	$evo = `curve -p $curveX[0] $curveY[0] $curveZ[0]`;
-	for($f=1;$f<`size($curveX)`;$f++){
-
-		curve -a -p $curveX[$f] $curveY[$f] $curveZ[$f] $evo;
-	}
-
-	curve - a -p $curveX[0] $curveY[0] $curveZ[0] $evo;
-	closeCurve -ch 1 -ps 0 -rpo 1 -bb 0.9 -bki 1 -p 0.1 $evo;
-
-	for($g=0;$g<12;$g++){
-
-		for($h=0;$h<7;$h++){
-
-			select -r ($evo + ".cv[" + (7*$g+$h) + "]");
-			$cluster = `newCluster "-envelope 1"`;
-			select -r $cluster[0];
-			parent $cluster[1] ("rodinGrp_" + $rodinGrpNum + "_point_" + $g + "_locator_" + $h);
-		}
-	}
-
-	select -r ($evo + ".cv[" + (`size($curveX)`+1) + "]");
-	$cluster = `newCluster "-envelope 1"`;
-	select -r $cluster[0];
-	parent $cluster[1] ("rodinGrp_" + $rodinGrpNum + "_point_0_locator_0");
-
-	parent $evo rodinTorusCurve_Grp;
-	rename $evo ("rodinTorusCurve_" + $rodinGrpNum) ;
-}
-
-global proc rodin_createOptions(){
-
-	float $rodinRot = `floatFieldGrp -q -v1 rodinRotate`;
-	float $rodinRad = `floatFieldGrp -q -v1 rodinRadius`;
-	float $rodinHR = `floatFieldGrp -q -v1 rodinHR`;
-
-	rodinCreate( $rodinRot, $rodinRad, $rodinHR );
-}

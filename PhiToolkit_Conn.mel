@@ -1,254 +1,0 @@
-//// 	Phi Scripts collection//	created by Goa Lobaugh	//	c2009 liquid buddha studios///*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/////	Phi_Curve(Start Node, Pivot Node, NUM of TURNS)////	To transform from rectangular coordinates to //	polar ones and vice versa, use the following formulas://    	x = r cos(theta),//    	y = r sin(theta),////	...where r is the distance from the origin (the radius), @ represents //	the Greek symbol theta, which is the angle the graph is open up to, //	and a and k are constants.  ////	a = vector length, or $i//  	r = a * phi////	phi = 1.6180339 = (1 + sqrt(5))/2global proc string conn_phi_curve (int $min, int $pvt, int $max) {  string $cmd = "curve -d 3  -p 0 0 0 ";float $phi = (1 + sqrt(5))/2;int $theta = 0;int $c = $min;float $r = 0;float $x, $y = 0;do {		$r 	= 	pow($phi, $c);		$x 	= 	$r 	* 	cos (deg_to_rad( $theta )) ;		$y 	= 	$r	* 	sin  (deg_to_rad( $theta )) ;	float $z 	= 	$r;							//	print "\n";//	print ("c: " + $c + "     theta, " + $theta  + "    R:  " + $r  + "\n");//	print ("X: "+ $x + "  Y: " + $y  + "    Z :   " +  $z + "\n");//	print  "\n";	$c ++;	$theta 	= 	$theta	+	90 ;	string $append = (" -p " + $x  + " " + $y  + " " + $z + " ");	$cmd = ($cmd + $append);} while ($c < $max);string $cmd = ($cmd + "\;");//	print ($cmd + "\n");string $result = `eval $cmd`;//	print ($result + "\n");//	Move the Pivot Point to the correct node numberselect curve1;	float $epXYZ[] = getAttr(".ep[" + $pvt + "]"); 	move $epXYZ[0] $epXYZ[1] $epXYZ[2]  .scalePivot .rotatePivot ;	move -rpr 0 0 0 ;return $result;	 } /*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/////	phi_matrix (NUM of CURVES, START Turn, Pivot Node, NUM of Phi-Turns, FULL or HALF)////global proc string conn_phi_matrix (float $n, int $min, int $pvt, int $max, int $F) {  float $rot = 360/$n;int $x = 0;select -cl;do 	{		conn_phi_curve($min, $pvt, $max);		setAttr .rotateZ $rot;		string $s = "Phi_Curve_" + $n +"_" + $x;		rename "curve1" $s;		if (objExists("group1")) {				parent ("Phi_Curve_" + $n +"_" + $x) group1;		} else {			group;		}		$rot = $rot + (360/$n);		$x ++;		} while ($x<$n);	rename "group1" ("Phi_Curve_Group" + $n);	select ("Phi_Curve_Group" + $n);	move 0 0 0  .scalePivot .rotatePivot ;	if ($F == 1) {		duplicate -name ("Phi_Curve_Group" + $n +"_rev") -rc;		setAttr ("Phi_Curve_Group" + $n +"_rev.scaleX") -1;	}return "PhiMatrix has been created with " + $n + " curves with " + $max + " turns. \n";}/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/////	phi_matrix_flat (NUM of CURVES, START Turn, Pivot Node, NUM of Phi-Turns, FULL or HALF)////global proc string conn_phi_matrix_flat (float $n, int $min, int $pvt, int $max, int $F) {  float $rot = 360/$n;int $x = 0;select -cl;do 	{		conn_phi_curve_flat($min, $pvt, $max);		setAttr .rotateZ $rot;		string $s = "Phi_Curve_" + $n +"_" + $x;		rename "curve1" $s;		if (objExists("group1")) {				parent ("Phi_Curve_" + $n +"_" + $x) group1;		} else {			group;		}		$rot = $rot + (360/$n);		$x ++;		} while ($x<$n);	rename "group1" ("Phi_Curve_Group" + $n);	select ("Phi_Curve_Group" + $n);	move 0 0 0  .scalePivot .rotatePivot ;	if ($F == 1) {		duplicate -name ("Phi_Curve_Group" + $n +"_rev") -rc;		setAttr ("Phi_Curve_Group" + $n +"_rev.scaleX") -1;	}return "PhiMatrix has been created with " + $n + " curves with " + $max + " turns. \n";}/*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/////	Phi_Curve_flat(NUM of TURNS)////	*** FLAT version does not extend into Z ***//global proc string conn_phi_curve_flat (int $min, int $pvt, int $max) {  string $cmd = "curve -d 3  -p 0 0 0 ";float $phi = (1 + sqrt(5))/2;int $theta = 0;int $c = $min;float $r = 0;float $x, $y = 0;do {		$r 	= 	pow($phi, $c);		$x 	= 	$r 	* 	cos (deg_to_rad( $theta )) ;		$y 	= 	$r	* 	sin  (deg_to_rad( $theta )) ;	float $z 	= 	0;							//	print "\n";//	print ("c: " + $c + "     theta, " + $theta  + "    R:  " + $r  + "\n");//	print ("X: "+ $x + "  Y: " + $y  + "    Z :   " +  $z + "\n");//	print  "\n";	$c ++;	$theta 	= 	$theta	+	90 ;	string $append = (" -p " + $x  + " " + $y  + " " + $z + " ");	$cmd = ($cmd + $append);} while ($c < $max);string $cmd = ($cmd + "\;");//	print ($cmd + "\n");string $result = `eval $cmd`;//	print ($result + "\n");//	Move the Pivot Point to the correct node numberselect curve1;	float $epXYZ[] = getAttr(".ep[" + $pvt + "]"); 	move $epXYZ[0] $epXYZ[1] $epXYZ[2]  .scalePivot .rotatePivot ;	move -rpr 0 0 0 ;//	fitBspline -ch 1 -tol 0.01 $result;return $result;	 } /*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/////	Phi_Shell(Start Node, Pivot Node, NUM of TURNS)////	To transform from rectangular coordinates to //	polar ones and vice versa, use the following formulas://    	x = r cos(theta),//    	y = r sin(theta),////	...where r is the distance from the origin (the radius), @ represents //	the Greek symbol theta, which is the angle the graph is open up to, //	and a and k are constants.  ////	a = vector length, or $i//  	r = a * phi////	phi = 1.6180339 = (1 + sqrt(5))/2global proc string conn_phi_shell (int $min, int $pvt, int $max) {  string $cmd = "curve -d 3  -p 0 0 0 ";float $phi = (1 + sqrt(5))/2;int $theta = 0;int $c = $min;float $r = 0;float $x, $y = 0;do {		$r 	= 	pow($phi, ($c*.1)) ;		$x 	= 	$r 	* 	cos (deg_to_rad( $theta )) ;		$y 	= 	$r	* 	sin  (deg_to_rad( $theta )) ;	float $z 	= 	$r;							//	print "\n";//	print ("c: " + $c + "     theta, " + $theta  + "    R:  " + $r  + "\n");//	print ("X: "+ $x + "  Y: " + $y  + "    Z :   " +  $z + "\n");//	print  "\n";	$c ++;	$theta 	= 	$theta	+	45 ;	string $append = $append + (" -p " + $x  + " " + $y  + " " + $z + " ");	$cmd = ($cmd + $append);} while ($c < $max);string $cmd = ($cmd + "\;");//	print ($cmd + "\n");string $result = `eval $cmd`;//	print ($result + "\n");//	Move the Pivot Point to the correct node numberselect curve1;	float $epXYZ[] = getAttr(".ep[" + $pvt + "]"); 	move $epXYZ[0] $epXYZ[1] $epXYZ[2]  .scalePivot .rotatePivot ;	move -rpr 0 0 0 ;return $result;	 } //----------------------------//makes animation radio button and cycle selection options available//when checkbox is checked//-----------------------------global proc conn_animCheckBox(){$pt_checkBox = `checkBoxGrp -q -v1 conn_ptAnimCheck`;if ($pt_checkBox == 1 )	{	radioButtonGrp -e -en 1 conn_animType;	intSliderGrp -e -en 1 conn_fldAnimCycle;	}else	{	radioButtonGrp -e -en 0 conn_animType;	intSliderGrp -e -en 0 conn_fldAnimCycle;	}pt_animRot();}//------------------------------//PROCEDURE FOR CREATING ANIMATION//------------------------------global proc conn_animRot(){$pt_animCheck = `checkBoxGrp -q -v1 conn_ptAnimCheck`;$pt_animType = `radioButtonGrp -q -sl conn_animType`;$pt_cycleVal = `intSliderGrp -q -v conn_fldAnimCycle`;$animGrp01 = ("Phi_Curve_Group" +`intSliderGrp -q -v conn_fldNumCurves`);$animGrp02 = ($animGrp01 + "_rev");//------------------------------//3d phi matrix and animate checked//------------------------------if( `objExists $animGrp01` == 1 && $pt_animCheck == 1 )		{	channelBoxCommand -break;	CBdeleteConnection ($animGrp01 + ".rz");	CBdeleteConnection ($animGrp02 + ".rz");	if($pt_animType == 1)		{		currentTime 1;		setAttr ($animGrp01 + ".rz") 0;		setKeyframe ($animGrp01 + ".rz");			setAttr ($animGrp02 + ".rz") 0;		setKeyframe ($animGrp02 + ".rz");		currentTime $pt_cycleVal;		setAttr ($animGrp01 + ".rz") -359;		setKeyframe ($animGrp01 + ".rz");		setAttr ($animGrp02 + ".rz") 359;		setKeyframe ($animGrp02 + ".rz");		selectKey -r -k -t 1 -t $pt_cycleVal ($animGrp01 + ".rz");		setInfinity -poi linear;		selectKey -r -k -t 1 -t $pt_cycleVal ($animGrp02 + ".rz");		setInfinity -poi linear;		}	if($pt_animType == 2)		{		currentTime 1;		setAttr ($animGrp01 + ".rz") 0;		setKeyframe ($animGrp01 + ".rz");		setAttr ($animGrp02 + ".rz") 0;		setKeyframe ($animGrp02 + ".rz");		currentTime $pt_cycleVal;		setAttr ($animGrp01 + ".rz") 359;		setKeyframe ($animGrp01 + ".rz");		setAttr ($animGrp02 + ".rz") -359;		setKeyframe ($animGrp02 + ".rz");		selectKey -r -k -t 1 -t $pt_cycleVal ($animGrp01 + ".rz");		setInfinity -poi linear;		selectKey -r -k -t 1 -t $pt_cycleVal ($animGrp02 + ".rz");		setInfinity -poi linear;		}	currentTime 1;	playbackOptions -e -min 1.00 -max $pt_cycleVal;	}//------------------------------//3d phi matrix and animate not checked//------------------------------else if( `objExists $animGrp01` == 1 && $pt_animCheck == 0 )	{	currentTime 1;	channelBoxCommand -break;	CBdeleteConnection ($animGrp01 + ".rz");	CBdeleteConnection ($animGrp02 + ".rz");	playbackOptions -e -min 1 -max 100;	}//------------------------------//3d phi attached and animate checked//------------------------------	else if ( `objExists phi_attach_group` == 1 && $pt_animCheck == 1 )	{	channelBoxCommand -break;	CBdeleteConnection phi_attach_group.rz;	if($pt_animType == 1)		{		currentTime 1;		setAttr phi_attach_group.rz 0;		setKeyframe phi_attach_group.rz;		currentTime $pt_cycleVal;		setAttr phi_attach_group.rz -359;		setKeyframe phi_attach_group.rz;		selectKey -r -k -t 1 -t $pt_cycleVal phi_attach_group.rz;		setInfinity -poi linear;		}	if($pt_animType == 2)		{		currentTime 1;		setAttr phi_attach_group.rz 0;		setKeyframe phi_attach_group.rz;		currentTime $pt_cycleVal;		setAttr phi_attach_group.rz 359;		setKeyframe phi_attach_group.rz;		selectKey -r -k -t 1 -t $pt_cycleVal phi_attach_group.rz;		setInfinity -poi linear;		}	currentTime 1;	playbackOptions -e -min 1.00 -max $pt_cycleVal;	}//------------------------------//3d phi attached and animate not checked//------------------------------else if ( `objExists phi_attach_group` == 1 && $pt_animCheck == 0 )	{	currentTime 1;	channelBoxCommand -break;	CBdeleteConnection phi_attach_group.rz;	playbackOptions -e -min 1 -max 100;	}//------------------------------//no 3d phi curves created//------------------------------else	{	print("----------------------------" + "\n");	print("----------------------------" + "\n");	print("No Phi Curve group for Animation" + "\n");
-	print("Add animation BEFORE renaming" + "\n");	}}//----------------------------------------------//ATTACH 3D PHI CURVES//----------------------------------------------global proc conn_3dAttach(){if( `objExists "Phi_Curve_Group*"` == 1 )	{	currentTime 1;	$animGrp01 = ("Phi_Curve_Group" +`intSliderGrp -q -v conn_fldNumCurves`);	$animGrp02 = ($animGrp01 + "_rev");	channelBoxCommand -break;	CBdeleteConnection ($animGrp01 + ".rz");	CBdeleteConnection ($animGrp02 + ".rz");	checkBoxGrp -e -v1 0 conn_ptAnimCheck;	radioButtonGrp -e -en 0 conn_animType;	intSliderGrp -e -en 0 conn_fldAnimCycle;	select -r "Phi_Curve_Group*";	select -d "*_rev";	$phi_curveArray = `listRelatives -c`;//	print($phi_curveArray);//	print(`size($phi_curveArray)` + "\n");	$phi_numCurve = `size($phi_curveArray)`;	select -r "*_rev";	$phi_curveArray_rev = `listRelatives -c`;//	print($phi_curveArray_rev);	$curveSpans = `getAttr ("Phi_Curve_" + $phi_numCurve + "_Shape0.spans")`;	$phiEP1 = `xform -q -t ("Phi_Curve_" + $phi_numCurve + "_0.ep[0]" )`;	$phiEP2 = `xform -q -t ("Phi_Curve_" + $phi_numCurve + "_0.ep[" + $curveSpans + "]" )`;	if( $phiEP1[2] + $phiEP2[2] > 0 )		{		select -r ("Phi_Curve_" + $phi_numCurve + "_0.ep[" + ($curveSpans - 1) + "]" );		$phi_cluster = `newCluster " -envelope 1"`;		$phi_loc = `spaceLocator -p 0 0 0`;//		print($phi_cluster[0] + " " +  $phi_cluster[1] + " " + $phi_loc[0] + "------"  + "\n");		select -r $phi_cluster[1] $phi_loc[0];		pointConstraint -offset 0 0 0 -weight 1;		select -r locator1_pointConstraint1 ;		doDelete;		$phi_locPos = `xform -q -t $phi_loc[0]`;
-
-		select -r ("Phi_Curve_" + $phi_numCurve + "_0.cv[" + ($curveSpans + 2) + "]" );
-		$cluster1 = `newCluster " -envelope 1"`;
-		$phi_loc1 = `spaceLocator -p 0 0 0`;
-		select -r $cluster1[1] $phi_loc1[0];		pointConstraint -offset 0 0 0 -weight 1;
-		$phi_locPos1 = `xform -q -t $phi_loc1[0]`;
-
-		select -r ("Phi_Curve_" + $phi_numCurve + "_0.cv[" + ($curveSpans + 1) + "]" );
-		$cluster2 = `newCluster " -envelope 1"`;
-		$phi_loc2 = `spaceLocator -p 0 0 0`;
-		select -r $cluster2[1] $phi_loc2[0];		pointConstraint -offset 0 0 0 -weight 1;
-		$phi_locPos2 = `xform -q -t $phi_loc1[0]`;
-
-		$phi_distance = ($phi_locPos1[2] - $phi_locPos2[2]);		setAttr ("Phi_Curve_Group" + $phi_numCurve + "_rev.sz") -1;
-		setAttr ("Phi_Curve_Group" + $phi_numCurve + "_rev.sx") -1;		xform -t 0 0 (($phi_locPos[2] * 2) + $phi_distance ) ("Phi_Curve_Group" + $phi_numCurve + "_rev");		select -r $phi_cluster[1] $phi_loc[0] $phi_loc1[0] $phi_loc2[0];		doDelete;		for($i=0;$i<=(( $phi_numCurve *2) - 1);$i++)			{			select -r ("Phi_Curve_" + $phi_numCurve + "_" + $i + ".ep[" + ($curveSpans) + "]");			doDelete;			}		$phi_attachGroup = `group -em`;		xform -os -piv 0 0 0;
-
-		$n = ($phi_numCurve - 1);
-				for($i=0;$i<=($phi_numCurve -1);$i++)			{			string $phi_attach[] = `attachCurve  -ch 1 -rpo 0 -kmk 1 -m 1 -bb 0.5 -bki 1 -p 0.1 $phi_curveArray[$i] $phi_curveArray_rev[$n]`;			parent $phi_attach[0] $phi_attachGroup;			rename $phi_attach[0] ("phiAttach_" + ($i + 1) );			$n--;			}		select -r $phi_attachGroup;		CenterPivot;		xform -t 0 0 ($phi_locPos[2] * -1 ) $phi_attachGroup;		move -a 0 0 0 ($phi_attachGroup + ".scalePivot")  ($phi_attachGroup + ".rotatePivot");		rename $phi_attachGroup "phi_attach_group";
-
-		setAttr  ("Phi_Curve_Group" + $phi_numCurve + "_rev.rz") ((360 / $phi_numCurve ) + (120 / $phi_numCurve ));
-
-		select -cl;
-		for($i=1;$i<=$phi_numCurve;$i++)			{			select -add ("phiAttach_" + $i);
-			DeleteHistory;			}
-		select -r "Phi_Curve_Group*";		doDelete;
-
-		floatSliderGrp -e -en 1 conn_scaleSlide;		}	else		{		print("need 3D phi curves to attach" + "\n");		}		}
-
-else
-	{
-	print("--no PHI CURVE GROUP to attach in scene" + "\n");
-	error("--create and attach curves before renaming" + "\n");
-	}select -cl;
-
-pt_scale();}
-
-//-----------------------------------------
-//CREATE LOCATORS PROC
-//-----------------------------------------
-
-global proc conn_locCreate(){
-
-	select -r phi_attach_group;	$curveArray = `listRelatives -c`;	$curveNum = `size($curveArray)`;	print("number of curves: " + $curveNum + "\n");	$curveSpan = `getAttr phiAttach_1.spans` + 2;	print($curveSpan + "\n");
-
-	select -r phiAttach_1.cv[0];	$cluster_1 = `newCluster " -envelope 1"`;	select -r ("phiAttach_1.cv[" + $curveSpan + "]");	$cluster_2 = `newCluster " -envelope 1"`;	$loc_1 = `spaceLocator -p 0 0 0`;	$loc_2 = `spaceLocator -p 0 0 0`;	select -r $cluster_1[1] $loc_1;	$pntConst_1 = `pointConstraint -offset 0 0 0 -weight 1`;	select -r $cluster_2[1] $loc_2;	$pntConst_2 = `pointConstraint -offset 0 0 0 -weight 1`;
-
-	select -r $pntConst_1 $pntConst_2 $cluster_1 $cluster_2;
-	doDelete;
-
-	setAttr ($loc_1[0] + ".sx") ($curveSpan * 2);
-	setAttr ($loc_1[0] + ".sy") ($curveSpan * 2);
-	setAttr ($loc_1[0] + ".sz") ($curveSpan * 2);
-
-	setAttr ($loc_2[0] + ".sx") ($curveSpan * 2);
-	setAttr ($loc_2[0] + ".sy") ($curveSpan * 2);
-	setAttr ($loc_2[0] + ".sz") ($curveSpan * 2);
-
-	rename $loc_1[0] "phi_placement_loc1";
-	rename $loc_2[0] "phi_placement_loc2";
-}
-
-//-----------------------------------------
-//ATTACH LOCATORS PROC
-//-----------------------------------------
-global proc conn_locAttach(){if(`objExists phi_attach_group` == 1)	{
-	select -r phi_placement_loc1 phi_placement_loc2;
-	$pt_locPlacement = `ls -sl`;
-	select -r phi_attach_group;	$curveArray = `listRelatives -c`;	$curveNum = `size($curveArray)`;	print("number of curves: " + $curveNum + "\n");	$curveSpan = `getAttr phiAttach_1.spans` + 2;	print($curveSpan + "\n");
-
-//---------------------------------
-//create group above phi curve group 
-//to keep rotation animation working correctly
-//---------------------------------
-
-	select -r phi_attach_group;
-	$phiAttach_group = `group`;
-	xform -os -piv 0 0 0;	
-//--------------------------------------
-//--add cluster to the ends of attached phi curve
-//--point constrain locator to cluster
-//--use xform to get translation coordinates of locators
-//--use translation coordinates to create joint system
-//--------------------------------------
-	select -r phiAttach_1.cv[0];	$cluster_1 = `newCluster " -envelope 1"`;	select -r ("phiAttach_1.cv[" + $curveSpan + "]");	$cluster_2 = `newCluster " -envelope 1"`;	$loc_1 = `spaceLocator -p 0 0 0`;	$loc_2 = `spaceLocator -p 0 0 0`;
-	$loc_3 = `spaceLocator -p 0 0 0`;	select -r $cluster_1[1] $loc_1;	$pntConst_1 = `pointConstraint -offset 0 0 0 -weight 1`;	select -r $cluster_2[1] $loc_2;	$pntConst_2 = `pointConstraint -offset 0 0 0 -weight 1`;	$xformLoc_1 = `xform -q -t $loc_1`;	$xformLoc_2 = `xform -q -t $loc_2`;	select -cl;	$joint1 = `joint -p $xformLoc_1[0] $xformLoc_1[1] $xformLoc_1[2]`;	$joint2 = `joint -p $xformLoc_2[0] $xformLoc_2[1] $xformLoc_2[2]`;	escapeCurrentTool;
-
-//-------------------------------------------
-//end of joint system creation
-//--------------------------------------------
-
-	select -r $joint2 $loc_3;	$pntConst_3 = `pointConstraint -offset 0 0 0 -weight 1`;	select -r $cluster_1[0] $cluster_2[0] $loc_1 $loc_2;	doDelete;
-
-//---------------------------------------------
-//--create 2 distance utility nodes
-//--connect phi_placement locators to distance1
-//--connect phi_placement_loc1 and locator_3 to distance2
-//--distances will be divided to find scale of joint1
-//---------------------------------------------
-
-	$distance1 = `shadingNode -asUtility distanceBetween`;
-	$distance2 = `shadingNode -asUtility distanceBetween`;
-
-	connectAttr phi_placement_loc1.translate ($distance1 + ".point1");
-	connectAttr phi_placement_loc2.translate ($distance1 + ".point2");
-
-	connectAttr phi_placement_loc1.translate ($distance2 + ".point1");
-	connectAttr ($loc_3[0] + ".translate") ($distance2 + ".point2");
-
-//-----------------------------------------------
-//constraints to translate rotate and scale phi curve group
-//-----------------------------------------------
-
-	select -r $joint1 $phiAttach_group;
-	$phi_Parent = `parentConstraint -mo -weight 1`;
-	$phi_Scale = `scaleConstraint -offset 1 1 1 -weight 1`;
-
-	select -r $pt_locPlacement[1] $joint1;
-	$pt_aimConst = `aimConstraint -offset 0 0 0 -weight 1 -aimVector 0 0 1 -upVector 0 1 0 -worldUpType "vector" -worldUpVector 0 1 0`;
-
-	print($pt_locPlacement);
-
-	$joint1_place = `xform -q -t $pt_locPlacement[0]`;
-	xform -t $joint1_place[0] $joint1_place[1] $joint1_place[2] $joint1;
-
-//-------------------------------------------------
-//find distances and divide them to get scaleZ value of joint1
-//-------------------------------------------------
-
-	$disVal1 = `getAttr ($distance1 + ".distance")`;
-	print($disVal1 + "\n");
-
-	float $disVal2 = `getAttr ($distance2 + ".distance")`;
-	print($disVal2 + "\n");
-
-	$jointScale = $disVal1 / $disVal2;
-	setAttr ($joint1 + ".sz") $jointScale;
-
-	rename $phiAttach_group "phi_attach_constraint_group";
-
-	select -r $pt_aimConst $phi_Parent $phi_Scale phi_placement_loc1 phi_placement_loc2 $joint1 $loc_3;
-	doDelete;
-		}}
-
-//-----------------------------------------
-//change scale of curves
-//-----------------------------------------
-
-global proc conn_scale()
-{
-
-if(`objExists phi_attach_group` == 1 )
-	{
-	select -r phi_attach_group;	$curveArray = `listRelatives -c`;	$curveNum = `size($curveArray)`;	float $scaleINPT = `floatSliderGrp -q -v conn_scaleSlide`;
-	for($i=1;$i<=$curveNum;$i++)		{
-		$pt_scale = `pow $scaleINPT ($i-1)`;
-		setAttr("phiAttach_" + $i + ".sx") $pt_scale;		setAttr("phiAttach_" + $i  + ".sy") $pt_scale;		}
-	}
-else
-	{
-	print("adjust scale before renaming" + "\n");
-	}
-}
-
-//-----------------------------------------
-//rename curves and group
-//-----------------------------------------
-
-global proc conn_nameCurve()
-{
-
-if(`objExists phi_attach_constraint_group` == 1)
-	{
-	select -r phi_attach_group;	$curveArray = `listRelatives -c`;	$curveNum = `size($curveArray)`;
-	string $pt_name = `textFieldGrp -q -tx conn_reName`;
-	print("name entered: " + $pt_name + "\n");
-
-	string $new_pt_name = `substitute " " $pt_name "_"`;
-	print("new name: " + $new_pt_name + "\n");
-
-	if(`objExists ($new_pt_name + "_group")` == 0)
-		{
-		for($i=1;$i<=$curveNum;$i++)
-			{
-			rename ("phiAttach_" + $i) ($new_pt_name + "_" + $i);
-			}
-		
-		rename "phi_attach_constraint_group" ($new_pt_name + "_constraint_group");
-		rename "phi_attach_group" ($new_pt_name + "_group");
-		}
-	else
-		{
-		print("--curve group name already taken" + "\n");
-		error("--enter a unique name for PHI CURVES and GROUP" + "\n");
-		}
-	}
-
-else if(`objExists phi_attach_group` == 1)
-	{
-	select -r phi_attach_group;	$curveArray = `listRelatives -c`;	$curveNum = `size($curveArray)`;
-	string $pt_name = `textFieldGrp -q -tx conn_reName`;
-	print("name entered: " + $pt_name + "\n");
-
-	string $new_pt_name = `substitute " " $pt_name "_"`;
-	print("new name: " + $new_pt_name + "\n");
-
-	if(`objExists ($new_pt_name + "_group")` == 0)
-		{
-		for($i=1;$i<=$curveNum;$i++)
-			{
-			rename ("phiAttach_" + $i) ($new_pt_name + "_" + $i);
-			}
-
-		rename "phi_attach_group" ($new_pt_name + "_group");
-		}
-	else
-		{
-		print("--curve group name already taken" + "\n");
-		error("--enter a unique name for PHI CURVES and GROUP" + "\n");
-		}
-	}
-
-else if(`objExists "Phi_Curve_Group*"` == 1)
-	{
-	select -r "Phi_Curve_Group*";
-	$phi3D_array = `listRelatives -c`;
-	$phi3D_num = `size($phi3D_array)`;
-
-	string $pt_name = `textFieldGrp -q -tx conn_reName`;
-	print("name entered: " + $pt_name + "\n");
-
-	string $new_pt_name = `substitute " " $pt_name "_"`;
-	print("new name: " + $new_pt_name + "\n");
-
-	if(`objExists ($new_pt_name + "_group")` == 0)
-		{
-		for($i=1;$i<=$phi3D_num;$i++)
-			{
-			rename $phi3D_array[($i-1)] ($new_pt_name + "_" + $i);
-			}	
-		rename ("Phi_Curve_Group" + ($phi3D_num/2)) ($new_pt_name + "_group");
-		rename ("Phi_Curve_Group" + ($phi3D_num/2) + "_rev") ($new_pt_name + "_group_rev");
-		}
-	else
-		{
-		print("--curve group name already taken" + "\n");
-		error("--enter a unique name for PHI CURVES and GROUP" + "\n");
-		}
-	}
-else
-	{
-	print("--NO PHI CURVES to rename" + "\n");
-	}}

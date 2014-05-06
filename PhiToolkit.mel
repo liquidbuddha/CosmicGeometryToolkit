@@ -1,1326 +1,0 @@
-//// 	Phi Scripts collection//	created by Goa Lobaugh	//	c2009 liquid buddha studios///*--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/////	Phi_Curve(Start Node, Pivot Node, NUM of TURNS)////	To transform from rectangular coordinates to //	polar ones and vice versa, use the following formulas://    	x = r cos(theta),//    	y = r sin(theta),////	...where r is the distance from the origin (the radius), @ represents //	the Greek symbol theta, which is the angle the graph is open up to, //	and a and k are constants.  ////	a = vector length, or $i//  	r = a * phi////	phi = 1.6180339 = (1 + sqrt(5))/2
-
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-
-proc pt_updateTextList()
-{
-	if(`objExists phiCurve_Grp` == 1)	{		$phiArray = `listRelatives -c phiCurve_Grp`;		$phiNum = `size($phiArray)`;		textScrollList -e -ra pt_textList;		for($i=1;$i<=$phiNum;$i++)		{			textScrollList -e -append ("  ----       " + "Phi " + $i + "                        --------") pt_textList;		}
-	}
-	else
-	{
-		textScrollList -e -ra pt_textList;
-	}
-}
-
-proc phiJBReorder()
-{
-	$jbArray = `listRelatives -c jitterbug_group`;	$shellNum = 0;	int $phiShellNumSize = 0;	int $phiShellNum[] = {};	for($a=1;$a<`size($jbArray)`;$a++)	{		$jbShell = `listRelatives -c $jbArray[$a]`;		for($b=0;$b<`size($jbShell)`;$b++)		{			if($jbShell[$b] == ("group_" + $a + "_shell_" + $b))			{				$shellNum++;			}		}		if(`objExists ("PhiToolkit_JB_" + $a)` == 1)		{			$phiCrv = `listRelatives -c ("PhiToolkit_JB_" + $a)`;			for($c=0;$c<`size($phiCrv)`;$c++)			{				$phiShell = `listRelatives -c $phiCrv[$c]`;				clear($phiShellNum);
-				for($d=0;$d<$shellNum;$d++)				{					if(`objExists ($phiCrv[$c] + "_shell_" + $d)` == 1)					{						$phiShellNumSize = `size($phiShellNum)`;						$phiShellNum[$phiShellNumSize] = $d;					}				}								$phiShellNumSize = `size($phiShellNum)`;				for($e=0;$e<$phiShellNumSize;$e++)				{					while( $phiShell[$e] != ($phiCrv[$c] + "_shell_" + $phiShellNum[$e]))					{						reorder -relative -1 ($phiCrv[$c] + "_shell_" + $phiShellNum[$e]);						$phiShell = `listRelatives -c $phiCrv[$c]`;					}				}			}			}	}}
-
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-
-proc phiAnim(int $phiGrpNum, int $ptAnimDirection, int $ptAnimCycle)
-{
-	int $keyFrameNum;
-	$phiArray = `listRelatives -c ("phiCurveGrp_" + $phiGrpNum)`;
-
-	setAttr -l false ("phiCurveGrp_" + $phiGrpNum + ".animCycle"); 
-	setAttr ("phiCurveGrp_" + $phiGrpNum + ".animCycle") $ptAnimCycle;
-	setAttr -l true ("phiCurveGrp_" + $phiGrpNum + ".animCycle"); 
-
-	setAttr -l false ("phiCurveGrp_" + $phiGrpNum + ".animDirection"); 
-	setAttr ("phiCurveGrp_" + $phiGrpNum + ".animDirection") $ptAnimDirection;
-	setAttr -l true ("phiCurveGrp_" + $phiGrpNum + ".animDirection"); 
-
-	if($ptAnimDirection == 2)
-	{
-		$ptAnimDirection = -1;
-	}	
-
-	if(`size($phiArray)` == 1)
-	{
-		$keyFrameNum = 1;
-	}
-	else if(`size($phiArray)` >= 2)
-	{
-		$keyFrameNum = 2;
-	}
-	
-//--------------------------------------------------------------------------
-	channelBoxCommand -break;	CBdeleteConnection ($phiArray[0] + ".rz");
-	if($keyFrameNum == 2)
-	{		CBdeleteConnection ($phiArray[1] + ".rz");	}
-
-//--------------------------------------------------------------------------	currentTime 1;	setAttr ($phiArray[0] + ".rz") 0;	setKeyframe ($phiArray[0] + ".rz");	
-	if($keyFrameNum == 2)
-	{		setAttr ($phiArray[1] + ".rz") 0;		setKeyframe ($phiArray[1] + ".rz");	}
-//--------------------------------------------------------------------------	currentTime $ptAnimCycle;	setAttr ($phiArray[0] + ".rz") (-359 * $ptAnimDirection);	setKeyframe ($phiArray[0] + ".rz");
-	
-	if($keyFrameNum == 2)
-	{		setAttr ($phiArray[1] + ".rz") (359 * $ptAnimDirection);		setKeyframe ($phiArray[1] + ".rz");
-	}
-//--------------------------------------------------------------------------	selectKey -r -k -t 1 -t $ptAnimCycle ($phiArray[0] + ".rz");	setInfinity -poi linear;
-	
-	if($keyFrameNum == 2)
-	{		selectKey -r -k -t 1 -t $ptAnimCycle ($phiArray[1] + ".rz");		setInfinity -poi linear;	}//--------------------------------------------------------------------------	currentTime 1;
-}
-
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-
-proc phiMatrix(string $phiCurve, int $nCurves, int $matrixType, int $phiGrpNum)
-{
-	float $rot = 360.00/$nCurves;
-	string $curveArray[] = {$phiCurve};
-
-	for($a=1;$a<$nCurves;$a++)
-	{
-		select -r $phiCurve;
-		$newCurve = `duplicate`;
-		$curveArray[$a]=$newCurve[0];
-		setAttr ($newCurve[0] + ".rz") ($rot*$a);
-	}
-
-	if($matrixType == 2)
-	{
-		for($b=0;$b<$nCurves;$b++)
-		{
-			select -r $curveArray[$b];
-			$newMatrixCurve = `duplicate`;
-			setAttr ($newMatrixCurve[0] + ".sx") -1;
-			rename $newMatrixCurve[0] ("phiCurveGrp_" + $phiGrpNum + "_B_" + ($b+1)); 
-		}
-	}
-
-	select -r ("phiCurveGrp_" + $phiGrpNum + "_A_*");
-	$curveGrpA = `group`;
-	xform -os -piv 0 0 0;
-	
-	if($matrixType == 2)
-	{
-		select -r ("phiCurveGrp_" + $phiGrpNum + "_B_*");
-		$curveGrpB = `group`;	
-		xform -os -piv 0 0 0;
-
-		select -r $curveGrpA $curveGrpB;
-		$curveGrp = `group`;
-		xform -os -piv 0 0 0;
-
-		parent $curveGrp phiCurve_Grp;
-
-		rename $curveGrpA ("phiCurve_grp_" + $phiGrpNum + "_A");
-		rename $curveGrpB ("phiCurve_grp_" + $phiGrpNum + "_B");
-		rename $curveGrp ("phiCurveGrp_" + $phiGrpNum);
-		move 0 0 0 ("phiCurve_grp_" + $phiGrpNum + "_A.scalePivot") ("phiCurve_grp_" + $phiGrpNum + "_A.rotatePivot");
-	}
-	else 
-	{
-		select -r $curveGrpA;
-		$grpA = `group`;
-		xform -os -piv 0 0 0;
-		parent $grpA phiCurve_Grp;
-		rename $curveGrpA ("phiCurveGrp_" + $phiGrpNum + "_A");
-		rename $grpA ("phiCurveGrp_" + $phiGrpNum);
-	}
-}
-
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-
-proc phi_creation(int $phiGrpNum, int $nCurves, float $sNode, float $pNode, int $pDepth, int $phiType, int $spiralType, int $matrixType, int $ptAnim, int $ptAnimDirection, int $ptAnimCycle)
-{
-	string $phiCurveInfo = "curve -d 3 -p 0 0 0";
-	float $phi = (1 + sqrt(5))/2;
-	int $theta = 0;	float $r = 0;	float $x = 0;
-	float $y = 0;
-	string $append;
-
-	for($a=$sNode;$a<$pDepth;$a++)
-	{
-		$r = pow($phi, $a);
-		$x = $r * cos(deg_to_rad($theta));
-		$y = $r * sin(deg_to_rad($theta));
-
-		$theta = $theta + 90;
-		
-		if($spiralType != 2)
-		{			string $append = (" -p " + $x  + " " + $y  + " " + $r + " ");
-			$phiCurveInfo = ($phiCurveInfo + $append);
-		}
-		if($spiralType == 2)
-		{			string $append = (" -p " + $x  + " " + $y  + " 0 ");
-			$phiCurveInfo = ($phiCurveInfo + $append);
-		}
-	}
-
-	string $phiCurveInfo = ($phiCurveInfo + "\;");
-
-	string $phiCurve = `eval $phiCurveInfo`;	displaySmoothness -pointsWire 16;
-//------------Move the Pivot Point to the correct node number--------------------	select $phiCurve;	float $epXYZ[] = getAttr(".ep[" + $pNode + "]"); 	move $epXYZ[0] $epXYZ[1] $epXYZ[2]  .scalePivot .rotatePivot ;	move -rpr 0 0 0 ;
-
-	if($pNode != 0)
-	{
-		$detachedCurves = `detachCurve -ch 1 -cos on -rpo 1 ($phiCurve + ".u[" + $pNode + "]")`;
-		$phiCurve = $detachedCurves[0];
-		move 0 0 0 ($phiCurve + ".scalePivot") ($phiCurve + ".rotatePivot");
-		delete $detachedCurves[1];
-	}
-
-	if(`objExists phiCurve_Grp` == 0)
-	{
-		$phiGrp = `group -em`;
-		xform -os -piv 0 0 0;
-		rename $phiGrp phiCurve_Grp;
-
-		rename $phiCurve phiCurveGrp_1;
-		$phiCurve = "phiCurveGrp_1";
-	}
-
-	if($phiType != 2)
-	{
-		parent $phiCurve phiCurve_Grp;
-		rename $phiCurve ("phiCurveGrp_" + $phiGrpNum);
-		$phiCurve = ("phiCurveGrp_" + $phiGrpNum);
-	}
-
-	if($phiType == 2)
-	{
-		rename $phiCurve ("phiCurveGrp_" + $phiGrpNum + "_A_1");
-		$phiCurve = ("phiCurveGrp_" + $phiGrpNum + "_A_1");
-		phiMatrix($phiCurve, $nCurves, $matrixType , $phiGrpNum);
-	}
-
-//-----------------------------------------------------------------------------------
-//reorder Phi Curve Groups in Outliner
-
-	$phiArray = `listRelatives -c phiCurve_Grp`;
-	$phiArraySize = `size($phiArray)`;
-
-	for($b=1;$b<=$phiArraySize;$b++)
-	{
-		while( $phiArray[ ($b-1) ] != ("phiCurveGrp_" + $b))
-		{
-			reorder -relative -1 ("phiCurveGrp_" + $b	);
-			$phiArray = `listRelatives -c phiCurve_Grp`;
-		}
-	}
-
-//---------------------------------------------------------------
-//Add custom attributes to store values of each field
-//---------------------------------------------------------------
-
-	$phiChildArray = `listRelatives -c phiCurve_Grp`;
-
-	addAttr -ln "startNode" -at double -dv $sNode $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".startNode");
-
-	addAttr -ln "pivotNode" -at double -dv $pNode $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".pivotNode");
-
-	addAttr -ln "depth" -at long -dv $pDepth $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".depth");
-
-	addAttr -ln "curveNumber" -at long -dv $nCurves $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".curveNumber");
-
-	addAttr -ln "buildType" -at long -dv $phiType $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".buildType");
-
-	addAttr -ln "spiralType" -at long -dv $spiralType $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".spiralType");
-
-	addAttr -ln "matrixType" -at long -dv $matrixType $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".matrixType");
-
-	addAttr -ln "animated" -at long -dv $ptAnim $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".animated");
-
-	addAttr -ln "animDirection" -at long -dv $ptAnimDirection $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".animDirection");
-
-	addAttr -ln "animCycle" -at long -dv $ptAnimCycle $phiChildArray[$phiGrpNum-1];
-	setAttr -e-keyable false -l true ($phiChildArray[$phiGrpNum-1] + ".animCycle");
-
-//---------------------------------------------------------------
-//END custom attributes to store values of each field
-//---------------------------------------------------------------
-
-	if($ptAnim == 1)
-	{
-		phiAnim($phiGrpNum, $ptAnimDirection, $ptAnimCycle);
-	}
-	pt_updateTextList;
-}
-
-//-----------------------------------------------------------------------
-//
-//-----------------------------------------------------------------------
-
-proc phi_createOptions(int $phiGrpNum)
-{
-//store value from UI in variables--------------------------------
-
-	int $nCurves = `intSliderGrp -query -v fldNumCurves `;
-	float $sNode = `floatSliderGrp -query -v fldSNode `;
-	float $pNode = `floatSliderGrp -query -v fldPNode `;
-	int $pDepth = `intSliderGrp -query -v fldNumTurns `;
-
-	int $phiType	= `radioButtonGrp -query -sl phiType`;
-	int $spiralType = `radioButtonGrp -query -sl spiralType`;
-	int $matrixType = `radioButtonGrp -query -sl matrixType`;
-
-	int $ptAnim = `checkBoxGrp -q -v1 ptAnimCheck`;
-	$ptAnimDirection = `radioButtonGrp -q -sl ptAnimType`;
-	$ptAnimCycle = `intSliderGrp -q -v ptAnimCycle`;
-
-	phi_creation($phiGrpNum, $nCurves, $sNode, $pNode, $pDepth, $phiType, $spiralType, $matrixType, $ptAnim, $ptAnimDirection, $ptAnimCycle);
-	pt_mirrorCheck();
-
-	textScrollList -e -sii $phiGrpNum pt_textList;
-}
-//----------------------------//makes animation radio button and cycle selection options available//when checkbox is checked//-----------------------------global proc pt_animCheckBox(){	$pt_checkBox = `checkBoxGrp -q -v1 ptAnimCheck`;
-	$ptAnimDirection = `radioButtonGrp -q -sl ptAnimType`;
-	$ptAnimCycle = `intSliderGrp -q -v ptAnimCycle`;	int $phiGrp[] = `textScrollList -q -sii pt_textList`;
-	int $phiGrpNum = $phiGrp[0];
-	string $phiArray[] = {};
-
-	if(`objExists phiCurve_Grp` == 1)
-	{
-		$phiArray = `listRelatives -c phiCurve_Grp`;
-	}
-	if ($pt_checkBox == 1 )	{		radioButtonGrp -e -en 1 ptAnimType;		intSliderGrp -e -en 1 ptAnimCycle;
-
-		if(`size($phiGrp)` != 0)
-		{
-			phiAnim($phiGrpNum, $ptAnimDirection, $ptAnimCycle);
-
-			setAttr -l false ($phiArray[$phiGrpNum-1] + ".animCycle"); 
-			setAttr ($phiArray[$phiGrpNum-1] + ".animCycle") $ptAnimCycle;
-			setAttr -l true ($phiArray[$phiGrpNum-1] + ".animCycle"); 
-
-			setAttr -l false ($phiArray[$phiGrpNum-1] + ".animated"); 
-			setAttr ($phiArray[$phiGrpNum-1] + ".animated") 1;
-			setAttr -l true ($phiArray[$phiGrpNum-1] + ".animated"); 	
-
-		}	}	else	{		radioButtonGrp -e -en 0 ptAnimType;		intSliderGrp -e -en 0 ptAnimCycle;
-
-		if(`size($phiGrp)` != 0)
-		{
-			setAttr -l false ($phiArray[$phiGrpNum-1] + ".animated"); 
-			setAttr ($phiArray[$phiGrpNum-1] + ".animated") 0;
-			setAttr -l true ($phiArray[$phiGrpNum-1] + ".animated"); 
-		}	}	}
-
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-
-global proc phi_grpCreateNum()
-{
-	int $phiGrpNum = 1;
-	if(`objExists phiCurve_Grp` == 1)
-	{
-		$phiArray = `listRelatives -c phiCurve_Grp`;
-		$phiGrpNum = `size($phiArray)`+1;
-	}
-	phi_createOptions($phiGrpNum);
-}
-
-global proc phi_grpNum()
-{
-	int $phiGrpNum = 1;
-	$phiSel = `textScrollList -q -sii pt_textList`;
-	if(`size($phiSel)` != 0)
-	{
-		$phiGrpNum = $phiSel[0];
-	}
-	else if(`objExists phiCurve_Grp` == 1)
-	{
-		$phiArray = `listRelatives -c phiCurve_Grp`;
-		$phiGrpNum = `size($phiArray)`+1;
-	}
-	phi_createOptions($phiGrpNum);
-}
-
-//-----------------------------------------------------------------------
-//-----------------------------------------------------------------------
-
-global proc pt_editTextList()
-{
-	$phiSel = `textScrollList -q -sii pt_textList`;
-	$phiSelected = `size($phiSel)`;
-	
-	if($phiSelected != 0)
-	{
-		int $phiSelInt = $phiSel[0];
-		string $phiChildArray[] = {};
-
-		button -e -en 0 phiCurveButton;
-
-		int $ptAnimDirection;
-		int $ptAnimCycle;
-	
-		if(`objExists phiCurve_Grp` == 1)
-		{
-			$phiChildArray = `listRelatives -c phiCurve_Grp`;
-		}
-
-		if($phiChildArray[$phiSelInt-1] == ("phiCurve_" + $phiSelInt)||$phiChildArray[$phiSelInt-1] == ("phiCurveGrp_" + $phiSelInt))
-		{
-			$sNode = `getAttr ($phiChildArray[$phiSelInt-1] + ".startNode")`;
-			$pNode = `getAttr ($phiChildArray[$phiSelInt-1] + ".pivotNode")`;
-			$pDepth = `getAttr ($phiChildArray[$phiSelInt-1] + ".depth")`;
-			$nCurves = `getAttr ($phiChildArray[$phiSelInt-1] + ".curveNumber")`;
-			$phiType = `getAttr ($phiChildArray[$phiSelInt-1] + ".buildType")`;
-			$spiralType = `getAttr ($phiChildArray[$phiSelInt-1] + ".spiralType")`;
-			$spiralMirror = objExists ("phiInstGrp_" + $phiSelInt);
-			$matrixType = `getAttr ($phiChildArray[$phiSelInt-1] + ".matrixType")`;
-			$ptAnim = `getAttr ($phiChildArray[$phiSelInt-1] + ".animated")`;
-			$ptAnimDirection = `getAttr ($phiChildArray[$phiSelInt-1] + ".animDirection")`;
-			$ptAnimCycle = `getAttr ($phiChildArray[$phiSelInt-1] + ".animCycle")`;
-
-			intSliderGrp -e -v $nCurves fldNumCurves;
-			floatSliderGrp -e -v $sNode fldSNode;
-			floatSliderGrp -e -v $pNode fldPNode;
-			intSliderGrp -e -v $pDepth fldNumTurns;
-			radioButtonGrp -e -sl $phiType phiType;
-			radioButtonGrp -e -sl $spiralType spiralType;
-			checkBoxGrp -e -v1 $spiralMirror ptMirrorCheck;
-			radioButtonGrp -e -sl $matrixType matrixType;
-			checkBoxGrp -e -v1 $ptAnim ptAnimCheck;
-			radioButtonGrp -e -sl $ptAnimDirection ptAnimType;
-			intSliderGrp -e -v $ptAnimCycle ptAnimCycle;
-
-			if($ptAnim == 1)
-			{	
-				radioButtonGrp -e -en 1 ptAnimType;
-				intSliderGrp -e -en 1 ptAnimCycle;
-			}
-			else
-			{
-				radioButtonGrp -e -en 0 ptAnimType;
-				intSliderGrp -e -en 0 ptAnimCycle;	
-			}
-		}
-		radioButtonGrp -e -sl 1 pt_editRadio;
-	}
-	else
-	{
-		button -e -en 1 phiCurveButton;
-		radioButtonGrp -e -sl 2 pt_editRadio;
-		select -cl;
-	}
-}	//------------------------------//PROCEDURE FOR CREATING ANIMATION//------------------------------global proc pt_animRot(){	$phiGrpNum = `textScrollList -q -sii pt_textList`;	$ptAnimDirection = `radioButtonGrp -q -sl ptAnimType`;	$ptAnimCycle = `intSliderGrp -q -v ptAnimCycle`;	if(`size($phiGrpNum)` != 0)	{		phiAnim($phiGrpNum[0], $ptAnimDirection, $ptAnimCycle);	}}
-
-global proc phiUpdate()
-{
-	$edit = `radioButtonGrp -q -sl pt_editRadio`;
-
-	if($edit == 1)
-	{
-		$phiGrpNum = `textScrollList -q -sii pt_textList`;
-
-		if(`size($phiGrpNum)` != 0)		{
-			$phiArray = `listRelatives -c phiCurve_Grp`;
-			int $delGrp = ($phiGrpNum[0]-1);
-			delete $phiArray[$delGrp];			phi_createOptions($phiGrpNum[0]);		}
-	}
-}
-
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------
-
-global proc pt_editCheck()
-{
-	$edit = `radioButtonGrp -q -sl pt_editRadio`;
-	
-	if($edit == 1)
-	{
-		button -e -en 0 phiCurveButton;
-	}
-	else
-	{
-		button -e -en 1 phiCurveButton;
-		textScrollList -e -da pt_textList;
-	}
-}
-
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------
-
-proc jb_populate(int $jbGrpSel, int $jbGrpNum, int $listSelect)
-{
-	string $phiToolkitGrp[] = {};
-
-	if($jbGrpSel != 0 )
-	{
-		$curveNum = 0;
-		$jbPhi = 0;
-
-		if(`objExists phiCurve_Grp` == 1)
-		{
-			$phiCurves = `listRelatives -c phiCurve_Grp`;			$curveNum = `size($phiCurves)`;
-		}
-
-		if(`objExists jitterbug_LOCKED_groups` == 1)
-		{
-			textScrollList -e -ra phi_JBList;
-
-			for($a=1;$a<=$jbGrpNum;$a++)			{
-				$shellList = `listRelatives -c ("jitterbug_" + $a + "_shell_group")`;				$shellNum = `size($shellList)`;				for($b=0;$b<$shellNum;$b++)				{
-					if($shellList[$b] == ("group_" + $a + "_shell_" + $b))					{
-						$textList = `textScrollList -q -ai phi_JBList`;						$lineNum = `size($textList)`;
-						if($lineNum >= $a)
-						{
-							textScrollList -e -rii $a phi_JBList;
-						}
-	
-						textScrollList -e -ap $a (" JB Group " + $a) phi_JBList;					}	
-					else
-					{
-						for($c=1;$c<=$curveNum;$c++)						{							if($shellList[$b] == ("PhiToolkit_JB_" + $a))							{
-								$textList = `textScrollList -q -ai phi_JBList`;								$lineNum = `size($textList)`;
-								if($lineNum >= $a)
-								{
-									textScrollList -e -rii $a phi_JBList;
-								}
-								textScrollList -e -ap $a (" JB Group " + $a + " - P.") phi_JBList;							}						}
-					}				}				}
-			$listSelect = 1;
-			textScrollList -e -sii $jbGrpSel phi_JBList;
-		}
-
-		string $phiJBGrp[] = {}; 
-
-		if(`objExists jitterbug_LOCKED_groups` == 1 && $listSelect == 1)
-		{
-			textScrollList -e -ra phi_shellList;
-
-			$shellList = `listRelatives -c ("jitterbug_" + $jbGrpSel + "_shell_group")`;			$shellNum = `size($shellList)`;
-	
-			$shellCount = 0;
-			for($b=0;$b<$shellNum;$b++)
-			{
-				if($shellList[$b] == ("group_" + $jbGrpSel + "_shell_" + $b))
-				{
-					$textList = `textScrollList -q -ai phi_shellList`;					$lineNum = `size($textList)`;
-					if($lineNum >= ($b+1))
-					{
-						textScrollList -e -rii ($b+1) phi_shellList;
-					}
-					textScrollList -e -ap ($b+1) ("   Shell " + $b) phi_shellList;
-					$shellCount++;
-				}
-				else
-				{
-					$jbPhi = 1;
-				}
-			}
-		
-			if($jbPhi == 1)
-			{
-				for($b=0;$b<$shellNum;$b++)
-				{
-					if($shellList[$b] == ("PhiToolkit_JB_" + $jbGrpSel))
-					{
-						$phiToolkitGrp = `listRelatives -c ("PhiToolkit_JB_" + $jbGrpSel)`;
-						for($c=0;$c<`size($phiToolkitGrp)`;$c++)
-						{
-							for($d=1;$d<=$curveNum;$d++)
-							{
-								if($phiToolkitGrp[($c)] == ("phiCurve_" + $d + "_JB_" + $jbGrpSel))
-								{	
-									$jbCurveList = `listRelatives -c ("phiCurve_" + $d + "_JB_" + $jbGrpSel)`;
-									$jbCurveNum = `size($jbCurveList)`;
-			
-									for($e=0;$e<$jbCurveNum;$e++)
-									{
-										$f=0;
-										int $jbShellNumArray[] = {};
-		
-										while($jbCurveList[$e] != ("phiCurve_" + $d + "_JB_" + $jbGrpSel + "_shell_" + $f))
-										{
-											$f++;
-										}
-						
-										textScrollList -e -rii ($f+1) -ap ($f+1) ("   Shell " + $f + " - Phi " + $d) phi_shellList;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			for($i=1;$i<=$shellCount;$i++)
-			{
-				textScrollList -e -sii $i phi_shellList;
-			}
-		}
-	}
-	else
-	{
-		textScrollList -e -ra phi_shellList;
-	}
-}
-
-global proc pt_jbExp()
-{
-	$jbCheck = `checkBoxGrp -q -v1 pt_JBcheck`;
-
-	if($jbCheck == 1)
-	{
-		formLayout -edit
-
-		-attachForm pt_jbRadio "top" 35 		-attachForm pt_jbRadio "left" 480		-attachNone pt_jbRadio "bottom" 		-attachNone pt_jbRadio "right"
-
-		-attachForm phi_JBList "top" 60 		-attachForm phi_JBList "left" 490		-attachNone phi_JBList "bottom" 		-attachNone phi_JBList "right"
-
-		-attachForm phi_shellList "top" 60 		-attachControl phi_shellList "left" 10 phi_JBList		-attachNone phi_shellList "bottom" 		-attachNone phi_shellList "right"
-
-		phiForm;		setParent ..;
-	
-		radioButtonGrp -e -vis 1 pt_jbRadio;
-		textScrollList -e -vis 1 phi_JBList;
-		textScrollList -e -vis 1 phi_shellList;
-		button -e -vis 1 pt_jbConn;
-		button -e -vis 1 pt_jbDis;
-
-		tabLayout -e -w 795 winTab;
-		window -e -w 795 lbs_scriptsWindow;
-
-		$jbGroups = `listRelatives -c jitterbug_LOCKED_groups`;
-		$jbGrpSize = `size($jbGroups)`;
-		jb_populate($jbGrpSize, $jbGrpSize, 0);
-	}
-	else
-	{
-		formLayout -edit
-
-		-attachForm pt_jbRadio "top" 35 
-		-attachForm pt_jbRadio "left" 0
-		-attachNone pt_jbRadio "bottom" 
-		-attachNone pt_jbRadio "right"
-
-		-attachForm phi_JBList "top" 30 		-attachForm phi_JBList "left" 0		-attachNone phi_JBList "bottom" 		-attachNone phi_JBList "right"
-
-		-attachForm phi_shellList "top" 30 		-attachControl phi_shellList "left" 10 phi_JBList		-attachNone phi_shellList "bottom" 		-attachNone phi_shellList "right"
-
-		phiForm;		setParent ..;
-	
-		radioButtonGrp -e -vis 0 pt_jbRadio;
-		textScrollList -e -vis 0 phi_JBList;
-		textScrollList -e -vis 0 phi_shellList;
-		button -e -vis 0 pt_jbConn;
-		button -e -vis 0 pt_jbDis;
-
-		tabLayout -e -w 480 winTab;
-		window -e -w 480 lbs_scriptsWindow;
-	}
-}
-
-//-----------------------------------------------------------------------------------------------------
-
-global proc pt_shellPopulate()
-{
-	int $jbGrpSel = 0;
-	int $jbGrp[] = `textScrollList -q -sii phi_JBList`;
-	if(`size($jbGrp)` != 0)
-	{
-		$jbGrpSel = $jbGrp[0];
-	}
-	$jbGroups = `listRelatives -c jitterbug_LOCKED_groups`;
-	$jbGrpSize = `size($jbGroups)`;
-	jb_populate($jbGrpSel, $jbGrpSize, 1);
-}
-
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------
-
-proc phiPopulateFace(int $phiNum, int $jbNum, int $shells[])
-{
-	int $newShells[] = {};
-
-	$phiAnim = `getAttr ("phiCurveGrp_" + $phiNum + ".animated")`;
-
-	$phiAnimDir = `getAttr ("phiCurveGrp_" + $phiNum + ".animDirection")`;
-	if($phiAnimDir == 2)
-	{
-		$phiAnimDir = -1;
-	}
-
-	$phiAnimCycle = `getAttr ("phiCurveGrp_" + $phiNum + ".animCycle")`;
-
-	for($a=0;$a<`size($shells)`;$a++)
-	{
-		if(`objExists ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$a])` == 0)
-		{
-			$newShells[$a] = $shells[$a];
-		}
-	}
-
-	$shellNum = `size($newShells)`;
-
-	string $phiArray[] = {};
-	string $phiCld[] = {};
-	string $phiInstGrp[] = {};
-	
-	string $phiB[] = {};
-	int $phiBCheck = 0;
-
-	for($s=0;$s<$shellNum;$s++)
-	{
-		$armNum = 1;
-		if($shells[$s] != 0)
-		{
-			$armNum = 8;
-		}
-
-		for($arm=0;$arm<$armNum;$arm++)
-		{
-			if(`objExists ("PhiToolkit_JB_" + $jbNum)` == 0)
-			{
-				$phiMainJBGrp = `group -em`;
-				xform -os -piv 0 0 0;
-				parent $phiMainJBGrp ("jitterbug_" + $jbNum + "_shell_group");
-				rename $phiMainJBGrp ("PhiToolkit_JB_" + $jbNum);
-			}
-
-			if(`objExists ("phiCurve_" + $phiNum + "_JB_" + $jbNum)` == 0)
-			{
-				$jbGrp = `group -em`;
-				xform -os -piv 0 0 0;
-				parent $jbGrp ("PhiToolkit_JB_" + $jbNum);
-				rename $jbGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum);
-			}
-
-			for($i=0;$i<8;$i++)
-			{
-				$phiCld = `listRelatives -c ("phiCurveGrp_" + $phiNum)`;
-				$phiA = `listRelatives -c $phiCld[0]`;
-
-				if(`size($phiCld)` == 2)
-				{
-					$phiB = `listRelatives -c $phiCld[1]`;
-					$phiBCheck = 1;
-				}
-
-				if(`objExists ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s])` == 0)
-				{
-					$shellGrp = `group -em`;
-					xform -os -piv 0 0 0;
-					parent $shellGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum);
-					rename $shellGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s]);
-				}
-
-				if(`objExists ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1))` == 0)
-				{
-					$armGrp = `group -em`;
-					xform -os -piv 0 0 0;
-					parent $armGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s]);
-					rename $armGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1));
-				}
-
-				for($a=0;$a<`size($phiA)`;$a++)
-				{
-					if(`objExists ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1))` == 0)
-					{
-						$phiCrvGrp = `group -em`;
-						xform -os -piv 0 0 0;
-
-						$phiABGrp = `group`;
-						xform -os -piv 0 0 0;
-
-						parent $phiABGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1));
-
-						rename $phiABGrp ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-						rename $phiCrvGrp ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					}
-
-					if(`objExists ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1))` == 0 && $phiBCheck == 1)
-					{
-						$phiCrvGrp = `group -em`;
-						xform -os -piv 0 0 0;
-
-						parent $phiCrvGrp ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-						rename $phiCrvGrp ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					}
-
-					select -r $phiA[$a];
-					$phiInst = `instance`;
-
-					parent $phiInst[0] ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					rename $phiInst[0] ("phiCurveA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + "_" + ($a+1));	
-
-					if($phiBCheck == 1)
-					{
-						select -r $phiB[$a];
-						$phiInst = `instance`;
-
-						parent $phiInst[0] ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-						rename $phiInst[0] ("phiCurveB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + "_" + ($a+1));	
-					}
-
-					if($phiAnim == 1)
-					{
-						setKeyframe -t 1 -v 0 ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-						setKeyframe -t $phiAnimCycle -v (-359 * $phiAnimDir) ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-
-						selectKey -add -k -t ("0:" + $phiAnimCycle) ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-						setInfinity -poi cycle;						setInfinity -pri cycle;
-
-						if($phiBCheck ==1)
-						{
-							setKeyframe -t 1 -v 0 ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-							setKeyframe -t $phiAnimCycle -v (359 * $phiAnimDir) ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-
-							selectKey -add -k -t ("0:" + $phiAnimCycle) ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-							setInfinity -poi cycle;							setInfinity -pri cycle;
-						}
-					}
-
-				}
-
-				if($newShells[$s] != 0 )
-				{
-					select -r ("group_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_face_" + ($i+1)) ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-				}
-				else
-				{
-					select -r ("group_" + $jbNum + "_shell_" + $shells[$s] + "_face_" + ($i+1)) ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-				}
-				pointConstraint -offset 0 0 0 -weight 1;
-
-				if($newShells[$s] != 0 )
-				{
-					select -r ("group_" + $jbNum + "_shell_" + $shells[$s]  + "_arm_" + ($arm+1)) ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-				}
-				else
-				{
-					select -r ("group_" + $jbNum + "_shell_" + $shells[$s]) ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-				}	
-				aimConstraint -offset 0 0 0 -weight 1 -aimVector 0 0 1 -upVector 0 0 1 -worldUpType "vector" -worldUpVector 0 1 0;
-
-			}
-		}
-	}
-
-	$curveNum = 0;
-
-	pt_shellPopulate;
-
-}
-
-//-----------------------------------------------------------------------------------------------------
-
-proc phiPopulateUnit(int $phiNum, int $jbNum, int $shells[])
-{
-	int $newShells[] = {};
-
-	$jbOrient = `getAttr ("jitterbug_" + $jbNum + "_shell_group.rz")`;
-	$jbSpin = 0;
-	if($jbOrient != 0)
-	{
-		setAttr ("jitterbug_" + $jbNum + "_shell_group.rz") 0;
-		$jbSpin = 1;
-	}
-	
-	$phiAnim = `getAttr ("phiCurveGrp_" + $phiNum + ".animated")`;
-
-	$phiAnimDir = `getAttr ("phiCurveGrp_" + $phiNum + ".animDirection")`;
-	if($phiAnimDir == 2)
-	{
-		$phiAnimDir = -1;
-	}
-
-	$phiAnimCycle = `getAttr ("phiCurveGrp_" + $phiNum + ".animCycle")`;
-
-	for($a=0;$a<`size($shells)`;$a++)
-	{
-		if(`objExists ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$a])` == 0)
-		{
-			$newShells[$a] = $shells[$a];
-		}
-	}
-
-	$shellNum = `size($newShells)`;
-
-	string $phiArray[] = {};
-	string $phiCld[] = {};
-	string $phiInstGrp[] = {};
-	
-	string $phiB[] = {};
-	int $phiBCheck = 0;
-
-	for($s=0;$s<$shellNum;$s++)
-	{
-		$armNum = 1;
-		if($shells[$s] != 0)
-		{
-			$armNum = 8;
-		}
-
-		for($arm=0;$arm<$armNum;$arm++)
-		{
-			if(`objExists ("PhiToolkit_JB_" + $jbNum)` == 0)
-			{
-				$phiMainJBGrp = `group -em`;
-				xform -os -piv 0 0 0;
-				parent $phiMainJBGrp ("jitterbug_" + $jbNum + "_shell_group");
-				rename $phiMainJBGrp ("PhiToolkit_JB_" + $jbNum);
-			}
-
-			if(`objExists ("phiCurve_" + $phiNum + "_JB_" + $jbNum)` == 0)
-			{
-				$jbGrp = `group -em`;
-				xform -os -piv 0 0 0;
-				parent $jbGrp ("PhiToolkit_JB_" + $jbNum);
-				rename $jbGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum);
-			}
-
-			for($i=0;$i<4;$i++)
-			{
-				$phiCld = `listRelatives -c ("phiCurveGrp_" + $phiNum)`;
-				$phiA = `listRelatives -c $phiCld[0]`;
-
-				if(`size($phiCld)` == 2)
-				{
-					$phiB = `listRelatives -c $phiCld[1]`;
-					$phiBCheck = 1;
-				}
-
-				if(`objExists ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s])` == 0)
-				{
-					$shellGrp = `group -em`;
-					xform -os -piv 0 0 0;
-					parent $shellGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum);
-					rename $shellGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s]);
-				}
-
-				if(`objExists ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1))` == 0)
-				{
-					$armGrp = `group -em`;
-					xform -os -piv 0 0 0;
-					parent $armGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s]);
-					rename $armGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1));
-				}
-
-				for($a=0;$a<`size($phiA)`;$a++)
-				{
-					if(`objExists ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1))` == 0)
-					{
-						$phiCrvGrp = `group -em`;
-						xform -os -piv 0 0 0;
-
-						$phiABGrp = `group`;
-						xform -os -piv 0 0 0;
-
-						parent $phiABGrp ("phiCurve_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1));
-
-						rename $phiABGrp ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-						rename $phiCrvGrp ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					}
-
-					if(`objExists ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1))` == 0 && $phiBCheck == 1)
-					{
-						$phiCrvGrp = `group -em`;
-						xform -os -piv 0 0 0;
-
-						parent $phiCrvGrp ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-						rename $phiCrvGrp ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					}
-
-					select -r $phiA[$a];
-					$phiInst = `instance`;
-
-					parent $phiInst[0] ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					rename $phiInst[0] ("phiCurveA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + "_" + ($a+1));	
-
-					if($phiBCheck == 1)
-					{
-						select -r $phiB[$a];
-						$phiInst = `instance`;
-
-						parent $phiInst[0] ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-						rename $phiInst[0] ("phiCurveB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + "_" + ($a+1));	
-					}
-
-					if($phiAnim == 1)
-					{
-						setKeyframe -t 1 -v 0 ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-						setKeyframe -t $phiAnimCycle -v (-359 * $phiAnimDir) ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-
-						selectKey -add -k -t ("0:" + $phiAnimCycle) ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-						setInfinity -poi cycle;						setInfinity -pri cycle;
-
-						if($phiBCheck ==1)
-						{
-							setKeyframe -t 1 -v 0 ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-							setKeyframe -t $phiAnimCycle -v (359 * $phiAnimDir) ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-
-							selectKey -add -k -t ("0:" + $phiAnimCycle) ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rz");
-							setInfinity -poi cycle;							setInfinity -pri cycle;
-						}
-					}
-
-					if($a == (`size($phiA)`-1))
-					{
-						setAttr ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".rx") 35.247;
-						setAttr ("phiCurveGrp_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1) + ".ry") (90*$i);
-					}
-				}
-
-				if($shells[$s] != 0)
-				{
-					select -r ("group_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1)) ("phiCurveGrpA_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					pointConstraint -offset 0 0 0 -weight 1;
-				}
-				if($shells[$s] != 0 && $phiBCheck == 1)
-				{
-					select -r ("group_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1)) ("phiCurveGrpB_" + $phiNum + "_JB_" + $jbNum + "_shell_" + $shells[$s] + "_arm_" + ($arm+1) + "_grp_" + ($i+1));
-					pointConstraint -offset 0 0 0 -weight 1;
-				}
-			}
-		}
-	}
-
-	$curveNum = 0;
-	
-	if($jbSpin == 1)
-	{
-		setAttr ("jitterbug_" + $jbNum + "_shell_group.rz") 54.753;
-	}
-
-	pt_shellPopulate;
-}
-
-//-----------------------------------------------------------------------------------------------------
-
-global proc pt_connectJB()
-{
-	int $phiNum[] = `textScrollList -q -sii pt_textList`;
-	int $phiConnectType = `radioButtonGrp -q -sl pt_jbRadio`;
-
-	if($phiNum[0] != 0 && $phiConnectType == 1)
-	{
-		$jbNum = `textScrollList -q -sii phi_JBList`;
-		$shellList = `textScrollList -q -sii phi_shellList`;
-		int $shells[] = {};
-
-		for($i=0;$i<`size($shellList)`;$i++)
-		{
-			$shells[$i] = $shellList[$i] - 1;
-		}
-		
-		phiPopulateUnit($phiNum[0], $jbNum[0], $shells);
-
-		textScrollList -e -da phi_JBList;
-		jb_populate($jbNum[0], $jbNum[0], 1);
-		phiJBReorder;
-	}
-	else if($phiNum[0] != 0 && $phiConnectType == 2)
-	{
-		$jbNum = `textScrollList -q -sii phi_JBList`;
-		$shellList = `textScrollList -q -sii phi_shellList`;
-		int $shells[] = {};
-
-		for($i=0;$i<`size($shellList)`;$i++)
-		{
-			$shells[$i] = $shellList[$i] - 1;
-		}
-		
-		phiPopulateFace($phiNum[0], $jbNum[0], $shells);
-
-		textScrollList -e -da phi_JBList;
-		jb_populate($jbNum[0], $jbNum[0], 1);
-		phiJBReorder;
-	}
-	else
-	{
-		error("select a Curve Group from Phi Text List" + "\n");
-	}
-}
-
-
-global proc pt_disconnectJB()
-{
-	$phiSel = `textScrollList -q -sii pt_textList`;	$jbGrp = `textScrollList -q -sii phi_JBList`;	$shellSel = `textScrollList -q -sii phi_shellList`;
-	string $jbPhiGrp[] = {};		for($a=0;$a<`size($shellSel)`;$a++)	{		if(`objExists ("phiCurve_" + $phiSel[0] + "_JB_" + $jbGrp[0] + "_shell_" + ($shellSel[$a]-1))` == 1)		{			delete ("phiCurve_" + $phiSel[0] + "_JB_" + $jbGrp[0] + "_shell_" + ($shellSel[$a]-1));		}
-
-		if(`objExists ("phiCurve_" + $phiSel[0] + "_JB_" + $jbGrp[0])` == 1)
-		{
-			$jbPhiGrp = `listRelatives -c ("phiCurve_" + $phiSel[0] + "_JB_" + $jbGrp[0])`;
-		}
-		if(`size($jbPhiGrp)` == 0 && `objExists ("phiCurve_" + $phiSel[0] + "_JB_" + $jbGrp[0])` == 1)
-		{
-			delete ("phiCurve_" + $phiSel[0] + "_JB_" + $jbGrp[0]);
-		}	}
-	
-	jb_populate($jbGrp[0], $jbGrp[0], 1);
-	phiJBReorder;
-}
-//-----------------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------
-//----------------------------------------------//ATTACH 3D PHI CURVES//----------------------------------------------global proc phi_3dAttach(){	if( `objExists "Phi_Curve_Group*"` == 1 )	{		currentTime 1;		$animGrp01 = ("Phi_Curve_Group" +`intSliderGrp -q -v fldNumCurves`);		$animGrp02 = ($animGrp01 + "_rev");		channelBoxCommand -break;		CBdeleteConnection ($animGrp01 + ".rz");		CBdeleteConnection ($animGrp02 + ".rz");		checkBoxGrp -e -v1 0 ptAnimCheck;		radioButtonGrp -e -en 0 animType;		intSliderGrp -e -en 0 fldAnimCycle;		select -r "Phi_Curve_Group*";		select -d "*_rev";		$phi_curveArray = `listRelatives -c`;		print($phi_curveArray);		print(`size($phi_curveArray)` + "\n");		$phi_numCurve = `size($phi_curveArray)`;		select -r "*_rev";		$phi_curveArray_rev = `listRelatives -c`;		print($phi_curveArray_rev);		$curveSpans = `getAttr ("Phi_Curve_" + $phi_numCurve + "_Shape0.spans")`;		$phiEP1 = `xform -q -t ("Phi_Curve_" + $phi_numCurve + "_0.ep[0]" )`;		$phiEP2 = `xform -q -t ("Phi_Curve_" + $phi_numCurve + "_0.ep[" + $curveSpans + "]" )`;		if( $phiEP1[2] + $phiEP2[2] > 0 )		{			select -r ("Phi_Curve_" + $phi_numCurve + "_0.ep[" + ($curveSpans - 1) + "]" );			$phi_cluster = `newCluster " -envelope 1"`;			$phi_loc = `spaceLocator -p 0 0 0`;			print($phi_cluster[0] + " " +  $phi_cluster[1] + " " + $phi_loc[0] + "------"  + "\n");			select -r $phi_cluster[1] $phi_loc[0];			pointConstraint -offset 0 0 0 -weight 1;			select -r locator1_pointConstraint1 ;			doDelete;			$phi_locPos = `xform -q -t $phi_loc[0]`;
-
-			select -r ("Phi_Curve_" + $phi_numCurve + "_0.cv[" + ($curveSpans + 2) + "]" );
-			$cluster1 = `newCluster " -envelope 1"`;
-			$phi_loc1 = `spaceLocator -p 0 0 0`;
-			select -r $cluster1[1] $phi_loc1[0];			pointConstraint -offset 0 0 0 -weight 1;
-			$phi_locPos1 = `xform -q -t $phi_loc1[0]`;
-
-			select -r ("Phi_Curve_" + $phi_numCurve + "_0.cv[" + ($curveSpans + 1) + "]" );
-			$cluster2 = `newCluster " -envelope 1"`;
-			$phi_loc2 = `spaceLocator -p 0 0 0`;
-			select -r $cluster2[1] $phi_loc2[0];			pointConstraint -offset 0 0 0 -weight 1;
-			$phi_locPos2 = `xform -q -t $phi_loc1[0]`;
-
-			$phi_distance = ($phi_locPos1[2] - $phi_locPos2[2]);			setAttr ("Phi_Curve_Group" + $phi_numCurve + "_rev.sz") -1;
-			setAttr ("Phi_Curve_Group" + $phi_numCurve + "_rev.sx") -1;			xform -t 0 0 (($phi_locPos[2] * 2) + $phi_distance ) ("Phi_Curve_Group" + $phi_numCurve + "_rev");			select -r $phi_cluster[1] $phi_loc[0] $phi_loc1[0] $phi_loc2[0];			doDelete;			for($i=0;$i<=(( $phi_numCurve *2) - 1);$i++)			{				select -r ("Phi_Curve_" + $phi_numCurve + "_" + $i + ".ep[" + ($curveSpans) + "]");				doDelete;			}			$phi_attachGroup = `group -em`;			xform -os -piv 0 0 0;
-
-			$n = ($phi_numCurve - 1);
-					for($i=0;$i<=($phi_numCurve -1);$i++)			{				string $phi_attach[] = `attachCurve  -ch 1 -rpo 0 -kmk 1 -m 1 -bb 0.5 -bki 1 -p 0.1 $phi_curveArray[$i] $phi_curveArray_rev[$n]`;				parent $phi_attach[0] $phi_attachGroup;				rename $phi_attach[0] ("phiAttach_" + ($i + 1) );				$n--;			}			select -r $phi_attachGroup;			CenterPivot;			xform -t 0 0 ($phi_locPos[2] * -1 ) $phi_attachGroup;			move -a 0 0 0 ($phi_attachGroup + ".scalePivot")  ($phi_attachGroup + ".rotatePivot");			rename $phi_attachGroup "phi_attach_group";
-
-			setAttr  ("Phi_Curve_Group" + $phi_numCurve + "_rev.rz") ((360 / $phi_numCurve ) + (120 / $phi_numCurve ));
-
-			select -cl;
-			for($i=1;$i<=$phi_numCurve;$i++)			{				select -add ("phiAttach_" + $i);
-				DeleteHistory;			}
-			select -r "Phi_Curve_Group*";			doDelete;
-
-			floatSliderGrp -e -en 1 pt_scaleSlide;		}		else		{			print("need 3D phi curves to attach" + "\n");		}		}
-
-	else
-	{
-		print("--no PHI CURVE GROUP to attach in scene" + "\n");
-		error("--create and attach curves before renaming" + "\n");
-	}
-	select -cl;
-
-	pt_scale();}
-
-//-----------------------------------------
-//CREATE LOCATORS PROC
-//-----------------------------------------
-
-global proc locCreate(){
-
-	select -r phi_attach_group;	$curveArray = `listRelatives -c`;	$curveNum = `size($curveArray)`;	print("number of curves: " + $curveNum + "\n");	$curveSpan = `getAttr phiAttach_1.spans` + 2;	print($curveSpan + "\n");
-
-	select -r phiAttach_1.cv[0];	$cluster_1 = `newCluster " -envelope 1"`;	select -r ("phiAttach_1.cv[" + $curveSpan + "]");	$cluster_2 = `newCluster " -envelope 1"`;	$loc_1 = `spaceLocator -p 0 0 0`;	$loc_2 = `spaceLocator -p 0 0 0`;	select -r $cluster_1[1] $loc_1;	$pntConst_1 = `pointConstraint -offset 0 0 0 -weight 1`;	select -r $cluster_2[1] $loc_2;	$pntConst_2 = `pointConstraint -offset 0 0 0 -weight 1`;
-
-	select -r $pntConst_1 $pntConst_2 $cluster_1 $cluster_2;
-	doDelete;
-
-	setAttr ($loc_1[0] + ".sx") ($curveSpan * 2);
-	setAttr ($loc_1[0] + ".sy") ($curveSpan * 2);
-	setAttr ($loc_1[0] + ".sz") ($curveSpan * 2);
-
-	setAttr ($loc_2[0] + ".sx") ($curveSpan * 2);
-	setAttr ($loc_2[0] + ".sy") ($curveSpan * 2);
-	setAttr ($loc_2[0] + ".sz") ($curveSpan * 2);
-
-	rename $loc_1[0] "phi_placement_loc1";
-	rename $loc_2[0] "phi_placement_loc2";
-}
-
-//-----------------------------------------
-//ATTACH LOCATORS PROC
-//-----------------------------------------
-global proc locAttach(){	if(`objExists phi_attach_group` == 1)	{
-		select -r phi_placement_loc1 phi_placement_loc2;
-		$pt_locPlacement = `ls -sl`;
-		select -r phi_attach_group;		$curveArray = `listRelatives -c`;		$curveNum = `size($curveArray)`;		print("number of curves: " + $curveNum + "\n");		$curveSpan = `getAttr phiAttach_1.spans` + 2;		print($curveSpan + "\n");
-
-//---------------------------------
-//create group above phi curve group 
-//to keep rotation animation working correctly
-//---------------------------------
-
-		select -r phi_attach_group;
-		$phiAttach_group = `group`;
-		xform -os -piv 0 0 0;	
-//--------------------------------------
-//--add cluster to the ends of attached phi curve
-//--point constrain locator to cluster
-//--use xform to get translation coordinates of locators
-//--use translation coordinates to create joint system
-//--------------------------------------
-		select -r phiAttach_1.cv[0];		$cluster_1 = `newCluster " -envelope 1"`;		select -r ("phiAttach_1.cv[" + $curveSpan + "]");		$cluster_2 = `newCluster " -envelope 1"`;		$loc_1 = `spaceLocator -p 0 0 0`;		$loc_2 = `spaceLocator -p 0 0 0`;
-		$loc_3 = `spaceLocator -p 0 0 0`;		select -r $cluster_1[1] $loc_1;		$pntConst_1 = `pointConstraint -offset 0 0 0 -weight 1`;		select -r $cluster_2[1] $loc_2;		$pntConst_2 = `pointConstraint -offset 0 0 0 -weight 1`;		$xformLoc_1 = `xform -q -t $loc_1`;		$xformLoc_2 = `xform -q -t $loc_2`;		select -cl;		$joint1 = `joint -p $xformLoc_1[0] $xformLoc_1[1] $xformLoc_1[2]`;		$joint2 = `joint -p $xformLoc_2[0] $xformLoc_2[1] $xformLoc_2[2]`;		escapeCurrentTool;
-
-//-------------------------------------------
-//end of joint system creation
-//--------------------------------------------
-
-		select -r $joint2 $loc_3;		$pntConst_3 = `pointConstraint -offset 0 0 0 -weight 1`;		select -r $cluster_1[0] $cluster_2[0] $loc_1 $loc_2;		doDelete;
-
-//---------------------------------------------
-//--create 2 distance utility nodes
-//--connect phi_placement locators to distance1
-//--connect phi_placement_loc1 and locator_3 to distance2
-//--distances will be divided to find scale of joint1
-//---------------------------------------------
-
-		$distance1 = `shadingNode -asUtility distanceBetween`;
-		$distance2 = `shadingNode -asUtility distanceBetween`;
-
-		connectAttr phi_placement_loc1.translate ($distance1 + ".point1");
-		connectAttr phi_placement_loc2.translate ($distance1 + ".point2");
-
-		connectAttr phi_placement_loc1.translate ($distance2 + ".point1");
-		connectAttr ($loc_3[0] + ".translate") ($distance2 + ".point2");
-
-//-----------------------------------------------
-//constraints to translate rotate and scale phi curve group
-//-----------------------------------------------
-
-		select -r $joint1 $phiAttach_group;
-		$phi_Parent = `parentConstraint -mo -weight 1`;
-		$phi_Scale = `scaleConstraint -offset 1 1 1 -weight 1`;
-
-		select -r $pt_locPlacement[1] $joint1;
-		$pt_aimConst = `aimConstraint -offset 0 0 0 -weight 1 -aimVector 0 0 1 -upVector 0 1 0 -worldUpType "vector" -worldUpVector 0 1 0`;
-
-		print($pt_locPlacement);
-
-		$joint1_place = `xform -q -t $pt_locPlacement[0]`;
-		xform -t $joint1_place[0] $joint1_place[1] $joint1_place[2] $joint1;
-
-//-------------------------------------------------
-//find distances and divide them to get scaleZ value of joint1
-//-------------------------------------------------
-
-		$disVal1 = `getAttr ($distance1 + ".distance")`;
-		print($disVal1 + "\n");
-
-		float $disVal2 = `getAttr ($distance2 + ".distance")`;
-		print($disVal2 + "\n");
-
-		$jointScale = $disVal1 / $disVal2;
-		setAttr ($joint1 + ".sz") $jointScale;
-
-		rename $phiAttach_group "phi_attach_constraint_group";
-
-		select -r $pt_aimConst $phi_Parent $phi_Scale phi_placement_loc1 phi_placement_loc2 $joint1 $loc_3;
-		doDelete;	}}
-
-//-----------------------------------------
-//change scale of curves
-//-----------------------------------------
-
-global proc pt_scale()
-{
-	if(`objExists phi_attach_group` == 1 )
-	{
-		select -r phi_attach_group;		$curveArray = `listRelatives -c`;		$curveNum = `size($curveArray)`;		float $scaleINPT = `floatSliderGrp -q -v pt_scaleSlide`;
-		for($i=1;$i<=$curveNum;$i++)		{
-			$pt_scale = `pow $scaleINPT ($i-1)`;
-			setAttr("phiAttach_" + $i + ".sx") $pt_scale;			setAttr("phiAttach_" + $i  + ".sy") $pt_scale;		}
-	}
-	else
-	{
-		print("adjust scale before renaming" + "\n");
-	}
-}
-
-//-----------------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------
-//--------------pt_mirrorCheck() and pt_mirrorFinish()
-
-proc pt_mirrorFinish(int $phiGrpNum)
-{
-	$numOfCurveGrp = `listRelatives -c ("phiCurveGrp_" + $phiGrpNum)`;
-	string $curveList[];
-	string $curveGrp[];
-	string $instList[];
-
-	for($i=0;$i<`size($numOfCurveGrp)`;$i++)
-	{
-		clear($instList);
-		$grp = "_A";
-		if($i==1) $grp = "_B";
-
-		$curveGrp = `listRelatives -c ("phiCurve_grp_" + $phiGrpNum + $grp)`;
-		for($a=0;$a<`size($curveGrp)`;$a++)
-		{
-			select -r $curveGrp[$a];
-			$inst = `instance`;
-			rename $inst[0] ("phiCurveInst_" + $phiGrpNum + $grp + "_" + ($a+1));
-			$instList[ `size($instList)` ] = ("phiCurveInst_" + $phiGrpNum + $grp + "_" + ($a+1));
-		}
-
-		select -cl;
-		for($b=0;$b<`size($instList)`;$b++)
-		{
-			select -add $instList[$b];
-		}
-
-		$instGrp = `group`;
-		xform -os -piv 0 0 0;
-		parent $instGrp ("phiCurveGrp_" + $phiGrpNum);
-		rename $instGrp ("phiInstGrp_" + $phiGrpNum + $grp);
-		expression -s ("phiInstGrp_" + $phiGrpNum + $grp + ".rz = phiCurve_grp_" + $phiGrpNum + $grp + ".rz * -1\;");
-
-		if(!objExists ("phiInstGrp_" + $phiGrpNum))
-		{
-			$newGrp = `group -em`;
-			xform -os -piv 0 0 0;
-			parent $newGrp ("phiCurveGrp_" + $phiGrpNum);
-			rename $newGrp ("phiInstGrp_" + $phiGrpNum);
-		}
-		
-		parent ("phiInstGrp_" + $phiGrpNum + $grp) ("phiInstGrp_" + $phiGrpNum);
-	}
-	xform -s 1 1 -1 ("phiInstGrp_" + $phiGrpNum);
-	
-}
-
-global proc pt_mirrorCheck()
-{
-	$editModeCheck = `radioButtonGrp -q -sl pt_editRadio`;
-	$mirrorCheck = `checkBoxGrp -q -v1 ptMirrorCheck`;
-	string $phiArray[];
-	int $phiGrpNum;
-
-	if($editModeCheck == 1 && $mirrorCheck == 1)
-	{
-		int $phiGrp[] = `textScrollList -q -sii pt_textList`;
-		$phiGrpNum = $phiGrp[0];
-		
-		if($phiGrpNum !=0)
-		{
-			pt_mirrorFinish($phiGrpNum);
-		}
-	}
-	if($editModeCheck == 2 && $mirrorCheck == 1)
-	{
-		//-----------------------------------------------------------------
-		//-------this was reused from phi_grpCreateNum()
-		//-------could be cleaned up
-
-		if(`objExists phiCurve_Grp` == 1)
-		{
-			$phiArray = `listRelatives -c phiCurve_Grp`;
-			$phiGrpNum = `size($phiArray)`;
-		}
-
-		if(objExists ("phiCurveGrp_" + $phiGrpNum) == 1 && !objExists ("phiInstGrp_" + $phiGrpNum)) 
-		{
-			pt_mirrorFinish($phiGrpNum);
-		}
-
-		//-----------------------------------------------------------------
-		//-----------------------------------------------------------------
-	}
-	else if($editModeCheck == 1 && $mirrorCheck == 0)
-	{
-		int $phiGrp[] = `textScrollList -q -sii pt_textList`;
-		$phiGrpNum = $phiGrp[0];
-
-		if(objExists ("phiInstGrp_" + $phiGrpNum))
-		{
-			delete ("phiInstGrp_" + $phiGrpNum);
-		}
-	}
-}
