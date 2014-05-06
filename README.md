@@ -1,5 +1,5 @@
-CosmicGeometryToolkit by liquidbuddha.studios
-============================================
+Cosmic Geometry Toolkit by liquidbuddha.studios
+===============================================
 
 Visual effects toolkit for Autodesk Maya, enabling fast creation of toroidal evolutionary wavefronts, phi-spirals, flower of life patters, jitterbugging vector equlibrium, geometric primatives, and more.  The toolkit is available in two flavors, the minikit and full-kit.
 
