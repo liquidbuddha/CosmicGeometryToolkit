@@ -1,0 +1,548 @@
+string $lbs_phi = `formLayout 
+		-nd 100 phiForm`;
+
+$pt_intSld_01 = `floatSliderGrp 
+	-label "Start Node"
+	-ann "what node to begin the phi-curve"
+	-field true
+	-v 0
+	-min 0
+	-max 24	 
+	-step 1
+	-pre 3
+	-cc "phiUpdate"
+	fldSNode`;
+
+$pt_intSld_02 = `floatSliderGrp 
+	-label "Pivot Node"
+	-ann "node to pivot around, to create vortex"
+	-field true
+	-value 0
+	-min 0 
+	-max 24	 
+	-step 1
+	-pre 3
+	-cc "phiUpdate"
+	fldPNode`;
+
+$pt_intSld_03 = `intSliderGrp 
+	-label "Depth of curve"
+	-ann "how many segments to the phi-spiral"
+	-field true
+	-v 14
+	-min 1 
+	-max 24	 
+	-step 1
+	-cc "phiUpdate"
+	fldNumTurns`;
+
+$pt_intSld_04 = `intSliderGrp 
+	-label "Number of Curves"
+	-ann "how many curves in the matrix"
+	-field true
+	-v 12
+	-min 1 
+	-max 360	 
+	-step 1
+	-cc "phiUpdate"
+	fldNumCurves`;
+
+$pt_radioButton_01 = `radioButtonGrp 
+	-numberOfRadioButtons 2
+    	-label "Type of Build" -labelArray2 "Curve" "Matirx"
+	-sl 2
+	-cc "phiUpdate"
+	-en 0	
+	phiType`;
+
+$pt_radioButton_02 = `radioButtonGrp 
+	-numberOfRadioButtons 2
+    	-label "Type of Spiral" -labelArray2 "Vortex" "Flat"
+	-sl 1
+	-cc "phiUpdate"
+	spiralType`;
+
+$pt_radioButton_03 = `radioButtonGrp 
+	-numberOfRadioButtons 2
+    	-label "Matrix Type" -labelArray2 "half" "full"
+	-sl 2
+	-cc "phiUpdate"
+	matrixType`;
+
+$pt_mirrorCheck = `checkBoxGrp
+	-en 1
+	-label "Mirror Vortex: "
+	-cc "pt_mirrorCheck()"
+	ptMirrorCheck`;
+	
+$pt_checkBox_01 = `checkBoxGrp
+	-en 1
+	-label "Animate Rotation: "
+	-cc "pt_animCheckBox()"
+	ptAnimCheck`;
+
+$pt_radioButton_04 = `radioButtonGrp
+	-nrb 2
+	-l1 "expanding"
+	-l2 "contracting"
+	-sl 1
+	-en 0
+	-on1 "pt_animRot"
+	-on2 "pt_animRot"
+	ptAnimType`;
+
+$pt_intSld_05 = `intSliderGrp
+	-l "Animation Cycle:"
+	-f 1
+	-v 100
+	-min 10
+	-max 100000
+	-step 1
+	-en 0
+	-cc "pt_animRot"
+	ptAnimCycle`;
+
+$pt_button_01 = `button 
+	-w 150 
+	-label "init a newScene"
+	-command "file -f -new;playbackOptions -e -min 1.00 -max 100;"
+	pt_newSceneButton`;
+
+$pt_button_02 = `button 	
+	-label "create Phi-Cuve(s)"
+	-command "phi_grpCreateNum" 
+	-w 150
+	phiCurveButton`;
+
+$pt_button_03 = `button 
+	-w 150 
+	-en 0
+	-l "attach Vortex curves"	
+	-command "phi_3dAttach()"
+	ptAttachButton`;
+
+$pt_button_04 = `button 
+	-w 150 
+	-en 0
+	-l "attach to locators"
+	-command "locAttach()"
+	ptLocAttachButton`;
+
+$pt_button_05 = `button 
+	-w 150 
+	-en 0
+	-l "create locators"
+	-command "locCreate()"
+	ptLocCreateButton`;
+
+$pt_floatSld_1 = `floatSliderGrp
+	-l "curve scale:"
+	-f 1
+	-v 1
+	-en 0
+	-min 0.5
+	-max 1.25
+	-step .001
+	-cc "pt_scale()"
+	pt_scaleSlide`;
+
+$pt_radioButton_1 = `radioButtonGrp
+	-numberOfRadioButtons 2
+	-label "Mode"
+	-labelArray2 "Edit" "Create"
+	-sl 2
+	-onc "pt_editCheck"
+	pt_editRadio`;
+
+$pt_textList = `textScrollList 
+	-w 290  
+	-h 180 
+	-sc "pt_editTextList"
+	-fn "obliqueLabelFont"
+	pt_textList`;
+
+string $pt_JBcheck = `checkBoxGrp
+	-l "connect to jitterbug"
+	-v1 0
+	-en 0
+	-cw2 110 60
+	-cc "pt_jbExp"
+	pt_JBcheck`;
+
+string $pt_connCheck = `checkBoxGrp
+	-l "Phi Conn"
+	-v1 0
+	-en 1
+	-cw2 70 40
+	-cc "pt_conn"
+	pt_connCheck`;
+
+$pt_jbRadio = `radioButtonGrp
+	-nrb 2
+	-vis 0
+	-cw3 150 75 75
+	-l "Phi Placement: "
+	-labelArray2 "unit" "face"
+	-sl 1
+	pt_jbRadio`;
+
+$pt_JBtextList = `textScrollList 
+	-w 127  
+	-h 480 
+	-vis 0
+	-sc "pt_shellPopulate"
+	-fn "obliqueLabelFont"
+	phi_JBList`;
+
+$pt_shellTextList = `textScrollList 
+	-w 155  
+	-h 480 
+	-vis 0
+	-ams 1
+	-fn "obliqueLabelFont"
+	phi_shellList`;
+
+$pt_jbConnectButton = `button
+	-label "connect to jitterbug"
+	-w 200
+	-vis 0
+	-command "pt_connectJB"
+	pt_jbConn`;
+
+$pt_jbDisconnectButton = `button
+	-label "disconnect jitterbug"
+	-w 200
+	-vis 0
+	-command "pt_disconnectJB"
+	pt_jbDis`;
+
+//-----------------------------------------------
+//layout of PHI TOOLKIT UI elements
+//-----------------------------------------------
+
+formLayout -edit
+
+	-attachForm $pt_intSld_01 "top" 45	
+	-attachForm $pt_intSld_01 "left" 20	
+	-attachNone $pt_intSld_01 "bottom"
+	-attachNone $pt_intSld_01 "right"
+
+	-attachForm $pt_JBcheck "top" 5
+	-attachForm $pt_JBcheck "left" 325
+	-attachNone $pt_JBcheck "bottom" 
+	-attachNone $pt_JBcheck "right" 
+
+	-attachForm $pt_connCheck "top" 5
+	-attachForm $pt_connCheck "left" 5
+	-attachNone $pt_connCheck "bottom" 
+	-attachNone $pt_connCheck "right"
+
+	-attachControl $pt_intSld_02 "top" 5 $pt_intSld_01	
+	-attachForm $pt_intSld_02 "left" 20
+	-attachNone $pt_intSld_02 "bottom"
+	-attachNone $pt_intSld_02 "right"
+
+	-attachControl $pt_intSld_03 "top" 5 $pt_intSld_02	
+	-attachForm $pt_intSld_03 "left" 20
+	-attachNone $pt_intSld_03 "bottom"
+	-attachNone $pt_intSld_03 "right"
+
+	-attachControl $pt_intSld_04 "top" 5 $pt_intSld_03	
+	-attachForm $pt_intSld_04 "left" 20
+	-attachNone $pt_intSld_04 "bottom"
+	-attachNone $pt_intSld_04 "right"
+
+	-attachControl $pt_radioButton_01 "top" 5 $pt_intSld_04
+	-attachForm $pt_radioButton_01 "left" 20
+	-attachNone $pt_radioButton_01 "bottom"
+	-attachNone $pt_radioButton_01 "right"
+
+	-attachControl $pt_radioButton_02 "top" 5 $pt_radioButton_01
+	-attachForm $pt_radioButton_02 "left" 20
+	-attachNone $pt_radioButton_02 "bottom"
+	-attachNone $pt_radioButton_02 "right"
+
+	-attachControl $pt_mirrorCheck "top" 5 $pt_radioButton_02
+	-attachForm $pt_mirrorCheck "left" 30
+	-attachNone $pt_mirrorCheck "bottom"
+	-attachNone $pt_mirrorCheck "right"
+
+	-attachControl $pt_radioButton_03 "top" 15 $pt_mirrorCheck
+	-attachForm $pt_radioButton_03 "left" 20
+	-attachNone $pt_radioButton_03 "bottom"
+	-attachNone $pt_radioButton_03 "right"
+
+	-attachControl $pt_checkBox_01 "top" 5 $pt_radioButton_03
+	-attachForm $pt_checkBox_01 "left" 25
+	-attachNone $pt_checkBox_01 "bottom"
+	-attachNone $pt_checkBox_01 "right"
+
+	-attachControl $pt_radioButton_04 "top" 5 $pt_checkBox_01
+	-attachForm $pt_radioButton_04 "left" 125
+	-attachNone $pt_radioButton_04 "bottom"
+	-attachNone $pt_radioButton_04 "right"
+
+	-attachControl $pt_intSld_05 "top" 20 $pt_radioButton_04
+	-attachForm $pt_intSld_05 "left" 20
+	-attachNone $pt_intSld_05 "bottom"
+	-attachNone $pt_intSld_05 "right"
+
+	-attachControl $pt_button_02 "top" 25 $pt_intSld_05
+	-attachForm $pt_button_02 "left" 70
+	-attachNone $pt_button_02 "bottom"
+	-attachNone $pt_button_02 "right"
+
+	-attachControl $pt_button_03 "top" 25 $pt_intSld_05
+	-attachForm $pt_button_03 "left" 230
+	-attachNone $pt_button_03 "bottom"
+	-attachNone $pt_button_03 "right"
+
+	-attachControl $pt_button_05 "top" 8 $pt_button_02
+	-attachForm $pt_button_05 "left" 70
+	-attachNone $pt_button_05 "bottom"
+	-attachNone $pt_button_05 "right"
+
+	-attachControl $pt_button_04 "top" 8 $pt_button_02
+	-attachForm $pt_button_04 "left" 230
+	-attachNone $pt_button_04 "bottom"
+	-attachNone $pt_button_04 "right"
+
+	-attachControl $pt_button_01 "top" 8 $pt_button_04
+	-attachForm $pt_button_01 "left" 230
+	-attachNone $pt_button_01 "bottom"
+	-attachNone $pt_button_01 "right"
+
+	-attachControl $pt_floatSld_1 "top" 25 $pt_button_01
+	-attachForm $pt_floatSld_1 "left" 20
+	-attachNone $pt_floatSld_1 "bottom"
+	-attachNone $pt_floatSld_1 "right"
+
+	-attachControl $pt_radioButton_1 "top" 15 $pt_floatSld_1
+	-attachForm $pt_radioButton_1 "left" 30
+	-attachNone $pt_radioButton_1 "bottom" 
+	-attachNone $pt_radioButton_1 "right" 
+
+	-attachControl $pt_textList "top" 5 $pt_radioButton_1
+	-attachForm $pt_textList "left" 95
+	-attachNone $pt_textList "bottom"
+	-attachNone $pt_textList "right"
+
+	-attachForm $pt_jbRadio "top" 35 
+	-attachForm $pt_jbRadio "left" 0
+	-attachNone $pt_jbRadio "bottom" 
+	-attachNone $pt_jbRadio "right"
+
+	-attachForm $pt_JBtextList "top" 60 
+	-attachForm $pt_JBtextList "left" 0
+	-attachNone $pt_JBtextList "bottom" 
+	-attachNone $pt_JBtextList "right"	 
+
+	-attachForm $pt_shellTextList "top" 60 
+	-attachControl $pt_shellTextList "left" 10 $pt_JBtextList
+	-attachNone $pt_shellTextList "bottom" 
+	-attachNone $pt_shellTextList "right" 
+
+	-attachControl $pt_jbConnectButton "top" 30 $pt_JBtextList
+	-attachControl $pt_jbConnectButton "left" -115 $pt_JBtextList
+	-attachNone $pt_jbConnectButton "bottom" 
+	-attachNone $pt_jbConnectButton "right" 
+
+	-attachControl $pt_jbDisconnectButton "top" 10 $pt_jbConnectButton
+	-attachControl $pt_jbDisconnectButton "left" -115 $pt_JBtextList
+	-attachNone $pt_jbDisconnectButton "bottom" 
+	-attachNone $pt_jbDisconnectButton "right" 
+
+$lbs_phi;
+
+//-----------------------------------------------
+//-----------------------------------------------
+//PHI SPIRAL PROC
+//-----------------------------------------------
+//-----------------------------------------------
+
+global proc CallPhiProc () {
+
+	int $nCurves	= `intSliderGrp -query -v fldNumCurves `;
+	int $sNode 	= `floatSliderGrp -query -v fldSNode `;
+	int $pNode 	= `floatSliderGrp -query -v fldPNode `;
+	int $pDepth 	= `intSliderGrp -query -v fldNumTurns `;
+
+	int $phiType	= `radioButtonGrp -query -sl phiType`;
+	int $spiralType	= `radioButtonGrp -query -sl spiralType`;
+	int $matrixType	= `radioButtonGrp -query -sl matrixType`;
+		$matrixType --;
+
+	$ptAnim = `checkBoxGrp -q -v1 ptAnimCheck`;
+
+if ( $phiType == 1) {
+	// Phi CURVE ONLY
+	if ( $spiralType == 1){
+		// Phi Curve
+		phi_curve ($sNode, $pNode, $pDepth );  
+	} else {
+		// phi_curve flat
+		phi_curve_flat ($sNode, $pNode, $pDepth );  
+	}
+} else if ( $phiType == 2) {
+	// Phi MATRIX
+	if ( $spiralType ==1){
+		phi_matrix 	($nCurves, $sNode,  $pNode, $pDepth, $matrixType )  ;
+	} else {
+		phi_matrix_flat 	($nCurves, $sNode,  $pNode, $pDepth, $matrixType )  ;
+	}
+} 
+
+if($ptAnim == 1)
+{
+	pt_animRot();
+}
+
+select -cl;
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//PHI TOOLKIT TEXT LIST PROC
+//-----------------------------------------------
+//-----------------------------------------------
+
+global proc pt_textListCheck()
+{
+	if(`objExists phiCurve_Grp` == 1)	{		$phiArray = `listRelatives -c phiCurve_Grp`;		$phiNum = `size($phiArray)`;		textScrollList -e -ra pt_textList;		for($i=1;$i<=$phiNum;$i++)		{			textScrollList -e -append ("  ----       " + "Phi " + $i + "                        --------") pt_textList;		}
+	}
+	else
+	{
+		textScrollList -e -ra pt_textList;
+	}
+}
+
+global proc testJB()
+{
+	tabLayout -e -st jitterbugForm winTab;
+
+	intSliderGrp -e -v 3 JB_fldInstances;
+	jb_creationOptions;
+
+	intSliderGrp -e -v 2 JB_fldInstances;
+	jb_creationOptions;
+
+	tabLayout -e -st torusToolkitForm winTab;
+
+	float $tRad = `floatFieldGrp -query -v1 torusSpecGrp`;
+	float $tHR = `floatFieldGrp -query -v2 torusSpecGrp`;
+	int $loops = `intSliderGrp -query -v fldLoops`;
+	float $dRot = `floatSliderGrp -query -v fldRot`;
+	int $Cycle = `intSliderGrp -query -v fldCycle`;
+	float $sz = `floatSliderGrp -query -v fldSize`;
+
+	evoCurve ($tRad, $tHR, $loops, $dRot, $Cycle);
+
+	textScrollList -e -sii 1 torus_textList;
+}
+
+global proc pt_conn()
+{
+	$ptConn = `checkBoxGrp -q -v1 pt_connCheck`;
+
+	if($ptConn == 0)
+	{
+		checkBoxGrp -e -v1 0 pt_JBcheck;
+	 	window -e -h 820 -w 480 lbs_scriptsWindow;
+		tabLayout -e -h 820 -w 480 winTab;
+
+		floatSliderGrp -e -vis 1 fldSNode;
+		floatSliderGrp -e -vis 1 fldPNode;
+		intSliderGrp -e -vis 1 fldNumTurns;
+		intSliderGrp -e -vis 1 fldNumCurves;
+		radioButtonGrp -e -vis 1 phiType;
+		radioButtonGrp -e -vis 1 spiralType;
+		radioButtonGrp -e -vis 1 matrixType;
+		checkBoxGrp -e -vis 1 ptMirrorCheck;
+		checkBoxGrp -e -vis 1 ptAnimCheck;
+		radioButtonGrp -e -vis 1 ptAnimType;
+		intSliderGrp -e -vis 1 ptAnimCycle;
+		button -e -vis 1 pt_newSceneButton;
+		button -e -vis 1 phiCurveButton;
+		button -e -vis 1 ptAttachButton;
+		button -e -vis 1 ptLocAttachButton;
+		button -e -vis 1 ptLocCreateButton;
+		floatSliderGrp -e -vis 1 pt_scaleSlide;
+		radioButtonGrp -e -vis 1 pt_editRadio;
+		textScrollList -e -vis 1 pt_textList;
+		checkBoxGrp -e -vis 1 pt_JBcheck;
+		radioButtonGrp -e -vis 0 pt_jbRadio;
+		textScrollList -e -vis 0 phi_JBList;
+		textScrollList -e -vis 0 phi_shellList;
+		button	-e -vis 0 pt_jbConn;
+		button	-e -vis 0 pt_jbDis;
+
+		intSliderGrp -e -vis 0 conn_fldSNode;
+		intSliderGrp -e -vis 0 conn_fldPNode;
+		intSliderGrp -e -vis 0 conn_fldNumTurns;
+		intSliderGrp -e -vis 0 conn_fldNumCurves;
+		radioButtonGrp -e -vis 0 conn_phiType;
+		radioButtonGrp -e -vis 0 conn_spiralType;
+		radioButtonGrp -e -vis 0 conn_matrixType;
+		checkBoxGrp -e -vis 0 conn_ptAnimCheck;
+		radioButtonGrp -e -vis 0 conn_animType;
+		intSliderGrp -e -vis 0 conn_fldAnimCycle;
+		button -e -vis 0 conn_newSceneButton;
+		button	-e -vis 0 conn_phiCurveButton;
+		button	-e -vis 0 conn_ptAttachButton;
+		button -e -vis 0 conn_ptLocAttachButton;
+		button -e -vis 0 conn_ptLocCreateButton;
+		floatSliderGrp -e -vis 0 conn_scaleSlide;
+		textFieldGrp -e -vis 0 conn_reName;	
+	}
+
+	else if($ptConn == 1)
+	{
+		checkBoxGrp -e -v1 0 pt_JBcheck;
+	 	window -e -h 820 -w 480 lbs_scriptsWindow;
+		tabLayout -e -h 820 -w 480 winTab;
+
+		floatSliderGrp -e -vis 0 fldSNode;
+		floatSliderGrp -e -vis 0 fldPNode;
+		intSliderGrp -e -vis 0 fldNumTurns;
+		intSliderGrp -e -vis 0 fldNumCurves;
+		radioButtonGrp -e -vis 0 phiType;
+		radioButtonGrp -e -vis 0 spiralType;
+		radioButtonGrp -e -vis 0 matrixType;
+		checkBoxGrp -e -vis 0 ptMirrorCheck;
+		checkBoxGrp -e -vis 0 ptAnimCheck;
+		radioButtonGrp -e -vis 0 ptAnimType;
+		intSliderGrp -e -vis 0 ptAnimCycle;
+		button -e -vis 0 pt_newSceneButton;
+		button -e -vis 0 phiCurveButton;
+		button -e -vis 0 ptAttachButton;
+		button -e -vis 0 ptLocAttachButton;
+		button -e -vis 0 ptLocCreateButton;
+		floatSliderGrp -e -vis 0 pt_scaleSlide;
+		radioButtonGrp -e -vis 0 pt_editRadio;
+		textScrollList -e -vis 0 pt_textList;
+		checkBoxGrp -e -vis 0 pt_JBcheck;
+		radioButtonGrp -e -vis 0 pt_jbRadio;
+		textScrollList -e -vis 0 phi_JBList;
+		textScrollList -e -vis 0 phi_shellList;
+		button	-e -vis 0 pt_jbConn;
+		button	-e -vis 0 pt_jbDis;
+
+		intSliderGrp -e -vis 1 conn_fldSNode;
+		intSliderGrp -e -vis 1 conn_fldPNode;
+		intSliderGrp -e -vis 1 conn_fldNumTurns;
+		intSliderGrp -e -vis 1 conn_fldNumCurves;
+		radioButtonGrp -e -vis 1 conn_phiType;
+		radioButtonGrp -e -vis 1 conn_spiralType;
+		radioButtonGrp -e -vis 1 conn_matrixType;
+		checkBoxGrp -e -vis 1 conn_ptAnimCheck;
+		radioButtonGrp -e -vis 1 conn_animType;
+		intSliderGrp -e -vis 1 conn_fldAnimCycle;
+		button -e -vis 1 conn_newSceneButton;
+		button	-e -vis 1 conn_phiCurveButton;
+		button	-e -vis 1 conn_ptAttachButton;
+		button -e -vis 1 conn_ptLocAttachButton;
+		button -e -vis 1 conn_ptLocCreateButton;
+		floatSliderGrp -e -vis 1 conn_scaleSlide;
+		textFieldGrp -e -vis 1 conn_reName;
+	}
+}

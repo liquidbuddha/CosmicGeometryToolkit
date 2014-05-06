@@ -1,0 +1,680 @@
+proc geo_textListUpdate()
+{
+	string $grpArrayA[];
+	string $grpArrayB[];
+	string $grpArrayList[];
+
+	textScrollList -e -ra geo_textList;
+
+	if(`objExists geo_Grp`)
+	{
+		$grpArrayA = `listRelatives -c geo_Grp`;
+		for($a=0;$a<`size($grpArrayA)`;$a++)
+		{
+			$grpArrayB = `listRelatives -c $grpArrayA[$a]`;
+			for($b=0;$b<`size($grpArrayB)`;$b++)
+			{
+				$grpArrayList[ `size($grpArrayList)` ] = $grpArrayB[$b];
+			}
+		}
+
+		for($c=0;$c<`size($grpArrayList)`;$c++)
+		{
+			textScrollList -e -append $grpArrayList[$c] geo_textList;
+		}
+	}
+}
+global proc geo_textListCheck()
+{
+	geo_textListUpdate;
+}
+
+proc geo_grpReorder()
+{
+	$array = `listRelatives -c geo_Grp`;	$arraySize = `size($array)`;
+	string $extName;
+	string $array2[];
+	string $extList[];
+	string $array3[];	for($i=1;$i<=$arraySize;$i++)	{
+		if($array[($i-1)] == "Tet_Grp")
+		{
+			$extName = "Tet_";
+		}
+		if($array[($i-1)] == "TetDual_Grp")
+		{
+			$extName = "TetDual_";
+		}
+		if($array[($i-1)] == "Cube_Grp")
+		{
+			$extName = "Cube_";
+		}
+		if($array[($i-1)] == "Octa_Grp")
+		{
+			$extName = "Octa_";
+		}
+		if($array[($i-1)] == "Icosa_Grp")
+		{
+			$extName = "Icosa_";
+		}
+		if($array[($i-1)] == "Dodeca_Grp")
+		{
+			$extName = "Dodeca_";
+		}
+		if($array[($i-1)] == "VE_Grp")
+		{
+			$extName = "VE_";
+		}
+		if($array[($i-1)] == "Rhombic_Grp")
+		{
+			$extName = "Rhombic_";
+		}
+
+		$array2 = `listRelatives -c $array[($i-1)]`;
+		for($a=1;$a<=`size($array2)`;$a++)
+		{
+			if(`objExists ($extName + "extGrp_" + $a)`)
+			{
+				$extList[ `size($extList)` ] = $a;
+			}
+			while( $array2[ ($a-1) ] != ($extName + "grp_" + $a))			{				reorder -relative -1 ($extName + "grp_" + $a);				$array2 = `listRelatives -c $array[($i-1)]`;			}
+		}
+	
+		if(`objExists ($extName + "extGrp")`)
+		{
+			$array3 = `listRelatives -c ($extName + "extGrp")`;
+			for($a=1;$a<=`size($extList)`;$a++)
+			{
+				while( $array3[ ($a-1) ] != ($extName + "extGrp_" + $extList[ ($a-1) ]))				{					reorder -relative -1 ($extName + "extGrp_" + $extList[ ($a-1) ]);					$array3 = `listRelatives -c ($extName + "extGrp")`;				}
+			}
+		}
+		clear $array2 $array3 $extList;	}
+	clear $array;
+}
+
+proc createGeo ( float $coordsX[], float $coordsY[], float $coordsZ[], string $geoName, int $curveOrder[], float $geoScale, int $grpNum )
+{
+	int $vertArray[];
+	float $geoScaleSld = `floatSliderGrp -q -v geoScaleSld`;
+	$geoScale *= $geoScaleSld;
+	string $grpArray[];
+
+	if(!`objExists geo_Grp`)
+	{
+		$grpTop = `group -em`;
+		rename $grpTop geo_Grp;
+	}
+	if(!`objExists ($geoName + "Grp")`)
+	{
+		$geoGrpTop = `group -em`;
+		parent $geoGrpTop geo_Grp;
+		rename $geoGrpTop ($geoName + "Grp");
+	}
+
+	if($grpNum == 0)
+	{
+		$grpArray = `listRelatives -c ($geoName + "Grp")`;
+		$grpNum = `size($grpArray)` + 1;
+	}
+
+	$grpA = `group -em`;
+	addAttr -ln "geoScale" -at double -dv $geoScaleSld $grpA;
+	setAttr -e -keyable true ($grpA + ".geoScale");
+
+	$grpB = `group -em`;
+	parent $grpB $grpA;
+	parent $grpA ($geoName + "Grp");
+
+	for($a=0;$a<`size($coordsX)`;$a++)
+	{
+		$loc = `spaceLocator -p 0 0 0`;
+		move -r ($coordsX[$a]*$geoScale) ($coordsY[$a]*$geoScale) ($coordsZ[$a]*$geoScale);
+		scale -r 0.1 0.1 0.1;
+		parent $loc $grpB;
+		rename $loc ($geoName + "loc_" + $grpNum + "_" + ($a + 1));
+	}
+
+	$nameNum = 1;
+	$grpC = `group -em`;
+	parent $grpC $grpA;
+
+	for($b=0;$b<`size($curveOrder)`;$b++)
+	{
+		$curve = `curve -d 1 -p ($coordsX[ $curveOrder[$b] ]*$geoScale) ($coordsY[ $curveOrder[$b] ]*$geoScale) ($coordsZ[ $curveOrder[$b] ]*$geoScale) 
+			-p ($coordsX[ $curveOrder[($b+1)] ]*$geoScale) ($coordsY[ $curveOrder[($b+1)] ]*$geoScale) ($coordsZ[ $curveOrder[($b+1)] ]*$geoScale) -k 0 -k 1 `;
+
+		parent $curve $grpC;
+		rename $curve ($geoName + "curve_" + $grpNum + "_" + $nameNum);
+
+		$b++;
+		$nameNum++;
+	}
+
+	rename $grpC ($geoName + "Curve_grp_" + $grpNum);
+	rename $grpB ($geoName + "Loc_grp_" + $grpNum);
+	rename $grpA ($geoName + "grp_" + $grpNum);
+
+	geo_grpReorder;
+	geo_textListUpdate();
+}
+
+proc string[] geo_circCreate(float $r, int $curveType)
+{
+	string $geo_curve[];
+	string $circCurve[];
+	int $nSide;
+
+	//------------------$curveType
+	//----------------- 1 == nurbsCircle : 2 == CV curve
+
+	if($curveType == 1)
+	{
+		$geo_curve = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $r -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+		return $geo_curve;
+	}
+
+	if($curveType == 2)
+	{
+		$nSide = `intSliderGrp -q -v geo_extSideSlider`;
+
+		float $nSideFloat = $nSide;
+		float $locRot = 360/$nSideFloat;
+			
+		float $curvePointsX[];
+		float $curvePointsY[];
+		float $curvePointsZ[];
+
+		$loc = `spaceLocator -p 0 0 0`;
+		xform -t 0 0 $r $loc[0];
+
+		$locGrp = `group -em`;
+		xform -os -piv 0 0 0;
+
+		parent $loc[0] $locGrp;
+	
+		if(size($curvePointsX) != $nSide)
+		{
+			for($a=0;$a<$nSide;$a++)
+			{
+				setAttr ($locGrp + ".ry") ($locRot*$a); 
+				parent -world $loc[0];
+    
+				$curvePointsX[$a] = `getAttr ($loc[0] + ".tx")`;
+				$curvePointsY[$a] = `getAttr ($loc[0] + ".ty")`;
+				$curvePointsZ[$a] = `getAttr ($loc[0] + ".tz")`;   
+    		
+				parent $loc[0] $locGrp; 
+			}
+		}
+
+		$circCurve[0] = `curve -d 1 -p $curvePointsX[0] $curvePointsY[0] $curvePointsZ[0]` ;
+		for($b=1;$b<$nSide;$b++)
+		{
+			curve -a -p $curvePointsX[$b] $curvePointsY[$b] $curvePointsZ[$b] $circCurve[0];
+		}
+		curve -a -p $curvePointsX[0] $curvePointsY[0] $curvePointsZ[0] $circCurve[0];
+
+		delete $locGrp;
+
+		addAttr -ln "radius" -at double -dv $r $circCurve[0];
+		setAttr -e -keyable true ($circCurve[0] + ".radius");
+
+		$circCurve[1] = $circCurve[0];
+
+		return $circCurve;
+
+		clear $geo_curve $circCurve;
+	}
+
+}
+
+global proc geo_editTextList()
+{
+	string $geoSel[] = `textScrollList -q -si geo_textList`;
+	$geoScale = `getAttr ($geoSel[0] + ".geoScale")`;
+	floatSliderGrp -e -v $geoScale geoScaleSld;
+
+	float $r = 0;
+
+	$grpSel = `listRelatives -c $geoSel[0]`;
+	if(`size($grpSel)` > 2)
+	{
+		checkBoxGrp -e -v1 1 geo_extCheck;
+		if(`objExists ($grpSel[2] + ".radius")`)
+		{
+			$r = getAttr ($grpSel[2] + ".radius");
+		}
+		else
+		{
+			select -r $grpSel[2];
+			pickWalk -d down;
+			$shape = `ls -sl`;
+			$makeCurve = `listConnections $shape[0]`;
+			$r = getAttr ($makeCurve[0] + ".radius");
+		}
+		floatSliderGrp -e -v $r -en 1 geo_extRadius;
+		radioButtonGrp -e -en 1 geo_extRadio;
+		intSliderGrp -e -en 1 geo_extSideSlider;
+	}
+	else
+	{
+		checkBoxGrp -e -v1 0 geo_extCheck;
+		floatSliderGrp -e -en 0 geo_extRadius;
+		radioButtonGrp -e -en 0 geo_extRadio;
+		intSliderGrp -e -en 0 geo_extSideSlider;
+	}
+}
+
+global proc geo_extEdit()
+{
+	string $geoSel[] = `textScrollList -q -si geo_textList`;
+	string $geoGrp[];
+	string $geoCurve[];
+	string $geoMainGrp[];
+	string $geoGrp_2[];
+	int $grpNum = 0;
+	string $curveName;
+	string $extGrp;
+
+	$extCheck = `checkBoxGrp -q -v1 geo_extCheck`;
+	
+	if(`objExists $geoSel[0]`)
+	{
+		$geoGrp = `listRelatives -c $geoSel[0]`;
+		$geoCurve = `listRelatives -c $geoGrp[1]`;
+		$geoMainGrp = `listRelatives -p $geoSel[0]`;
+		$geoGrp_2 = `listRelatives -c $geoMainGrp[0]`;
+
+		if($geoMainGrp[0] == "Tet_Grp")
+		{
+			$curveName = "Tet_";
+		}
+		if($geoMainGrp[0] == "TetDual_Grp")
+		{
+			$curveName = "TetDual_";
+		}
+		if($geoMainGrp[0] == "Cube_Grp")
+		{
+			$curveName = "Cube_";
+		}
+		if($geoMainGrp[0] == "Octa_Grp")
+		{
+			$curveName = "Octa_";
+		}
+		if($geoMainGrp[0] == "Icosa_Grp")
+		{
+			$curveName = "Icosa_";
+		}
+		if($geoMainGrp[0] == "Dodeca_Grp")
+		{
+			$curveName = "Dodeca_";
+		}
+		if($geoMainGrp[0] == "VE_Grp")
+		{
+			$curveName = "VE_";
+		}
+		if($geoMainGrp[0] == "Rhombic_Grp")
+		{
+			$curveName = "Rhombic_";
+		}
+
+		for($a=0;$a<`size($geoGrp_2)`;$a++)
+		{
+			if($geoSel[0] == $geoGrp_2[$a])
+			{
+				$grpNum = ($a+1);
+			}
+		}
+
+		if($extCheck == 1)
+		{
+			if(!`objExists geo_ext_Grp`)
+			{
+				$extGrp = `group -em`;
+				rename $extGrp geo_ext_Grp;
+			}
+
+			if(`objExists ($curveName + "extCurve_" + $grpNum)`)
+			{
+				delete ($curveName + "extCurve_" + $grpNum);
+				delete ($curveName + "extGrp_" + $grpNum);
+			}
+
+			$geo_extGrpA = `group -em`;
+			$geo_extCurve = geo_circCreate(`floatSliderGrp -q -v geo_extRadius`, `radioButtonGrp -q -sl geo_extRadio`);
+
+			if(!`objExists ($curveName + "extGrp")`)
+			{
+				$geo_extGrpShape = `group -em`;
+				rename $geo_extGrpShape ($curveName + "extGrp");
+				parent ($curveName + "extGrp") geo_ext_Grp;
+			}
+
+			for($a=0;$a<`size($geoCurve)`;$a++)
+			{
+				$ext = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 $geo_extCurve[0] $geoCurve[$a]`;
+				parent $ext[0] $geo_extGrpA;
+				rename $ext[0] ($curveName + "ext_" + $grpNum + "_" + ($a+1));
+			}
+
+			setAttr ($geo_extCurve[0] + ".v") 0;
+			parent $geo_extCurve[0] $geoSel[0];
+			parent $geo_extGrpA ($curveName + "extGrp");
+			rename $geo_extGrpA ($curveName + "extGrp_" + $grpNum);
+			rename $geo_extCurve[0] ($curveName + "extCurve_" + $grpNum);
+		}
+		else
+		{
+			if(`objExists ($curveName + "extCurve_" + $grpNum)`)
+			{
+				delete ($curveName + "extCurve_" + $grpNum);
+			}
+			if(`objExists geo_ext_Grp`)
+			{
+				delete ($curveName + "extGrp_" + $grpNum);
+				$extGrpList = `listRelatives -c ($curveName + "extGrp")`;
+				if(`size($extGrpList)` == 0)
+				{
+					delete ($curveName + "extGrp");
+				}
+
+				$extGrpList = `listRelatives -c geo_ext_Grp`;
+				if(`size($extGrpList)` == 0)
+				{
+					delete geo_ext_Grp;
+				}
+			}
+		}
+	}
+
+	if($extCheck == 1)
+	{
+		floatSliderGrp -e -en 1 geo_extRadius;
+		radioButtonGrp -e -en 1 geo_extRadio;
+		intSliderGrp -e -en 1 geo_extSideSlider;
+	}
+	else
+	{
+		floatSliderGrp -e -en 0 geo_extRadius;
+		radioButtonGrp -e -en 0 geo_extRadio;
+		intSliderGrp -e -en 0 geo_extSideSlider;
+	}
+
+	if(`objExists geo_ext_Grp`)
+	{
+		geo_grpReorder;
+	}
+}
+
+global proc geo_scaleEdit()
+{
+	int $grpNum = 0;
+	string $geoSel[] = `textScrollList -q -si geo_textList`;
+	string $geoType;
+	string $geoExtName;
+	string $geoGrp[];
+	string $geoGrpB[];
+	
+	if(`objExists $geoSel[0]`)
+	{
+		$geoGrp = `listRelatives -p $geoSel[0]`;
+		$geoGrpB = `listRelatives -c $geoGrp[0]`;
+
+		for($a=0;$a<`size($geoGrpB)`;$a++)
+		{
+			if($geoSel[0] == $geoGrpB[$a])
+			{
+				$grpNum = ($a+1);
+			}
+		}
+
+		if($geoGrp[0] == "Tet_Grp")
+		{
+			$geoType = "createTet";
+			$geoExtName = "Tet_extGrp_";
+		}
+		if($geoGrp[0] == "TetDual_Grp")
+		{
+			$geoType = "createTetDual";
+			$geoExtName = "TetDual_extGrp_";
+		}
+		if($geoGrp[0] == "Cube_Grp")
+		{
+			$geoType = "createCube";
+			$geoExtName = "Cube_extGrp_";
+		}
+		if($geoGrp[0] == "Octa_Grp")
+		{
+			$geoType = "createOcta";
+			$geoExtName = "Octa_extGrp_";
+		}
+		if($geoGrp[0] == "Icosa_Grp")
+		{
+			$geoType = "createIcosa";
+			$geoExtName = "Icosa_extGrp_";
+		}
+		if($geoGrp[0] == "Dodeca_Grp")
+		{
+			$geoType = "createDodeca";
+			$geoExtName = "Dodeca_extGrp_";
+		}
+		if($geoGrp[0] == "VE_Grp")
+		{
+			$geoType = "createVE";
+			$geoExtName = "VE_extGrp_";
+		}
+		if($geoGrp[0] == "Rhombic_Grp")
+		{
+			$geoType = "createRhombic";
+			$geoExtName = "Rhombic_extGrp_";
+		}
+
+		delete $geoSel[0];
+		$geoType = ($geoType + "(" + $grpNum + ")");
+		eval $geoType;
+
+		textScrollList -e -si $geoSel[0] geo_textList;
+
+		if(`objExists ($geoExtName + $grpNum)`)
+		{
+			delete ($geoExtName + $grpNum);
+			geo_extEdit;
+		}
+	}	
+}
+
+global proc createTet( int $grpNum )
+{
+	float $geoScale = 1.00 ;
+
+	float $coordsX[] = { 0.00, 0.0006069818624, -1.413606483, 1.414820544 };
+	float $coordsY[] = { 1.731153158, -0.578, -0.5787434378, -0.578 };
+	float $coordsZ[] = { 0.0004552608229, -1.632888342, 0.8166013442, 0.8166014006 };
+
+	int $curveOrder[] = { 0,1, 0,2, 0,3, 1,2, 1,3, 2,3 };
+
+	createGeo($coordsX, $coordsY, $coordsZ, "Tet_", $curveOrder, $geoScale, $grpNum );
+}
+
+global proc createTetDual( int $grpNum )
+{
+	float $geoScale = 1.00;
+
+	float $coordsX[] = { -1.413950717, 1.414476407, 0.0002628449587, 0.0002628449587 };
+	float $coordsY[] = { 0.5776501483, 0.5776501483, 0.5783935861, -1.73150301 };
+	float $coordsZ[] = { -0.8167422024, -0.8167422024, 1.632747428, 0.0004552608229 };
+
+	int $curveOrder[] = { 0,1, 0,2, 0,3, 1,2, 1,3, 2,3 };
+
+	createGeo($coordsX, $coordsY, $coordsZ, "TetDual_", $curveOrder, $geoScale, $grpNum );
+}
+
+global proc createCube( int $grpNum )
+{
+	float $geoScale = 1.00;
+
+	float $coordsX[] = { 0.00, 0.0006069818624, -1.413606483, 1.414820544, -1.413950717, 1.414476407, 0.0002628449587, 0.0002628449587 };
+	float $coordsY[] = { 1.731153158, -0.578, -0.5787434378, -0.578, 0.5776501483, 0.5776501483, 0.5783935861, -1.73150301 };
+	float $coordsZ[] = { 0.0004552608229, -1.632888342, 0.8166013442, 0.8166014006, -0.8167422024, -0.8167422024, 1.632747428, 0.0004552608229 };
+
+	int $curveOrder[] = { 0,4, 0,5, 0,6, 1,4, 1,5, 1,7, 2,4, 2,6, 2,7, 3,5, 3,6, 3,7};
+
+	createGeo($coordsX, $coordsY, $coordsZ, "Cube_", $curveOrder, $geoScale, $grpNum );
+}
+
+global proc createOcta( int $grpNum )
+{
+	float $geoScale = 1.00;
+
+	float $coordsX[] = { 0.7071067812,  -0.7071067812, 0, 0, -0.7071067812, 0.7071067812 };
+	float $coordsY[] = { 0.5774741489,  0.5774741489, 0.57710243, -0.57710243, -0.5774741489, -0.5774741489 };
+	float $coordsZ[] = { 0.4080730417,  0.4080730417, -0.8166717733, 0.8166717733,  -0.4080730417, -0.4080730417 };
+
+	int $curveOrder[] = { 2,0, 2,1, 2,4, 2,5, 0,1, 0,3, 0,5, 1,3, 1,4, 3,4, 3,5, 4,5 };
+
+	createGeo($coordsX, $coordsY, $coordsZ, "Octa_", $curveOrder, $geoScale, $grpNum );
+}
+
+global proc createIcosa( int $grpNum )
+{
+	float $geoScale = 1.00;
+
+	float $coordsX[] = { -0.00170585485, -0.9995890098, 0.9995890098, 0.00170585485, -0.001801479795, 1.617374308, -1.617374308, 0.001801479795, -1.619955309, -1.001490291, 1.619955309, 1.001490291 };
+	float $coordsY[] = { 1.512426637, 1.512426637, -1.512426637, -1.512426637, -0.3568195227, 0.3568195227, -0.3568195227, 0.3568195227, 0.3564825323, -1.511864147, -0.3564825323, 1.511864147 };
+	float $coordsZ[] = { 1.154869585, -0.5784016599, 0.5784016599, -1.154869585, 1.869180992, 0.9369851531, -0.9369851531, -1.869180992, 0.9326446274, 0.5765804364, -0.9326446274, -0.5765804364 };
+
+	int $curveOrder[] = { 0,1, 0,4, 0,5, 0,8, 0,11, 2,3, 2,4, 2,5, 2,9, 2,10, 6,1, 6,3, 6,7, 6,8, 6,9, 9,3, 9,4, 9,8,
+		10,3, 10,5, 10,7, 11,1, 11,5, 11,7, 11,10, 4,5, 4,8, 7,1, 7,3, 1,8 };
+
+	createGeo($coordsX, $coordsY, $coordsZ, "Icosa_", $curveOrder, $geoScale, $grpNum );
+}
+
+global proc createDodeca( int $grpNum )
+{
+	float $geoScale = 1.00;
+
+	float $coordsX[] = { 0.9984220703, -1.001576437, 1.000704762, 0.9992937454, -0.9992937454, -1.000704762, -0.9984220703, 1.001576437, 0.6161867912, -0.001410590504, 0.001410590504, -1.904792978e-07, 1.904792978e-07, -0.6161867912, 0.6198802637, -0.6198802637, 1.617763419, -1.617763419, 1.618302144, -1.618302144 };
+	float $coordsY[] = { -0.577466475, -0.577466475, -1.290942474, 1.290942474, -1.290942474, 1.290942474, 0.577466475, 0.577466475, 0.5772142081, -1.291098383, 1.291098383, 1.732050801, -1.732050801, -0.5772142081, -0.5772142081, 0.5772142081, -0.5773701175, 0.5773701175, 0.5773701175, -0.5773701175 };
+	float $coordsZ[] = { 1.29216324, 1.28971978, -0.5762443138, 0.5786877742, -0.5786877742, 0.5762443138, -1.29216324, -1.28971978, 1.512328535, 1.154583464, -1.154583464, 0.0001559093426, -0.0001559093426, -1.512328535, -1.510818394, 1.510818394, 0.2224528451, -0.2224528451, -0.2184992432, 0.2184992432 };
+
+	int $curveOrder[] = { 1,9, 1,15, 1,19, 8,0, 8,3, 8,15, 12,2, 12,4, 12,9, 11,3, 11,5, 11,10, 14,2, 14,7, 14,13,
+		17,5, 17,6, 17,19, 18,3, 18,7, 18,16, 0,9, 0,16, 4,13, 4,19, 10,6, 10,7, 2,16, 5,15, 6,13 };
+
+	createGeo($coordsX, $coordsY, $coordsZ, "Dodeca_", $curveOrder, $geoScale, $grpNum );
+}
+
+global proc createVE( int $grpNum )
+{
+	float $geoScale = (1.00+(1.00/3));
+
+	float $coordsX[] = { -0.4085987316, -1.224744815, 0.4085987316, 1.224744815, 0.8161460834, 5.551115123e-17, -0.8161460834, -5.551115123e-17, -0.4085987316, 1.224744815, 0.4085987316, -1.224744815 };
+	float $coordsY[] = { 1.154576579, -0.0003717189054, -1.154576579, 0.0003717189054, 1.154948298, 1.110223025e-16, -1.154948298, -1.110223025e-16, 1.154576579, 0.0003717189054, -1.154576579, -0.0003717189054 };
+	float $coordsZ[] = { -0.7071067812, 0.7071067812, 0.7071067812, -0.7071067812, -1.110223025e-16, 1.414213562, 1.110223025e-16, -1.414213562, 0.7071067812, 0.7071067812, -0.7071067812, -0.7071067812 };
+
+	int $curveOrder[] = { 0,4, 0,7, 0,8, 0,11, 1,5, 1,6, 1,8, 1,11, 9,2, 9,3, 9,4, 9,5, 10,2, 10,3, 10,6, 10,7,
+		2,5, 2,6, 3,4, 3,7, 8,4, 8,5, 11,6, 11,7 };
+
+	createGeo($coordsX, $coordsY, $coordsZ, "VE_", $curveOrder, $geoScale, $grpNum );
+}
+
+global proc createRhombic( int $grpNum )
+{
+	float $geoScale = 1.00;
+
+	float $coordsX[] = { -0.0005256899173, -0.8166717733, 1.632817857, -0.8166717733, 0.8166717733, -1.632817857, 0.8166717733,
+		0.0005256899173, 0.8161460834, -0.8161460834, -1.633343547, 1.633343547, 0.8161460834, -0.8161460834 };
+	float $coordsY[] = { 1.732050728, 0.57710243, 0.5778458678, 0.57710243, -0.57710243, -0.5778458678, -0.57710243,
+		-1.732050728, 1.154948298, -1.154948298, 1.15420486, -1.15420486, 1.154948298, -1.154948298 };
+	float $coordsZ[] = { -1.110223025e-16, 1.414213562, -1.110223025e-16, -1.414213562, 1.414213562, 1.110223025e-16,
+		-1.414213562, 1.110223025e-16, -1.414213562, 1.414213562, 0, 0, 1.414213562, -1.414213562 };
+
+	int $curveOrder[] = { 0,8, 0,10, 0,12, 1,9, 1,10, 1,12, 2,8, 2,11, 2,12, 3,8, 3,10, 3,13, 4,9, 4,11, 
+		4,12, 5,9, 5,10, 5,13, 6,8, 6,11, 6,13, 7,9, 7,11, 7,13 };
+
+	createGeo($coordsX, $coordsY, $coordsZ, "Rhombic_", $curveOrder, $geoScale, $grpNum );
+}
+
+proc geo_grpRename( string $geoGrpName, string $geoGrpREName )
+{
+	if(`objExists $geoGrpName`)
+	{
+		$geo_grpList = `listRelatives -c $geoGrpName`;
+
+		for($a=0;$a<`size($geo_grpList)`;$a++)
+		{
+			if( $geo_grpList[$a] != ($geoGrpREName + ($a+1)) )
+			{
+				$geo_subGrp = `listRelatives -c $geo_grpList[$a]`;
+				$geo_locGrp = `listRelatives -c $geo_subGrp[0]`;
+				$geo_curveGrp = `listRelatives -c $geo_subGrp[1]`;
+
+				rename $geo_grpList[$a] ($geoGrpREName + "grp_" + ($a+1));
+				rename $geo_subGrp[0] ($geoGrpREName + "Loc_grp_" + ($a+1));
+				rename $geo_subGrp[1] ($geoGrpREName + "Curve_grp_" + ($a+1));
+
+				for($b=0;$b<`size($geo_locGrp)`;$b++)
+				{
+					rename $geo_locGrp[$b] ($geoGrpREName + "loc_" + ($a+1) + "_" + ($b+1));
+				}
+				for($c=0;$c<`size($geo_curveGrp)`;$c++)
+				{
+					rename $geo_curveGrp[$c] ($geoGrpREName + "curve_" + ($a+1) + "_" + ($c+1));
+				}
+
+				if(`objExists ($geoGrpREName + "extGrp_" + ($a+2))`)
+				{
+					$geo_extList = `listRelatives -c ($geoGrpREName + "extGrp_" + ($a+2))`;
+	
+					for($d=0;$d<`size($geo_extList)`;$d++)
+					{
+						rename $geo_extList[$d] ($geoGrpREName + "ext_" + ($a+1) + "_" + ($d+1));
+					}
+					rename ($geoGrpREName + "extGrp_" + ($a+2)) ($geoGrpREName + "extGrp_" + ($a+1));
+					rename ($geoGrpREName + "extCurve_" + ($a+2)) ($geoGrpREName + "extCurve_" + ($a+1));
+				}
+			}
+		}
+	}
+}
+
+global proc geo_delete()
+{
+	if(`objExists geo_Grp`)
+	{
+		string $geoName[] = `textScrollList -q -si geo_textList`;
+		string $geoExtName = `substitute "grp" $geoName[0] "extGrp"`;
+		string $geoGrpName = `substitute "grp_.*" $geoName[0] "Grp"`;
+		string $mainExtGrp = `substitute "grp_.*" $geoName[0] "extGrp"`;
+
+		string $geoGrpREName = `substitute "_grp_.*" $geoName[0] "_"`;
+
+		delete $geoName[0];
+		if(`objExists $geoExtName`)
+		{
+   			delete $geoExtName;
+			
+			$extList = `listRelatives -c $mainExtGrp`;
+			if(`size($extList)` == 0)
+			{
+				delete $mainExtGrp;
+				$geoExtList = `listRelatives -c geo_ext_Grp`;
+				if(`size($geoExtList)` == 0)
+				{
+					delete geo_ext_Grp;
+				}
+			}
+		}
+		$grpList = `listRelatives -c $geoGrpName`;
+		if(`size($grpList)` == 0)
+		{
+			delete $geoGrpName;
+		}
+		$geoMain = `listRelatives -c geo_Grp`;
+		if(`size($geoMain)` == 0)
+		{
+			delete geo_Grp;
+		}
+
+		geo_grpRename( $geoGrpName, $geoGrpREName );
+		geo_textListUpdate;
+	}
+}

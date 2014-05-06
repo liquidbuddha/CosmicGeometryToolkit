@@ -1,0 +1,418 @@
+//-----------------------------------------------------------------------------
+//--------------------------COMMONLY USED PROCEDURES
+//-----------------------------------------------------------------------------
+proc int editCheckProc()
+{
+	int $editCheck = `radioButtonGrp -q -sl fol_editRadio`;
+	return $editCheck;
+}
+proc string grpNameProc()
+{
+	string $grpSel[] = `textScrollList -q -si fol_textList`;
+	return $grpSel[0];
+}
+proc int grpNumProc()
+{
+	int $grpNum[] = `textScrollList -q -sii fol_textList`;
+	return $grpNum[0];
+}
+proc float radiusProc()
+{
+	float $r = `floatSliderGrp -q -v fol_radiusSld`;
+	return $r;
+}
+proc int levelProc()
+{
+	int $level = `intSliderGrp -q -v fol_layerSld`;
+	return $level;
+}
+proc int dimensionProc()
+{
+	$dimension = `radioButtonGrp -q -sl fol_dimRadio`;
+	if($dimension > 1)
+	{
+		$dimension++;
+	}
+	return $dimension;
+}
+proc fol_extReorder()
+{
+	string $folList[];
+	int $folListSize;
+
+	string $folList[];
+	if(`objExists fol_group` == 1)
+	{
+		$folList = `listRelatives -c fol_group`;
+		$folListSize = `size($folList)`;
+	}
+  
+	if(`objExists folExt_group` == 1)
+	{
+		//--------------------------------------------------------------------------------
+		//--------------------------REORDER EXT CURVE GROUP
+		//--------------------------------------------------------------------------------
+		int $extCurve[] = {};
+		for($a=1;$a<=$folListSize;$a++)
+		{
+			if(`objExists ("folExt_curve_" + $a)` == 1)
+			{
+				$extCurveSize = `size($extCurve)`;
+				$extCurve[$extCurveSize] = $a;
+			}
+		}
+
+		$extCurveGrp = `listRelatives -c folExt_curve_group`;
+		$extCurveGrpSize = `size($extCurve)`;
+
+		for($b=0;$b<$extCurveGrpSize;$b++)
+		{
+			while( $extCurveGrp[$b] != ("folExt_curve_" + $extCurve[$b]) )
+			{
+				reorder -relative -1 ("folExt_curve_" + $extCurve[$b]);
+				$extCurveGrp = `listRelatives -c folExt_curve_group`;
+			}
+		}
+
+		//--------------------------------------------------------------------------------
+		//--------------------------REORDER EXT SURFACE GROUP
+		//--------------------------------------------------------------------------------
+		int $extSurf[] = {};
+		
+		$extSurfGrp = `listRelatives -c folExt_surf_group`;
+		$extSurfGrpSize = `size($extCurve)`;
+
+		for($b=1;$b<=$extSurfGrpSize;$b++)
+		{
+			while( $extSurfGrp[ ($b-1) ] != ("folExt_" + $extCurve[ ($b-1) ]) )
+			{
+				reorder -relative -1 ("folExt_" + $extCurve[ ($b-1) ]);
+				$extSurfGrp = `listRelatives -c folExt_surf_group`;
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------
+//-----------------------------------------------------------------------------
+proc fol_extCreate(int $grpNum, string $extCurve)
+{
+	if(!`objExists folExt_group`)
+	{
+		$fol_extGrp = `group -em`;
+		xform -os -piv 0 0 0;
+		rename $fol_extGrp folExt_group;
+	}
+	if(!`objExists folExt_curve_group`)
+	{
+		$fol_extGrp = `group -em`;
+		xform -os -piv 0 0 0;
+		parent $fol_extGrp folExt_group;
+		rename $fol_extGrp folExt_curve_group;
+	}
+	
+	parent $extCurve folExt_curve_group;
+
+	string $fol_groups[] = `listRelatives -c ("fol_" + $grpNum)`;
+	for($a=0;$a<size($fol_groups);$a++)
+	{
+		if(!`objExists "folExt_surf_group"`)
+		{
+			$fol_extGrp1 = `group -em`;
+			xform -os -piv 0 0 0;
+			parent $fol_extGrp1 folExt_group;
+			rename $fol_extGrp1 "folExt_surf_group";
+		}
+		if(!`objExists ("folExt_" + $grpNum)`)
+		{
+			$fol_extGrp2 = `group -em`;
+			xform -os -piv 0 0 0;
+			parent $fol_extGrp2 "folExt_surf_group";
+			rename $fol_extGrp2 ("folExt_" + $grpNum);
+		}
+
+		string $fol_groups2[] = `listRelatives -c $fol_groups[$a]`;
+
+		if($fol_groups[$a] == ("fol_" + $grpNum + "_grp_" + $a))
+		{
+			if(!`objExists ("folExt_" + $grpNum + "_grp_" + $a)`)
+			{
+				$fol_extGrp3 = `group -em`;
+				xform -os -piv 0 0 0;
+				parent $fol_extGrp3 ("folExt_" + $grpNum);
+				rename $fol_extGrp3 ("folExt_" + $grpNum + "_grp_" + $a);
+			}
+
+			for($b=0;$b<size($fol_groups2);$b++)
+			{
+				$folExt = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 $extCurve $fol_groups2[$b]`;
+				string $extName = $fol_groups2[$b];
+				string $extName = `substitute "circ" $extName "ext"`;
+				parent $folExt[0] ("folExt_" + $grpNum + "_grp_" + $a);
+				rename $folExt[0] $extName;
+			}
+		}
+		else
+		{
+
+			$fol_ExtGrpA = `group -em`;
+			xform -os -piv 0 0 0;
+			parent $fol_ExtGrpA ("folExt_" + $grpNum);
+
+			for($b=0;$b<size($fol_groups2);$b++)
+			{	
+				$fol_ExtGrpB = `group -em`;
+				xform -os -piv 0 0 0;
+				parent $fol_ExtGrpB $fol_ExtGrpA;
+				
+				string $extArray[];
+
+				string $fol_groups3[] = `listRelatives -c $fol_groups2[$b]`;
+				for($c=0;$c<size($fol_groups3);$c++)
+				{
+					$folExt = `extrude -ch true -rn false -po 0 -et 2 -ucp 1 -fpt 1 -upn 1 -rotation 0 -scale 1 -rsp 1 $extCurve $fol_groups3[$c]`;
+					string $extName = $fol_groups3[$c];
+					string $extName = `substitute "circ" $extName "ext"`;
+					parent $folExt[0] $fol_ExtGrpB;
+					$extArray = `listRelatives -c $fol_ExtGrpB`;
+					rename $folExt[0] $extName;
+				}
+
+				string $extGrpName = `substitute "ext_0_" $extArray[0] "ext_"`;
+				rename $fol_ExtGrpB $extGrpName;
+			}
+
+			string $grpArray[] = `listRelatives -c $fol_ExtGrpA`;
+			string $extTopGrpName = `substitute ("fol_" + $grpNum + "_grp_0_ext") $grpArray[0] ("folExt_" + $grpNum)`;
+			rename $fol_ExtGrpA $extTopGrpName;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------
+//-----------------------------------------------------------------------------
+global proc  fol_extPre(int $grpNum)
+{
+	$curveType  = `radioButtonGrp -q -sl fol_extrudeRadio`;
+	$fol_extCurve = fol_extCircCreate(`floatSliderGrp -q -v fol_extRadiusSld`, $curveType);
+
+	fol_extCreate($grpNum, $fol_extCurve[0]);
+
+	rename $fol_extCurve[0] ("folExt_curve_" + $grpNum);
+	if($curveType == 1)
+	{
+		rename $fol_extCurve[1] ("make_folExt_curve_" + $grpNum);
+	}
+	fol_extReorder();
+	select -r ("fol_" + $grpNum);
+}
+
+proc fol_extTess( int $grpNum )
+{
+	$uTess = `intSliderGrp -q -v fol_UtessSlider`;
+	$vTess = `intSliderGrp -q -v fol_VtessSlider`;
+
+	$extGrp = `listRelatives -c ("folExt_" + $grpNum)`;
+	string $extGrpList[];
+	for($a=0;$a<`size($extGrp)`;$a++)
+	{
+		$extGrp_2 = `listRelatives -c $extGrp[$a]`;
+		for($b=0;$b<`size($extGrp_2)`;$b++)
+		{
+			select -r $extGrp_2[$b];
+			$extShape = `pickWalk -d down`;
+			$extGrpList[ `size($extGrpList)` ] = $extShape[0];
+		}
+	}
+	for($c=0;$c<`size($extGrpList)`;$c++)
+	{
+		setAttr ($extGrpList[$c] + ".explicitTessellationAttributes") 1;
+		setAttr ($extGrpList[$c] + ".numberU") $uTess;
+		setAttr ($extGrpList[$c] + ".numberV") $vTess;
+	}
+}
+
+global proc fol_extTessGlob()
+{
+	fol_extCheck();
+
+	$extCheck = `checkBoxGrp -q -v1 fol_extrudeCheck`;
+	int $edit = editCheckProc();
+	int $grpNum;
+	string $extCurveCheck[];
+	
+	if($extCheck == 1)
+	{
+		if($edit == 1)
+		{
+			$grpNum = grpNumProc();
+			fol_extTess($grpNum);
+			select -r ("fol_" + $grpNum);
+		}
+	}
+}
+
+global proc fol_extEdit()
+{
+	fol_extCheck();
+
+	$extCheck = `checkBoxGrp -q -v1 fol_extrudeCheck`;
+	$extRadio = `radioButtonGrp -q -sl fol_extrudeRadio`;
+	int $edit = editCheckProc();
+	int $grpNum;
+	string $extCurveCheck[];
+
+	
+	if($extCheck == 1)
+	{
+		if($edit == 1)
+		{
+			$grpNum = grpNumProc();
+
+			if(objExists ("folExt_curve_" + $grpNum) && objExists ("folExt_" + $grpNum))
+			{
+				delete ("folExt_curve_" + $grpNum);
+				delete ("folExt_" + $grpNum);
+			}
+			if(objExists ("fol_" + $grpNum))
+			{
+				fol_extPre($grpNum);
+				fol_extTess($grpNum);
+			}
+		}
+	}
+	else
+	{
+		if($edit == 1)
+		{
+			$grpNum = grpNumProc();
+			
+			if(objExists ("folExt_curve_" + $grpNum) && objExists ("folExt_" + $grpNum))
+			{
+				delete ("folExt_curve_" + $grpNum);
+				delete ("folExt_" + $grpNum);
+
+				$extCurveCheck = `listRelatives -c folExt_curve_group`;
+				if(`size($extCurveCheck)`==0)
+				{
+					delete folExt_group;
+				}
+			}
+		}
+
+		floatSliderGrp -e -en 0 fol_extRadiusSld;
+		radioButtonGrp -e -en 0 fol_extrudeRadio;
+		intSliderGrp -e -en 0 fol_extSideSlider;
+	}
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------
+//-----------------------------------------------------------------------------
+global proc fol_extCheck()
+{
+	$extCheck = `checkBoxGrp -q -v1 fol_extrudeCheck`;
+	$extRadio = `radioButtonGrp -q -sl fol_extrudeRadio`;
+	int $edit = editCheckProc();
+	int $grpNum;
+	string $extCurveCheck[];
+
+	if($extCheck == 1)
+	{
+		floatSliderGrp -e -en 1 fol_extRadiusSld;
+		radioButtonGrp -e -en 1 fol_extrudeRadio;
+		intSliderGrp -e -en 1 fol_UtessSlider;
+		intSliderGrp -e -en 1 fol_VtessSlider;
+
+		if($extRadio == 2)
+		{
+			intSliderGrp -e -en 1 fol_extSideSlider;
+		}
+		else
+		{
+			intSliderGrp -e -en 0 fol_extSideSlider;
+		}
+/*
+		if($edit == 1)
+		{
+			$grpNum = grpNumProc();
+
+			if(objExists ("folExt_curve_" + $grpNum) && objExists ("folExt_" + $grpNum))
+			{
+				delete ("folExt_curve_" + $grpNum);
+				delete ("folExt_" + $grpNum);
+			}
+			fol_extPre($grpNum);
+		}
+*/
+	}
+	else
+	{
+		if($edit == 1)
+		{
+/*
+			$grpNum = grpNumProc();
+			
+			if(objExists ("folExt_curve_" + $grpNum) && objExists ("folExt_" + $grpNum))
+			{
+				delete ("folExt_curve_" + $grpNum);
+				delete ("folExt_" + $grpNum);
+
+				$extCurveCheck = `listRelatives -c folExt_curve_group`;
+				if(`size($extCurveCheck)`==0)
+				{
+					delete folExt_group;
+				}
+			}
+*/
+		}
+
+		floatSliderGrp -e -en 0 fol_extRadiusSld;
+		radioButtonGrp -e -en 0 fol_extrudeRadio;
+		intSliderGrp -e -en 0 fol_extSideSlider;
+		intSliderGrp -e -en 0 fol_UtessSlider;
+		intSliderGrp -e -en 0 fol_VtessSlider;
+	}
+	
+}
+
+global proc fol_editTextList_EXT(int $grpNum)
+{
+	if(objExists ("folExt_curve_" + $grpNum))
+	{
+		int $curveType;
+		float $radius;
+		int $spans;
+
+		$uTess = getAttr ("fol_" + $grpNum + "_grp_0_ext_Shape0.numberU");
+		$vTess = getAttr ("fol_" + $grpNum + "_grp_0_ext_Shape0.numberV");
+		intSliderGrp -e -v $uTess fol_UtessSlider;
+		intSliderGrp -e -v $vTess fol_VtessSlider;
+
+		if(objExists ("make_folExt_curve_" + $grpNum) == 1)
+		{
+			$radius = `getAttr ("make_folExt_curve_" + $grpNum + ".radius")`;
+			$curveType = 1;
+		}
+		else
+		{
+			$radius = `getAttr ("folExt_curve_" + $grpNum + ".radius")`;
+			$curveType = 2;
+			$spans = `getAttr ("folExt_curve_Shape" + $grpNum + ".spans")`;
+			intSliderGrp -e -v $spans fol_extSideSlider;
+		}
+
+		floatSliderGrp -e -v $radius fol_extRadiusSld;
+		radioButtonGrp -e -sl $curveType fol_extrudeRadio;
+
+		checkBoxGrp -e -v1 1 fol_extrudeCheck;
+		fol_extCheck();
+	}
+	else
+	{
+		checkBoxGrp -e -v1 0 fol_extrudeCheck;
+		fol_extCheck();
+	}
+}

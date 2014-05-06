@@ -1,0 +1,210 @@
+string $lbs_geometries = `formLayout 
+		-nd 100 geometriesForm`;
+
+$geo_scaleSld = `floatSliderGrp
+	-l "Geometry Scale: "
+	-field true
+	-v 1
+	-min 0.001
+	-max 500
+	-pre 4
+	-cc "geo_scaleEdit"
+	geoScaleSld`;
+
+$geo_button_tet = `button 	
+	-label "Tetrahedron"
+	-command "createTet(0)" 
+	-w 150
+	geoTetButton`;
+
+$geo_button_tetDual = `button 	
+	-label "Tetrahedron Dual"
+	-command "createTetDual(0)" 
+	-w 150
+	geoTetDualButton`;
+
+$geo_button_cube = `button 	
+	-label "Cube"
+	-command "createCube(0)" 
+	-w 150
+	geoCubeButton`;
+
+$geo_button_octa = `button 	
+	-label "Octahedron"
+	-command "createOcta(0)" 
+	-w 150
+	geoOctaButton`;
+
+$geo_button_Icosa = `button 	
+	-label "Icosahedron"
+	-command "createIcosa(0)" 
+	-w 150
+	geoIcosaButton`;
+
+$geo_button_Dodeca = `button 	
+	-label "Dodecahedron"
+	-command "createDodeca(0)" 
+	-w 150
+	geoDodecaButton`;
+
+$geo_button_VE = `button 	
+	-label "VE"
+	-command "createVE(0)" 
+	-w 150
+	geoVEButton`;
+
+$geo_button_Rhombic = `button 	
+	-label "Rhombic"
+	-command "createRhombic(0)" 
+	-w 150
+	geoRhombicButton`;
+
+string $geo_extCheck = `checkBoxGrp
+	-l "create extrude: "
+	-v1 0
+	-cc "geo_extEdit"
+	geo_extCheck`;
+
+string $geo_extRadius = `floatSliderGrp
+	-l "extrude radius: "
+	-v .025
+	-pre 4
+	-field true
+	-en 0
+	-cc "geo_extEdit"
+	geo_extRadius`;
+
+string $geo_extRadio = `radioButtonGrp
+	-numberOfRadioButtons 2
+	-l "type of extrude curve: "
+	-labelArray2 "circle" "linear curve"
+	-cw3 150 60 80
+	-sl 1
+	-en 0
+	-cc "geo_extEdit"
+	geo_extRadio`;
+
+string $geo_extSideSlider = `intSliderGrp
+	-l "number of sides: "
+	-field true
+	-v 3
+	-min 3
+	-max 64
+	-en 0
+	-cc "geo_extEdit"
+	geo_extSideSlider`;
+
+string $geo_textList = `textScrollList
+	-w 290
+	-h 180
+	-sc "geo_editTextList"
+	-fn "boldLabelFont"
+	geo_textList`;
+
+$geo_button_DELETE = `button 	
+	-label "Delete Geometry"
+	-command "geo_delete" 
+	-w 150
+	geoDeleteButton`;
+
+$geo_sep1 = `separator
+	-w 400
+	geo_sep1`;
+
+$geo_sep2 = `separator
+	-w 400
+	geo_sep2`;
+
+//-----------------------------------------------
+//layout of GEOMETRIES UI elements
+//-----------------------------------------------
+
+formLayout -edit
+
+	-attachForm $geo_scaleSld "top" 15	
+	-attachForm $geo_scaleSld "left" 15	
+	-attachNone $geo_scaleSld "bottom"
+	-attachNone $geo_scaleSld "right"
+
+	-attachControl $geo_button_tet "top" 15 $geo_scaleSld
+	-attachForm $geo_button_tet "left" 80	
+	-attachNone $geo_button_tet "bottom"
+	-attachNone $geo_button_tet "right"
+
+	-attachControl $geo_button_tetDual "top" 15 $geo_scaleSld
+	-attachControl $geo_button_tetDual "left" 10 $geo_button_tet	
+	-attachNone $geo_button_tetDual "bottom"
+	-attachNone $geo_button_tetDual "right"
+
+	-attachControl $geo_button_cube "top" 10 $geo_button_tet	 
+	-attachForm $geo_button_cube "left" 80	
+	-attachNone $geo_button_cube "bottom"
+	-attachNone $geo_button_cube "right"
+
+	-attachControl $geo_button_octa "top" 10 $geo_button_tetDual
+	-attachControl $geo_button_octa "left" 10 $geo_button_cube
+	-attachNone $geo_button_octa "bottom"
+	-attachNone $geo_button_octa "right"
+
+	-attachControl $geo_button_Icosa "top" 10 $geo_button_cube	 
+	-attachForm $geo_button_Icosa "left" 80	
+	-attachNone $geo_button_Icosa "bottom"
+	-attachNone $geo_button_Icosa "right"
+
+	-attachControl $geo_button_Dodeca "top" 10 $geo_button_octa
+	-attachControl $geo_button_Dodeca "left" 10 $geo_button_Icosa
+	-attachNone $geo_button_Dodeca "bottom"
+	-attachNone $geo_button_Dodeca "right"
+
+	-attachControl $geo_button_VE "top" 10 $geo_button_Icosa	 
+	-attachForm $geo_button_VE "left" 80	
+	-attachNone $geo_button_VE "bottom"
+	-attachNone $geo_button_VE "right"
+
+	-attachControl $geo_button_Rhombic "top" 10 $geo_button_Icosa
+	-attachControl $geo_button_Rhombic "left" 10 $geo_button_VE
+	-attachNone $geo_button_Rhombic "bottom"
+	-attachNone $geo_button_Rhombic "right"
+
+	-attachControl $geo_sep1 "top" 10 $geo_button_VE	 
+	-attachForm $geo_sep1 "left" 30		
+	-attachNone $geo_sep1 "bottom"
+	-attachNone $geo_sep1 "right"
+
+	-attachControl $geo_extCheck "top" 20 $geo_sep1	 
+	-attachForm $geo_extCheck "left" 30		
+	-attachNone $geo_extCheck "bottom"
+	-attachNone $geo_extCheck "right"
+
+	-attachControl $geo_extRadius "top" 10 $geo_extCheck	 
+	-attachForm $geo_extRadius "left" 30		
+	-attachNone $geo_extRadius "bottom"
+	-attachNone $geo_extRadius "right"
+
+	-attachControl $geo_extRadio "top" 10 $geo_extRadius	 
+	-attachForm $geo_extRadio "left" 60		
+	-attachNone $geo_extRadio "bottom"
+	-attachNone $geo_extRadio "right"
+
+	-attachControl $geo_extSideSlider "top" 10 $geo_extRadio	 
+	-attachForm $geo_extSideSlider "left" 30		
+	-attachNone $geo_extSideSlider "bottom"
+	-attachNone $geo_extSideSlider "right"
+
+	-attachControl $geo_sep2 "top" 20 $geo_extSideSlider	 
+	-attachForm $geo_sep2 "left" 30		
+	-attachNone $geo_sep2 "bottom"
+	-attachNone $geo_sep2 "right"
+
+	-attachControl $geo_textList "top" 10 $geo_sep2	 
+	-attachForm $geo_textList "left" 90	
+	-attachNone $geo_textList "bottom"
+	-attachNone $geo_textList "right"
+
+	-attachControl $geo_button_DELETE "top" 10 $geo_textList	 
+	-attachForm $geo_button_DELETE "left" 160	
+	-attachNone $geo_button_DELETE "bottom"
+	-attachNone $geo_button_DELETE "right"
+
+$lbs_geometries;
+setParent ..;

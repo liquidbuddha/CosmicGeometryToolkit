@@ -1,0 +1,1002 @@
+//-----------------------------------------------------------------------------
+//--------------------------COMMONLY USED PROCEDURES
+//-----------------------------------------------------------------------------
+proc int editCheckProc()
+{
+	int $editCheck = `radioButtonGrp -q -sl fol_editRadio`;
+	return $editCheck;
+}
+proc string grpNameProc()
+{
+	string $grpSel[] = `textScrollList -q -si fol_textList`;
+	return $grpSel[0];
+}
+proc int grpNumProc()
+{
+	int $grpNum[] = `textScrollList -q -sii fol_textList`;
+	return $grpNum[0];
+}
+proc float radiusProc()
+{
+	float $r = `floatSliderGrp -q -v fol_radiusSld`;
+	return $r;
+}
+proc int levelProc()
+{
+	int $level = `intSliderGrp -q -v fol_layerSld`;
+	return $level;
+}
+proc int dimensionProc()
+{
+	$dimension = `radioButtonGrp -q -sl fol_dimRadio`;
+	if($dimension > 1)
+	{
+		$dimension++;
+	}
+	if($dimension == 5)
+	{
+		$dimension = $dimension + 2;
+	}
+	return $dimension;
+}
+proc int extrudeCheckProc()
+{
+	$fol_extCheck = `checkBoxGrp -q -v1 fol_extrudeCheck`;
+	return  $fol_extCheck;
+}
+proc fol_grpReorder()
+{
+	$array = `listRelatives -c fol_group`;	$arraySize = `size($array)`;	for($i=1;$i<=$arraySize;$i++)	{		while( $array[ ($i-1) ] != ("fol_" + $i))		{			reorder -relative -1 ("fol_" + $i);			$array = `listRelatives -c fol_group`;		}	}
+	clear $array;
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------UPDATES TEXT LIST AFTER A NEW GROUP IS CREATED
+//--------------------------OR WHEN TAB IS SELECTED IN UI WINDOW
+//-----------------------------------------------------------------------------
+proc fol_updateTextList()
+{
+	if(`objExists fol_group` == 1)	{		string $folArray[] = `listRelatives -c fol_group`;		$folNum = `size($folArray)`;
+		string $folGrpName[];		textScrollList -e -ra fol_textList;		for($i=1;$i<=$folNum;$i++)		{
+			string $folGrpName = $folArray[$i-1];			textScrollList -e -append $folGrpName fol_textList;		}
+
+		clear $folArray $folGrpName;
+	}
+	else
+	{
+		textScrollList -e -ra fol_textList;
+	}
+}
+
+global proc fol_updateTextListGlb()
+{
+	fol_updateTextList;
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------UPDATES LOCATOR VISIBILITY WHEN IN EDIT MODE
+//-----------------------------------------------------------------------------
+proc fol_locVisUpdate(int $grpNum)
+{
+	$locVis = `checkBoxGrp -q -v1 fol_locVisCheck`;
+	if($locVis == 1)
+	{
+		setAttr ("fol_" + $grpNum + ".loc_vis") 1;	
+	}
+	else
+	{
+		setAttr ("fol_" + $grpNum + ".loc_vis") 0;		
+	}
+}
+
+global proc fol_locVisEdit()
+{
+	$editCheck = editCheckProc();
+	string $grpSel = grpNameProc();
+	if($editCheck == 1 && objExists ($grpSel))
+	{
+		$grpNum = grpNumProc();
+		fol_locVisUpdate($grpNum);
+	}
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------CREATES NURBS CIRCLE OR LINEAR CURVE
+//--------------------------BASED ON USER INPUTS
+//-----------------------------------------------------------------------------
+proc string[] fol_circCreate(float $r, int $curveType, int $curveOrExt)
+{
+	string $fol_curve[];
+	string $circCurve[];
+	int $nSide;
+
+	//------------------$curveType
+	//----------------- 1 == nurbsCircle : 2 == CV curve
+
+	if($curveType == 1)
+	{
+		$fol_curve = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $r -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+		return $fol_curve;
+	}
+
+	if($curveType == 2)
+	{
+		if($curveOrExt == 1)
+		{
+			$nSide = `intSliderGrp -q -v fol_curveSideSlider`;
+		}
+		else if($curveOrExt == 2)
+		{
+			$nSide = `intSliderGrp -q -v fol_extSideSlider`;
+		}
+
+		float $nSideFloat = $nSide;
+		float $locRot = 360/$nSideFloat;
+			
+		float $curvePointsX[];
+		float $curvePointsY[];
+		float $curvePointsZ[];
+
+		$loc = `spaceLocator -p 0 0 0`;
+		xform -t 0 0 $r $loc[0];
+
+		$locGrp = `group -em`;
+		xform -os -piv 0 0 0;
+
+		parent $loc[0] $locGrp;
+	
+		if(size($curvePointsX) != $nSide)
+		{
+			for($a=0;$a<$nSide;$a++)
+			{
+				setAttr ($locGrp + ".ry") ($locRot*$a); 
+				parent -world $loc[0];
+    
+				$curvePointsX[$a] = `getAttr ($loc[0] + ".tx")`;
+				$curvePointsY[$a] = `getAttr ($loc[0] + ".ty")`;
+				$curvePointsZ[$a] = `getAttr ($loc[0] + ".tz")`;   
+    		
+				parent $loc[0] $locGrp; 
+			}
+		}
+
+		$circCurve[0] = `curve -d 1 -p $curvePointsX[0] $curvePointsY[0] $curvePointsZ[0]` ;
+		for($b=1;$b<$nSide;$b++)
+		{
+			curve -a -p $curvePointsX[$b] $curvePointsY[$b] $curvePointsZ[$b] $circCurve[0];
+		}
+		curve -a -p $curvePointsX[0] $curvePointsY[0] $curvePointsZ[0] $circCurve[0];
+
+		delete $locGrp;
+
+		addAttr -ln "radius" -at double -dv $r $circCurve[0];
+		setAttr -e -keyable true ($circCurve[0] + ".radius");
+
+		$circCurve[1] = $circCurve[0];
+
+		return $circCurve;
+
+		clear $fol_curve $circCurve;
+	}
+
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------CREATE CURVE FOR EXTRUDE
+//-----------------------------------------------------------------------------
+global proc string[] fol_extCircCreate(float $r, int $curveType)
+{
+	$fol_circCurve = fol_circCreate($r, $curveType, 2);
+	return $fol_circCurve;
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------TRANSLATION AND GROUPING OF CIRCLES/CURVES
+//--------------------------EXPRESSIONS CONTROL PLACEMENT OF CIRCLES/CURVES BASED ON RADIUS
+//--------------------------LOCATORS PLACED AND PARENTED TO CENTER OF EACH CIRCLE/CURVE
+//-----------------------------------------------------------------------------
+proc fol_create(int $grpNum, float $r, int $level, int $dimension, float $scale)
+{
+	float $i;
+	float $tx;
+	float $txArray[];
+	int $txI;
+
+	string $circA[];
+	string $circB[];
+	string $circC[];
+	string $circD[];
+
+	string $locA[];
+	string $locB[];
+	string $locC[];
+	string $locD[];
+
+	//---------assign value to $nameSuf based on dimension
+	string $nameSuf = "";
+	if($dimension == 2)
+	{
+		$nameSuf = "_A";
+	}
+	if($dimension == 3)
+	{
+		$nameSuf = "_B";
+	}
+	if($dimension == 4)
+	{
+		$nameSuf = "_C";
+	}
+	if($dimension == 5)
+	{
+		$nameSuf = "_D";
+	}
+	if($dimension == 6)
+	{
+		$nameSuf = "_E";
+	}
+	if($dimension == 7)
+	{
+		$nameSuf = "_F";
+	}
+
+	$loop = 0;
+	$loop2 = 0;
+
+	if($level < 3)
+	{
+		$loop = $level + 1;
+	}
+	else
+	{
+		$loop = $level + 2;
+	}
+
+	$curveType = `radioButtonGrp -q -sl fol_curveRadio`;
+	$groupTop = `group -em`;
+	xform -os -piv 0 0 0;
+	addAttr -ln "radius" -at double -min 0.0001 -max 500 -dv $r $groupTop;
+	setAttr -e -keyable true ($groupTop + ".radius");
+
+	addAttr -ln "layerScale" -at double -min 1 -max 5 -dv $scale $groupTop;
+	setAttr -e -keyable true ($groupTop + ".layerScale");
+
+	$loc_vis = `checkBoxGrp -q -v1 fol_locVisCheck`;
+	addAttr -ln "loc_vis"  -at bool  $groupTop;
+	setAttr -e-keyable true ($groupTop + ".loc_vis");
+	setAttr ($groupTop + ".loc_vis") $loc_vis;
+
+	parent $groupTop fol_group;
+
+	for($a=0;$a<$loop;$a++)
+	{
+		$i = 0;
+		$txI = 0;
+		float $tx = 0;
+
+		$grpA = `group -em`;
+		xform -os -piv 0 0 0;
+		parent $grpA $groupTop;
+
+		//----------assign value to $loop2
+		//----------for creating correct number of circles
+
+    		if($a==0)
+    		{
+        		$loop2 = ($level * 2) + 1;
+    		}
+    		else if($a==1)
+    		{
+        		if($level<3)
+        		{
+            		$loop2 = $loop2 - 1;
+        		}
+        		else
+        		{
+            		$loop2 = $loop2 + 1;
+        		}
+    		}
+    		if($a>=2)
+    		{
+        		if($level < 3 || $loop - $a != 1)
+        		{
+            		$loop2 = $loop2 -1;
+        		}
+        		else
+        		{
+            		$loop2 = $level;
+        		}
+    		}
+
+		//-------------------------------------------
+
+		//----------if $a is EVEN
+		if(($a+2)%2 == 0)
+		{
+			for($b=0;$b<($loop2/2)+1;$b++)
+			{
+				$newR = (`pow $scale ($i+$a)`) * $r;
+
+				//---make single row first 
+				if($a==0)
+				{
+					if($b==0)
+					{
+						$circA = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;						
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locA = `spaceLocator -p 0 0 0`;
+						parent $locA[0] $circA[0];
+						setAttr ($circA[0] + ".tx") ($tx * $r);
+						connectAttr -f ($groupTop + ".loc_vis") ($locA[0] + ".v");
+
+						$nameNum1 = size(`listRelatives -c $grpA`);
+						parent $circA[0] $grpA;
+	
+						rename $circA[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						if($curveType == 1)
+						{
+							rename $circA[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						}
+						rename $locA[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+					
+						$txArray[0] = 0;
+					}
+					else
+					{
+						$circA = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locA = `spaceLocator -p 0 0 0`;
+						parent $locA[0] $circA[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locA[0] + ".v");
+						setAttr ($circA[0] + ".tx") ($tx * $r);
+
+						$circB = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locB = `spaceLocator -p 0 0 0`;
+						parent $locB[0] $circB[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locB[0] + ".v");
+						setAttr ($circB[0] + ".tx") (($tx * $r)*-1);
+
+						$nameNum1 = size(`listRelatives -c $grpA`);
+						parent $circA[0] $grpA;
+						$nameNum2 = size(`listRelatives -c $grpA`);
+						parent $circB[0] $grpA;
+
+						rename $circA[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						rename $circB[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+						if($curveType == 1)
+						{
+							rename $circA[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+							rename $circB[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+						}
+						rename $locA[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						rename $locB[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+
+						$txArray[$b] = ($tx * $r);
+					}
+					if($b==($loop2/2))
+					{
+						if( ($i+2)%2 == 0 )
+						{
+							$txArray[$b+1] = ((($tx * $scale) + $scale) * $r);
+						}
+						else
+						{
+							$txArray[$b+1] = ((($tx * $scale) + 1) * $r);
+						}
+					}
+				}
+				//---start making double rows z and -z
+				else
+				{
+					if($b==0)
+					{
+						$circA = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locA = `spaceLocator -p 0 0 0`;
+						parent $locA[0] $circA[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locA[0] + ".v");
+
+						setAttr ($circA[0] + ".tx") ($tx * $r);
+						setAttr ($circA[0] + ".tz") ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a);
+
+						$circB = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locB = `spaceLocator -p 0 0 0`;
+						parent $locB[0] $circB[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locB[0] + ".v");
+
+						setAttr ($circB[0] + ".tx") (($tx * $r)*-1);
+						setAttr ($circB[0] + ".tz") ( ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a) * -1);
+
+						$nameNum1 = size(`listRelatives -c $grpA`);
+						parent $circA[0] $grpA;
+						$nameNum2 = size(`listRelatives -c $grpA`);
+						parent $circB[0] $grpA;
+
+						rename $circA[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						rename $circB[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+						if($curveType == 1)
+						{
+							rename $circA[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+							rename $circB[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+						}
+						rename $locA[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						rename $locB[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+					}
+					else
+					{
+						$circA = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locA = `spaceLocator -p 0 0 0`;
+						parent $locA[0] $circA[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locA[0] + ".v");
+
+						setAttr ($circA[0] + ".tx") ($tx * $r);
+						setAttr ($circA[0] + ".tz") ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a);
+
+						$circB = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locB = `spaceLocator -p 0 0 0`;
+						parent $locB[0] $circB[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locB[0] + ".v");
+
+						setAttr ($circB[0] + ".tx") (($tx * $r)*-1);
+						setAttr ($circB[0] + ".tz") ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a);
+
+						$circC = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locC = `spaceLocator -p 0 0 0`;
+						parent $locC[0] $circC[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locC[0] + ".v");
+
+						setAttr ($circC[0] + ".tx") ($tx * $r);
+						setAttr ($circC[0] + ".tz") ( ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a) * -1);
+
+						$circD = fol_circCreate($newR, $curveType, 1);
+						displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+						subdivDisplaySmoothness -smoothness 3;
+
+						$locD = `spaceLocator -p 0 0 0`;
+						parent $locD[0] $circD[0];
+						connectAttr -f ($groupTop + ".loc_vis") ($locD[0] + ".v");
+
+						setAttr ($circD[0] + ".tx") (($tx * $r)*-1);
+						setAttr ($circD[0] + ".tz") ( ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a) * -1);
+
+						$nameNum1 = size(`listRelatives -c $grpA`);
+						parent $circA[0] $grpA;
+						$nameNum2 = size(`listRelatives -c $grpA`);
+						parent $circB[0] $grpA;
+						$nameNum3 = size(`listRelatives -c $grpA`);
+						parent $circC[0] $grpA;
+						$nameNum4 = size(`listRelatives -c $grpA`);
+						parent $circD[0] $grpA;
+
+						rename $circA[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						rename $circB[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+						rename $circC[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum3 + $nameSuf);
+						rename $circD[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum4 + $nameSuf);
+						if($curveType == 1)
+						{
+							rename $circA[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+							rename $circB[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+							rename $circC[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum3 + $nameSuf);
+							rename $circD[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum4 + $nameSuf);
+						}
+						rename $locA[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+						rename $locB[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+						rename $locC[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum3 + $nameSuf);
+						rename $locD[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum4 + $nameSuf);
+					}
+
+				}
+				if( ($i+2)%2 == 0 )
+				{
+					$tx = (($tx * $scale) + $scale);
+				}
+				else
+				{
+					$tx = (($tx * $scale) + 1);
+				}
+
+				if($a<2)
+				{
+    					$i++;
+					$txI++;
+				}
+				else
+				{
+					if(($a+2) % 2 == 0)
+					{
+						if($b>=($a/2))
+						{
+							$i++;
+							$txI++;
+						}
+					}
+					else
+					{
+						if($b>=(($a-1)/2))
+						{
+							$i++;
+							$txI++;
+						}
+					}
+				}
+			}
+		}
+
+		//----------if $a is ODD
+		if(($a+2)%2 != 0)
+		{
+			for($b=0;$b<$loop2/2;$b++)
+			{
+				$newR = (`pow $scale ($i+$a)`) * $r;
+
+				$circA = fol_circCreate($newR, $curveType, 1);
+				displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+				subdivDisplaySmoothness -smoothness 3;
+
+				$locA = `spaceLocator -p 0 0 0`;
+				parent $locA[0] $circA[0];
+				connectAttr -f ($groupTop + ".loc_vis") ($locA[0] + ".v");
+
+				setAttr ($circA[0] + ".tx") (($newR/2)+($tx * $r));
+				setAttr ($circA[0] + ".tz") ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a);
+
+				$circB = fol_circCreate($newR, $curveType, 1);
+				displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+				subdivDisplaySmoothness -smoothness 3;
+
+				$locB = `spaceLocator -p 0 0 0`;
+				parent $locB[0] $circB[0];
+				connectAttr -f ($groupTop + ".loc_vis") ($locB[0] + ".v");
+
+				setAttr ($circB[0] + ".tx") ((($newR/2)+($tx * $r))*-1);
+				setAttr ($circB[0] + ".tz") ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a);
+
+				$circC = fol_circCreate($newR, $curveType, 1);
+				displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+				subdivDisplaySmoothness -smoothness 3;
+
+				$locC = `spaceLocator -p 0 0 0`;
+				parent $locC[0] $circC[0];
+				connectAttr -f ($groupTop + ".loc_vis") ($locC[0] + ".v");
+
+				setAttr ($circC[0] + ".tx") (($newR/2)+($tx * $r));
+				setAttr ($circC[0] + ".tz") ( ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a) * -1);
+
+				$circD = fol_circCreate($newR, $curveType, 1);
+				displaySmoothness -divisionsU 3 -divisionsV 3 -pointsWire 16 -pointsShaded 4 -polygonObject 3;
+				subdivDisplaySmoothness -smoothness 3;
+
+				$locD = `spaceLocator -p 0 0 0`;
+				parent $locD[0] $circD[0];
+				connectAttr -f ($groupTop + ".loc_vis") ($locD[0] + ".v");
+
+				setAttr ($circD[0] + ".tx") ((($newR/2)+($tx * $r))*-1);
+				setAttr ($circD[0] + ".tz") ( ( ( ($txArray[$txI+$a] / ($i+$a)) * sqrt(3)/2) * $a) * -1);
+
+				$nameNum1 = size(`listRelatives -c $grpA`);
+				parent $circA[0] $grpA;
+				$nameNum2 = size(`listRelatives -c $grpA`);
+				parent $circB[0] $grpA;
+				$nameNum3 = size(`listRelatives -c $grpA`);
+				parent $circC[0] $grpA;
+				$nameNum4 = size(`listRelatives -c $grpA`);
+				parent $circD[0] $grpA;
+
+				rename $circA[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+				rename $circB[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+				rename $circC[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum3 + $nameSuf);
+				rename $circD[0] ("fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum4 + $nameSuf);
+				if($curveType == 1)
+				{
+					rename $circA[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+					rename $circB[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+					rename $circC[1] ("make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum3 + $nameSuf);
+					rename $circD[1] ("Make_fol_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum4 + $nameSuf);
+				}
+				rename $locA[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum1 + $nameSuf);
+				rename $locB[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum2 + $nameSuf);
+				rename $locC[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum3 + $nameSuf);
+				rename $locD[0] ("loc_" + $grpNum + "_grp_" + $a + "_circ_" + $nameNum4 + $nameSuf);
+
+				if( ($i+2)%2 == 0 )
+				{
+					$tx = (($tx * $scale) + $scale);
+				}
+				else
+				{
+					$tx = (($tx * $scale) + 1);
+				}
+				
+				if($a<2)
+				{
+    					$i++;
+					$txI++;
+				}
+				else
+				{
+					if(($a+2) % 2 == 0)
+					{
+						if($b>=($a/2))
+						{
+							$i++;
+							$txI++;
+						}
+					}
+					else
+					{
+						if($b>=(($a-1)/2))
+						{
+							$i++;
+							$txI++;
+						}
+					}
+				}
+			}
+		}
+		rename $grpA ("fol_" + $grpNum + "_grp_" + $a + $nameSuf);
+	}
+	rename $groupTop ("fol_" + $grpNum + $nameSuf);
+
+	clear $txArray $circA $circB $circC $circD $locA $locB $locC $locD;
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------PASS ALONG CREATION SETTINGS...
+//--------------------------INITIAL CREATION OR FOL EDIT SETTINGS
+//-----------------------------------------------------------------------------
+proc folCreate_pre(int $grpNum, float $radius, int $level, int $d, float $scale)
+{
+	string $nameSuf = "";
+
+	//CREATE FOL----------------------------
+	fol_create($grpNum, $radius, $level, $d, $scale);
+
+	$dimension = dimensionProc();
+
+	if($d==2)
+	{
+		$nameSuf = "_A";
+	}
+	if($d==3)
+	{
+		$nameSuf = "_B";
+	}
+	if($d==4)
+	{
+		$nameSuf = "_C";
+	}
+	if($d==5)
+	{
+		$nameSuf = "_D";
+	}
+	if($d==6)
+	{
+		$nameSuf = "_E";
+	}
+	if($d == 7)
+	{
+		$nameSuf = "_F";
+	}
+
+	if($d>1)
+	{
+		parent ("fol_" + $grpNum + $nameSuf) ("fol_" + $grpNum);
+		if($dimension == 3)
+		{
+			if($d == 2)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+			}
+			if($d == 3)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 90;
+			}
+		}
+		else if($dimension == 4)
+		{
+			if($d == 2)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 25.244;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 16.771;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rz") 58.534;
+			}
+			if($d == 3)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 154.756;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 16.771;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rz") 121.466;
+			}
+			if($d == 4)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") -90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") -35.247;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rz") 90;
+			}
+		}
+		else if($dimension == 7)
+		{
+			if($d == 2)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 0;
+			}
+			if($d == 3)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 30;
+			}
+			if($d == 4)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 60;
+			}
+			if($d == 5)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 90;
+			}
+			if($d == 6)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 120;
+			}
+			if($d == 7)
+			{
+				setAttr ("fol_" + $grpNum + $nameSuf + ".rx") 90;
+				setAttr ("fol_" + $grpNum + $nameSuf + ".ry") 150;
+			}
+		}
+	}
+
+	select -r ("fol_" + $grpNum);
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------READING USER DEFINED INPUT FOR FOL CREATION
+//-----------------------------------------------------------------------------
+global proc folCreate_options()
+{
+	$fol_extCheck = extrudeCheckProc();
+	//$layerScale = `floatSliderGrp -q -v fol_layerScale`;
+
+	if(!`objExists "fol_group"`)
+	{
+		$folGrp = `group -em`;
+		xform -os -piv 0 0 0;
+		rename $folGrp fol_group;
+	}
+	$grpNum = size(`listRelatives -c "fol_group"`)+1;
+
+	$radius = radiusProc();
+	$level = levelProc();
+	$dimension = dimensionProc();
+	string $nameSuf = "";
+
+	for($d=1;$d<=$dimension;$d++)
+	{
+		folCreate_pre($grpNum, $radius, $level, $d, 1);
+	}
+
+	if($fol_extCheck == 1)
+	{
+		fol_extPre($grpNum); 
+	}
+
+	fol_updateTextList;
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------ENABLES/DISABLES # OF SIDES INPUT FOR LINEAR CURVE
+//--------------------------BASED ON SELECTION OF CIRCLE/CURVE
+//--------------------------CONVERTS CIRCLES->CURVES & CURVES->CIRCLES
+//-----------------------------------------------------------------------------
+global proc fol_curveRadioEdit()
+{
+	$fol_curveRadio = `radioButtonGrp -q -sl fol_curveRadio`;
+	$editCheck = editCheckProc();
+	$grpNum = grpNumProc();
+	$radius = radiusProc();
+	$level = levelProc();
+	$dimension = dimensionProc();
+	$fol_extCheck = extrudeCheckProc();
+	//$layerScale = `floatSliderGrp -q -v fol_layerScale`;
+	
+	if($fol_curveRadio == 1)
+	{
+		intSliderGrp -e -en 0 fol_curveSideSlider;
+
+		if($editCheck == 1 && $grpNum != 0)
+		{
+			delete ("fol_" + $grpNum);
+
+			for($d=1;$d<=$dimension;$d++)
+			{
+				folCreate_pre($grpNum, $radius, $level, $d, 1);
+			}
+			fol_grpReorder;
+		
+			if($fol_extCheck == 1)
+			{
+				fol_extEdit();
+			}
+		}
+	}
+	else
+	{
+		intSliderGrp -e -en 1 fol_curveSideSlider;
+
+		if($editCheck == 1 && $grpNum != 0)
+		{
+			delete ("fol_" + $grpNum);
+
+			for($d=1;$d<=$dimension;$d++)
+			{
+				folCreate_pre($grpNum, $radius, $level, $d, 1);
+			}
+			fol_grpReorder;
+
+			if($fol_extCheck == 1)
+			{
+				fol_extEdit();
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------UPDATE INPUT FIELDS WHEN AN 
+//--------------------------ITEM IS SELECTED FROM TEXT LIST
+//-----------------------------------------------------------------------------
+global proc fol_editTextList()
+{
+	string $grpSel = grpNameProc();
+	int $grpNum = grpNumProc();
+
+	string $fol_layers[];
+	
+	if(objExists ($grpSel))
+	{
+		select -r $grpSel;
+		radioButtonGrp -e -sl 1 fol_editRadio;
+ 
+		$radius = getAttr ($grpSel + ".radius");
+		floatSliderGrp -e -v $radius fol_radiusSld;
+
+		$scale = getAttr ($grpSel + ".layerScale");
+		//floatSliderGrp -e -v $scale fol_layerScale;
+
+		$fol_layers = `listRelatives -c $grpSel`;
+		int $fol_layerNum = 0;
+		int $fol_dimension = 0;
+
+		for($a=0;$a<(size($fol_layers));$a++)
+		{
+			if($fol_layers[$a] == ($grpSel + "_grp_" + $a))
+			{
+				$fol_layerNum++;
+			}	
+			else
+			{
+				$fol_dimension++;
+			}
+		}
+
+		if($fol_layerNum <= 3)
+		{
+			$fol_layerNum = $fol_layerNum - 1;
+		}
+		else
+		{
+			$fol_layerNum = $fol_layerNum - 2;
+		}
+		intSliderGrp -e -v $fol_layerNum fol_layerSld;
+
+		if($fol_dimension == 0)
+		{
+			radioButtonGrp -e -sl 1 fol_dimRadio;
+		}
+		else if($fol_dimension == 6)
+		{
+			radioButtonGrp -e -sl 4 fol_dimRadio;
+		}
+		else
+		{
+			radioButtonGrp -e -sl $fol_dimension fol_dimRadio;
+		}
+
+		if(objExists ("make_" + $grpSel + "_grp_0_circ_0"))
+		{
+			radioButtonGrp -e -sl 1 fol_curveRadio;
+			intSliderGrp -e -en 0 fol_curveSideSlider;
+		}
+		else
+		{
+			radioButtonGrp -e -sl 2 fol_curveRadio;
+			intSliderGrp -e -en 1 fol_curveSideSlider;
+			$spans = getAttr ($grpSel + "_grp_0_circ_Shape0.spans");
+			intSliderGrp -e -v $spans fol_curveSideSlider;
+		}
+		
+		$locVis = getAttr ($grpSel + ".loc_vis");
+		if($locVis == 0)
+		{
+			checkBoxGrp -e -v1 0 fol_locVisCheck;
+		}
+		else
+		{
+			checkBoxGrp -e -v1 1 fol_locVisCheck;
+		}
+
+	}
+	else if(objExists ($grpSel) ==0 && $grpNum > 0)
+	{
+		error("!!!--->" + $grpSel + " does not exist\n");
+	}
+
+	fol_editTextList_EXT($grpNum);
+	clear $fol_layers;
+}
+
+//-----------------------------------------------------------------------------
+//--------------------------UPDATED RADIUS OF CIRCLE - OR -
+//--------------------------DELETES GROUP OF LINEAR CURVES AND STARTS
+//--------------------------CREATION PROCESS WITH NEW PARAMETERS
+//-----------------------------------------------------------------------------
+global proc fol_multiEdit()
+{
+	$grpNum = grpNumProc();
+	$editCheck = editCheckProc();
+	$radius = radiusProc();
+	int $curveType;
+	$dimension = dimensionProc();
+	$fol_extCheck = extrudeCheckProc();
+	//$layerScale = `floatSliderGrp -q -v fol_layerScale`;
+
+	if(objExists ("make_fol_" + $grpNum + "_grp_0_circ_0"))
+	{
+		$curveType = 1;
+	}
+	else
+	{
+		$curveType = 2;
+	}
+
+	if(objExists ("fol_" + $grpNum) && $editCheck == 1)
+	{
+		delete ("fol_" + $grpNum);
+		$level = `intSliderGrp -q -v fol_layerSld`;
+
+		for($d=1;$d<=$dimension;$d++)
+		{
+			folCreate_pre($grpNum, $radius, $level, $d, 1);
+		}
+
+		fol_grpReorder;
+
+		if($fol_extCheck == 1)
+		{
+			fol_extEdit(); 
+		}
+	}
+}

@@ -1,0 +1,224 @@
+float $r = 1;
+float $scale = 2;
+float $i;
+float $tx;
+
+$groupTop = `group -em`;
+$level = 4;
+$loop = 0;
+float $loop2 = 0;
+float $newR;
+
+if($level < 3)
+{
+	$loop = $level + 1;
+}
+else
+{
+	$loop = $level + 2;
+}
+
+for($a=0;$a<$loop;$a++)
+{
+	float $i = 0;
+	float $tx = 0;
+
+	//print("a: " + $a + "\n");
+
+	$grpA = `group -em`;
+	xform -os -piv 0 0 0;
+	parent $grpA $groupTop;
+
+    	if($a==0)
+    	{
+        	$loop2 = ($level * 2) + 1;
+    	}
+    	else if($a==1)
+    	{
+        	if($level<3)
+        	{
+            		$loop2 = $loop2 - 1;
+        	}
+        	else
+        	{
+        		$loop2 = $loop2 + 1;
+      		}
+    	}
+    	if($a>=2)
+    	{
+        	if($level < 3 || $loop - $a != 1)
+        	{
+            		$loop2 = $loop2 -1;
+        	}
+        	else
+        	{
+         		$loop2 = $level;
+      		}
+	}
+
+	print("-------------------\n");
+
+	if(($a+2)%2 == 0)
+	{
+		for($b=0;$b<($loop2/2)+1;$b++)
+		{
+			print("$i: " + ($i+$a) + "\n");
+
+   			$newR = (`pow $scale ($i+$a)`) * $r;
+			//print("b: " + $b + " i: " + $i + " newR: " + $newR + "\n");
+
+			if($a==0)
+			{
+				if($b==0)
+				{
+    					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) ($tx * $r);
+					parent $circ[0] $grpA;
+				}
+				else
+				{
+    					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) ($tx * $r);
+					parent $circ[0] $grpA;
+
+    					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) (($tx * $r)*-1);
+					parent $circ[0] $grpA;
+				}
+			}
+			else
+			{
+				if($b==0)
+				{
+					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) ($tx * $r);
+					parent $circ[0] $grpA;
+
+    					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) (($tx * $r)*-1);
+					parent $circ[0] $grpA;
+				}
+				else
+				{
+					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) ($tx * $r);
+					parent $circ[0] $grpA;
+
+    					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) ($tx * $r);
+					parent $circ[0] $grpA;
+
+					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) (($tx * $r)*-1);
+					parent $circ[0] $grpA;
+
+    					$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+					setAttr ($circ[0] + ".tx" ) (($tx * $r)*-1);
+					parent $circ[0] $grpA;
+				}
+			}
+
+
+			if( ($i+2)%2 == 0 )
+			{
+				//print($i + ": " + (($tx * $scale) + $scale) + "\n");
+
+				$tx = (($tx * $scale) + $scale);
+			}
+			else
+			{
+				//print($i + ": " + (($tx * $scale) + 1) + "\n");
+
+				$tx = (($tx * $scale) + 1);
+			}
+
+
+			if($a<2)
+			{
+    				$i++;
+
+			}
+			else
+			{
+				if(($a+2) % 2 == 0)
+				{
+					if($b>=($a/2))
+					{
+						$i++;
+					}
+				}
+				else
+				{
+					if($b>=(($a-1)/2))
+					{
+						$i++;
+					}
+				}
+			}
+		}
+	}
+	
+	if(($a+2)%2 != 0 )
+	{
+		for($b=0;$b<$loop2/2;$b++)
+		{
+			print("$i: " + ($i+$a) + "\n");
+	
+			if( ($i+2)%2 == 0 )
+			{
+				//print($i + ": " + (($tx * $scale) + $scale) + "\n");
+
+				$tx = (($tx * $scale) + $scale);
+			}
+			else
+			{
+				//print($i + ": " + (($tx * $scale) + 1) + "\n");
+
+				$tx = (($tx * $scale) + 1);
+			}
+
+			$newR = (`pow $scale ($i+$a)`) * $r;
+			//print("b: " + $b + " i: " + $i + " newR: " + $newR + "\n");
+
+			$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+			setAttr ($circ[0] + ".tx" ) ($tx * $r);
+			parent $circ[0] $grpA;
+
+			$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+			setAttr ($circ[0] + ".tx" ) ($tx * $r);
+			parent $circ[0] $grpA;
+
+			$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+			setAttr ($circ[0] + ".tx" ) (($tx * $r)*-1);
+			parent $circ[0] $grpA;
+
+			$circ = `circle -c 0 0 0 -nr 0 1 0 -sw 360 -r $newR -d 3 -ut 0 -tol 0 -s 8 -ch 1`;
+			setAttr ($circ[0] + ".tx" ) (($tx * $r)*-1);
+			parent $circ[0] $grpA;
+
+			if($a<2)
+			{
+    				$i++;
+			}
+			else
+			{
+				if(($a+2) % 2 == 0)
+				{
+					if($b>=($a/2))
+					{
+						$i++;
+					}
+				}
+				else
+				{
+					if($b>=(($a-1)/2))
+					{
+						$i++;
+					}
+				}
+			}
+		}
+	}
+}
+
+

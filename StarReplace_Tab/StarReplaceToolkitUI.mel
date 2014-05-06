@@ -1,0 +1,167 @@
+string $lbs_starReplace = `formLayout 
+		-nd 100 starReplaceForm`;
+
+$sr_button_01 = `button 
+	-l "Space Brush" 
+	-width 200 
+	-command "lbs_brush()"`;
+
+$sr_intSld_01 = `intSliderGrp
+	-label "Replacement Geometry Subdivisions:"
+	-field true
+	-v 5
+	-min 3
+	-max 60
+	-step 1
+	subDivVal`;
+
+$sr_text_01 = `text 
+	-label "Select Paint Effects Strokes to be replaced: "`;
+
+$sr_button_02 = `button 
+	-l "Replace Selected" 
+	-width 100 
+	-command "lbs_replaceStrokes()"`;
+
+$sr_floatFld_01 = `floatFieldGrp
+	-l "Min. Value: "
+	-v1 .1
+	-cc "randomizeScale();"
+	minVal`;
+
+$sr_floatFld_02 = `floatFieldGrp
+	-l "Max. Value: "
+	-v1 .6
+	-cc "randomizeScale();"
+	maxVal`;
+
+$sr_intSld_02 = `intSliderGrp
+	-label "Update Subdivisions: "
+	-field true
+	-v 8
+	-min 3
+	-max 60
+	-cc "repSubDiv();"
+	subVal`;
+
+$sr_starScale = `floatSliderGrp
+	-label "Update Star Scale"
+	-field true
+	-v 1
+	-min .001	
+	-max 50
+	-step .001
+	-cc "sr_scaleUpdate"
+	sr_starScale`;
+
+$sr_surfRad = `floatSliderGrp
+	-l "emitter radius"
+	-field true
+	-v 5.000
+	-step .001
+	-min 0.001
+	-max 500
+	-cc "sr_createHighlight"
+	sr_surfRad`;
+
+$sr_spriteSize = `floatSliderGrp
+	-l "sprite size"
+	-field true
+	-v 0.500
+	-step .001
+	-min .001
+	-max 20
+	-cc "sr_spriteResize"
+	sr_spriteSize`;
+
+$sr_surfSelect = `radioButtonGrp
+	-nrb 2
+	-l1 "sphere"
+	-l2 "plane"
+	-sl 1
+	-en 1
+	-cc "sr_createHighlight"
+	sr_surfType`;
+
+$sr_highlightButton = `button
+	-l "create highlight stars"
+	-command "sr_createHighlight"
+	sr_hightlightButton`;
+
+$sr_sep1 = `separator
+	-w 430
+	sr_sep1`;
+
+//-----------------------------------------------
+//layout of PAINT EFFECTS STAR REPLACE UI elements
+//-----------------------------------------------
+
+formLayout -edit
+
+	-attachForm $sr_button_01 "top" 35	
+	-attachForm $sr_button_01 "left" 120	
+	-attachNone $sr_button_01 "bottom"
+	-attachNone $sr_button_01 "right"
+
+	-attachControl $sr_intSld_01 "top" 25 $sr_button_01	
+	-attachForm $sr_intSld_01 "left" 20
+	-attachNone $sr_intSld_01 "bottom"
+	-attachNone $sr_intSld_01 "right"
+
+	-attachControl $sr_text_01 "top" 15 $sr_intSld_01	
+	-attachForm $sr_text_01 "left" 7
+	-attachNone $sr_text_01 "bottom"
+	-attachNone $sr_text_01 "right"
+
+	-attachControl $sr_button_02 "top" 15 $sr_intSld_01	
+	-attachForm $sr_button_02 "left" 270
+	-attachNone $sr_button_02 "bottom"
+	-attachNone $sr_button_02 "right"
+
+	-attachControl $sr_floatFld_01 "top" 20 $sr_button_02	
+	-attachForm $sr_floatFld_01 "left" 10
+	-attachNone $sr_floatFld_01 "bottom"
+	-attachNone $sr_floatFld_01 "right"
+
+	-attachControl $sr_floatFld_02 "top" 10 $sr_floatFld_01	
+	-attachForm $sr_floatFld_02 "left" 10
+	-attachNone $sr_floatFld_02 "bottom"
+	-attachNone $sr_floatFld_02 "right"
+
+	-attachControl $sr_intSld_02 "top" 25 $sr_floatFld_02
+	-attachForm $sr_intSld_02 "left" 8
+	-attachNone $sr_intSld_02 "bottom"
+	-attachNone $sr_intSld_02 "right"
+
+	-attachControl $sr_starScale "top" 15 $sr_intSld_02
+	-attachForm $sr_starScale "left" 8
+	-attachNone $sr_starScale "bottom"
+	-attachNone $sr_starScale "right"
+
+	-attachControl $sr_sep1 "top" 15 $sr_starScale
+	-attachForm $sr_sep1 "left" 10
+	-attachNone $sr_sep1 "bottom"
+	-attachNone $sr_sep1 "right"
+
+	-attachControl $sr_surfRad "top" 15 $sr_sep1
+	-attachForm $sr_surfRad "left" 10
+	-attachNone $sr_surfRad "bottom"
+	-attachNone $sr_surfRad "right"
+
+	-attachControl $sr_spriteSize "top" 15 $sr_surfRad
+	-attachForm $sr_spriteSize "left" 10
+	-attachNone $sr_spriteSize "bottom"
+	-attachNone $sr_spriteSize "right"
+
+	-attachControl $sr_surfSelect "top" 15 $sr_spriteSize
+	-attachForm $sr_surfSelect "left" 135
+	-attachNone $sr_surfSelect "bottom"
+	-attachNone $sr_surfSelect "right"
+
+	-attachControl $sr_highlightButton "top" 15 $sr_surfSelect
+	-attachForm $sr_highlightButton "left" 135
+	-attachNone $sr_highlightButton "bottom"
+	-attachNone $sr_highlightButton "right"
+
+$lbs_starReplace;
+setParent ..;

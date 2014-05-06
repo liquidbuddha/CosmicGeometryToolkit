@@ -1,0 +1,606 @@
+	string $lbs_torusToolkit = `formLayout
+		-nd 100
+		-w 470
+		torusToolkitForm`;
+		
+	string $tt_floatFld_1 = `floatFieldGrp 	
+		-numberOfFields 2
+    		-label "Torus Radius" -extraLabel "height ratio"
+    		-v1 10.00 -v2 0.900 
+		-pre 3
+		-w 300
+		-cc "radiusUpdate"
+		torusSpecGrp`;
+
+	string $torus_hrAnimate = `checkBoxGrp
+		-l "enable HR and radius animation"
+		-v1 0
+		-cw2 200 60
+		-cc "torus_hrAnimate"
+		torus_hrAnimateCheck`;
+
+	string $tt_JBcheck = `checkBoxGrp
+		-l "connect to jitterbug"
+		-v1 0
+		-en 0
+		-cw2 110 60
+		-cc "tt_jbExp"
+		tt_JBcheck`;
+
+	string $tt_intSlider_1 = `intSliderGrp 
+		-label "loops"
+		-ann "number of loops"
+		-field true
+		-v 2
+		-min 1 
+		-max 400
+		-step 1	
+		-cc "evoUpdate"
+		fldLoops`;
+
+	string $tt_floatSlider_1 = `floatSliderGrp 
+		-label "rotation"
+		-ann "degree of rotation between nodes"
+		-field true
+		-value 10 
+		-min .1 
+		-max 180	 
+		-step .01
+		-cc "evoUpdate"
+		fldRot`;
+
+	string $tt_revCheck = `checkBoxGrp
+		-l "reverse"
+		-w 160
+		-v1 0
+		-cc "tt_revAnimCheck"
+		ttRevAnim`;
+	
+	string $tt_intSlider_2 = `intSliderGrp
+		-l "cycle"
+		-ann "frames per cycle"
+		-field true
+		-v 100
+		-min  1
+		-max 100000 
+		-cw3 45 80 160
+		-step 1 
+		-cc "animUpdate"
+		fldCycle`;
+
+	string $tt_floatSlider_2 = `floatSliderGrp 
+		-label "Geometry Radius"
+		-ann "size of geometry nodes"
+		-field true
+		-value 1 
+		-min .1 
+		-max 1000	 
+		-step .1
+		-en 0
+		-cc "geometryUpdate"
+		fldSize`;
+
+	string $tt_floatSlider_3 = `floatSliderGrp 
+		-label "Geometry HR"
+		-ann "Height Ratio of geometry nodes"
+		-field true
+		-value 0.9 
+		-min .001 
+		-max 100	 
+		-step .001
+		-en 0
+		-cc "geometryUpdate"
+		fldGeoHR`;
+
+	string $tt_radioButton_1 = `radioButtonGrp 
+		-numberOfRadioButtons 4
+    		-label "Type of Evolute" 
+		-cw5 95	85 85 85 85
+		-labelArray4 "Curve" "Spheres" "Tori" "Planes"
+		-sl 1
+		-onc "evoType"
+		evoType`;
+
+	string $tt_extrudeButton = `button
+		-l "Create Extrude"
+		-w 120
+		-en 0
+		-command "torus_extrude"
+		tt_extrudeButton`;
+
+	string $tt_extrudeRadius = `floatSliderGrp
+		-l "extrude radius"
+		-en 0
+		-field true
+		-v 0.200
+		-step .001
+		-min .001
+		-max 1000
+		-cc "updateExtrudeRadius"
+		tt_extrudeRadius`;
+
+	string $tt_aimConst = `checkBoxGrp
+		-l "Face Camera"
+		-en 0
+		-v1 0
+		-cc "tt_aimConst"
+		tt_aimCheckBox`;
+
+	string $torus_separator_1 = `separator
+		-style "in"
+		-w 430
+		torusSep_1`;
+
+	string $torus_separator_2 = `separator
+		-style "in"
+		-w 430
+		torusSep_2`;
+	
+	string $tt_radioButton_2 = `radioButtonGrp
+		-numberOfRadioButtons 2
+		-label "Mode"
+		-labelArray2 "Edit" "Create"
+		-sl 2
+		-onc "editCheck"
+		editRadio`;
+
+	string $tt_button_1 = `button 	
+		-label "init a newScene"
+		-w 130
+		-command "file -f -new; playbackOptions -e -min 1.00 -max 100; torus_updateTextList;"
+		newSceneButton`;
+
+	string $tt_button_2 = `button 	
+		-label "create Evolute"
+		-w 130
+		-en 1
+		-command "CallEvos"
+		evoCurveButton`;
+
+	string $tt_button_3 = `button
+		-label "reset settings"
+		-w 130
+		-command "resetSettings"
+		ttResetButton`;
+
+	$torus_textList = `textScrollList 
+		-w 290  
+		-h 180 
+		-sc "torus_editTextList"
+		-fn "obliqueLabelFont"
+		torus_textList`;
+
+	$tt_evoJBConnType = `radioButtonGrp
+		-nrb 2
+		-vis 0
+		-cw3 150 75 75
+		-l "Conn. Type: "
+		-labelArray2 "unit" "faces"
+		-sl 1
+		tt_evoJBConnSel`;
+
+	$tt_dblRadio = `radioButtonGrp
+		-nrb 2
+		-vis 0
+		-cw3 150 75 75
+		-l "Evo Type: "
+		-labelArray2 "single" "double"
+		-sl 1
+		tt_dblRadio`;
+
+	$tt_JBtextList = `textScrollList 
+		-w 127  
+		-h 480 
+		-vis 0
+		-sc "tt_shellPopulate"
+		-fn "obliqueLabelFont"
+		torus_JBList`;
+
+	$tt_shellTextList = `textScrollList 
+		-w 155  
+		-h 480 
+		-vis 0
+		-ams 1
+		-sc ""
+		-fn "obliqueLabelFont"
+		torus_shellList`;
+
+	$tt_jbConnectButton = `button
+		-label "connect to jitterbug"
+		-w 200
+		-vis 0
+		-command "tt_connectJB"
+		tt_jbConn`;
+
+	$tt_jbDisconnectButton = `button
+		-label "disconnect jitterbug"
+		-w 200
+		-vis 0
+		-command "tt_disconnectJB"
+		tt_jbDis`;
+
+	$torus_frame= `frameLayout
+		-l "Tapered Bead Options - select a curve from list to edit"
+		-w 430
+		-cl 1
+		-cll 1
+		-cc "torusFrameCol"
+		-ec "torusFrameCol"
+		torus_frame`;
+
+	$torus_frameForm = `formLayout
+		-nd 100
+		-w 430
+		-h 270
+		torus_frameForm`;
+
+	string $torus_evoTaperNum = `intSliderGrp
+		-label "taper num"
+		-field true
+		-value 1
+		-step 1
+		-min 1
+		-max 1000
+		-en 0
+		-cc "torusTaperBeads"
+		torus_taperNum`;
+
+	string $torus_evoSphereNum = `intSliderGrp
+		-label "sphere num"
+		-field true
+		-value 5
+		-step 1
+		-min 1
+		-max 300
+		-en 0
+		-cc "torusTaperBeads"
+		torus_sphereNum`;
+
+	string $torus_evoCurveSection = `floatSliderGrp
+		-label "percent of curve"
+		-field true
+		-value .7
+		-step .001
+		-min .01
+		-max 1
+		-en 0
+		-cc "torusTaperBeads"
+		torus_sphereSection`;
+
+	string $torus_evoAnimCycle = `floatSliderGrp
+		-label "anim cycle"
+		-field true
+		-value 300
+		-step 1
+		-min 10
+		-max 10000
+		-en 0
+		-cc "torusTaperBeads"
+		torus_sphereAnimCycle`;
+
+	string $torus_evoMinRad = `floatSliderGrp
+		-label "min radius"
+		-field true
+		-value .1
+		-step .001
+		-min .001
+		-max 50
+		-en 0
+		-cc "torusTaperBeads"
+		torus_sphereMinRad`;
+
+	string $torus_evoMaxRad = `floatSliderGrp
+		-label "max radius"
+		-field true
+		-value 1
+		-step .001
+		-min .001
+		-max 50
+		-en 0
+		-cc "torusTaperBeads"
+		torus_sphereMaxRad`;
+
+	string $torus_taperCenter = `floatSliderGrp
+		-label "taper center"
+		-field true
+		-step .001
+		-value 0.50
+		-min 0.000
+		-max 1.000
+		-en 0
+		-cc "torusTaperBeads"
+		torus_taperCenter`;
+
+	string $torus_taperCurvePos = `floatSliderGrp
+		-label "position along curve"
+		-field true
+		-step .001
+		-value 0.00
+		-min 0.000
+		-max 1.000
+		-en 0
+		-cc "torusTaperBeads"
+		torus_taperCurvePos`;
+
+	string $tt_button_4 = `button
+		-label "create tapered beads"
+		-w 140
+		-command "torusTaperBeadsButton"
+		torus_createTaper`;
+
+	string $tt_button_5 = `button
+		-label "delete tapered beads"
+		-w 140
+		-command "torusTaperBeadsDelete"
+		torus_deleteTaper`;
+
+//--------------------------------------------------
+//layout of TORUS TOOLKIT UI elements
+//--------------------------------------------------
+
+formLayout -edit
+
+	-attachForm $tt_floatFld_1 "top" 35
+	-attachForm $tt_floatFld_1 "left" 20
+	-attachNone $tt_floatFld_1 "bottom" 
+	-attachNone $tt_floatFld_1 "right" 
+	
+	-attachControl $torus_hrAnimate "top"  5 $tt_floatFld_1
+	-attachForm $torus_hrAnimate "left" 110
+	-attachNone $torus_hrAnimate "bottom" 
+	-attachNone $torus_hrAnimate "right" 
+
+	-attachControl $tt_JBcheck "top"  -30 $tt_floatFld_1
+	-attachForm $tt_JBcheck "left" 325
+	-attachNone $tt_JBcheck "bottom" 
+	-attachNone $tt_JBcheck "right" 
+
+	-attachControl $tt_intSlider_1 "top" 5 $torus_hrAnimate
+	-attachForm $tt_intSlider_1 "left" 20
+	-attachNone $tt_intSlider_1 "bottom" 
+	-attachNone $tt_intSlider_1 "right" 
+
+	-attachControl $tt_floatSlider_1 "top" 5 $tt_intSlider_1
+	-attachForm $tt_floatSlider_1 "left" 20
+	-attachNone $tt_floatSlider_1 "bottom" 
+	-attachNone $tt_floatSlider_1 "right" 
+
+	-attachControl $tt_revCheck "top" 9 $tt_floatSlider_1
+	-attachForm $tt_revCheck "left" -45
+	-attachNone $tt_revCheck "bottom" 
+	-attachNone $tt_revCheck "right"  
+
+	-attachControl $tt_intSlider_2 "top" 5 $tt_floatSlider_1
+	-attachForm $tt_intSlider_2 "left" 115
+	-attachNone $tt_intSlider_2 "bottom" 
+	-attachNone $tt_intSlider_2 "right" 
+
+	-attachControl $tt_floatSlider_2 "top" 5 $tt_intSlider_2
+	-attachForm $tt_floatSlider_2 "left" 20
+	-attachNone $tt_floatSlider_2 "bottom" 
+	-attachNone $tt_floatSlider_2 "right" 
+
+	-attachControl $tt_floatSlider_3 "top" 5 $tt_floatSlider_2
+	-attachForm $tt_floatSlider_3 "left" 20
+	-attachNone $tt_floatSlider_3 "bottom" 
+	-attachNone $tt_floatSlider_3 "right" 
+
+	-attachControl $tt_radioButton_1 "top" 5 $tt_floatSlider_3
+	-attachForm $tt_radioButton_1 "left" 30
+	-attachNone $tt_radioButton_1 "bottom" 
+	-attachNone $tt_radioButton_1 "right" 
+
+	-attachControl $tt_aimConst "top" 5 $tt_radioButton_1
+	-attachForm $tt_aimConst "left" 280
+	-attachNone $tt_aimConst "bottom" 
+	-attachNone $tt_aimConst "right" 
+
+	-attachControl $tt_extrudeButton "top" 7 $tt_radioButton_1
+	-attachForm $tt_extrudeButton "left" 70
+	-attachNone $tt_extrudeButton "bottom" 
+	-attachNone $tt_extrudeButton "right" 
+
+	-attachControl $tt_extrudeRadius "top" 5 $tt_extrudeButton
+	-attachForm $tt_extrudeRadius "left" 20
+	-attachNone $tt_extrudeRadius "bottom" 
+	-attachNone $tt_extrudeRadius "right" 
+
+	-attachControl $torus_separator_1 "top" 10 $tt_extrudeRadius
+	-attachForm $torus_separator_1 "left" 35 
+	-attachNone $torus_separator_1 "bottom" 
+	-attachNone $torus_separator_1 "right"
+
+	-attachControl $torus_frame "top" 10 $torus_separator_1
+	-attachForm $torus_frame "left" 30
+	-attachNone $torus_frame "bottom" 
+	-attachNone $torus_frame "right" 
+
+	-attachControl $torus_separator_2 "top" 10 $torus_frame
+	-attachForm $torus_separator_2 "left" 35
+	-attachNone $torus_separator_2 "bottom" 
+	-attachNone $torus_separator_2 "right"
+
+	-attachControl $tt_radioButton_2 "top" 15 $torus_separator_2
+	-attachForm $tt_radioButton_2 "left" 35
+	-attachNone $tt_radioButton_2 "bottom" 
+	-attachNone $tt_radioButton_2 "right"  
+
+	-attachControl $torus_textList "top" 5 $tt_radioButton_2
+	-attachForm $torus_textList "left" 100 
+	-attachNone $torus_textList "bottom" 
+	-attachNone $torus_textList "right" 
+
+	-attachControl $tt_button_1 "top" 30 $torus_textList
+	-attachForm $tt_button_1 "left" 40
+	-attachNone $tt_button_1 "bottom" 
+	-attachNone $tt_button_1 "right" 
+
+	-attachControl $tt_button_2 "top" 30 $torus_textList
+	-attachForm $tt_button_2 "left" 175
+	-attachNone $tt_button_2 "bottom" 
+	-attachNone $tt_button_2 "right" 
+
+	-attachControl $tt_button_3 "top" 30 $torus_textList
+	-attachForm $tt_button_3 "left" 310
+	-attachNone $tt_button_3 "bottom" 
+	-attachNone $tt_button_3 "right" 
+
+	-attachForm $tt_evoJBConnType "top" 15
+	-attachForm $tt_evoJBConnType "left" 0
+	-attachNone $tt_evoJBConnType "bottom"
+	-attachNone $tt_evoJBConnType "right"
+
+	-attachForm $tt_dblRadio "top" 35 
+	-attachForm $tt_dblRadio "left" 0
+	-attachNone $tt_dblRadio "bottom" 
+	-attachNone $tt_dblRadio "right"	
+
+	-attachForm $tt_JBtextList "top" 60 
+	-attachForm $tt_JBtextList "left" 0
+	-attachNone $tt_JBtextList "bottom" 
+	-attachNone $tt_JBtextList "right"	 
+
+	-attachForm $tt_shellTextList "top" 60 
+	-attachControl $tt_shellTextList "left" 10 $tt_JBtextList
+	-attachNone $tt_shellTextList "bottom" 
+	-attachNone $tt_shellTextList "right" 
+
+	-attachControl $tt_jbConnectButton "top" 30 $tt_JBtextList
+	-attachControl $tt_jbConnectButton "left" -115 $tt_JBtextList
+	-attachNone $tt_jbConnectButton "bottom" 
+	-attachNone $tt_jbConnectButton "right" 
+
+	-attachControl $tt_jbDisconnectButton "top" 10 $tt_jbConnectButton
+	-attachControl $tt_jbDisconnectButton "left" -115 $tt_JBtextList
+	-attachNone $tt_jbDisconnectButton "bottom" 
+	-attachNone $tt_jbDisconnectButton "right" 
+
+$lbs_torusToolkit;
+setParent ..;
+setParent ..;
+
+
+formLayout -edit
+
+	-attachForm $torus_evoTaperNum "top" 15 
+	-attachForm $torus_evoTaperNum "left" 5
+	-attachNone $torus_evoTaperNum "bottom" 
+	-attachNone $torus_evoTaperNum "right"
+
+	-attachControl $torus_evoSphereNum "top" 5 $torus_evoTaperNum
+	-attachForm $torus_evoSphereNum "left" 5
+	-attachNone $torus_evoSphereNum "bottom" 
+	-attachNone $torus_evoSphereNum "right"
+
+	-attachControl $torus_evoCurveSection "top" 5 $torus_evoSphereNum
+	-attachForm $torus_evoCurveSection "left" 5
+	-attachNone $torus_evoCurveSection "bottom" 
+	-attachNone $torus_evoCurveSection "right"
+
+	-attachControl $torus_evoAnimCycle "top" 5 $torus_evoCurveSection
+	-attachForm $torus_evoAnimCycle "left" 5
+	-attachNone $torus_evoAnimCycle "bottom" 
+	-attachNone $torus_evoAnimCycle "right"
+
+	-attachControl $torus_evoMinRad "top" 5 $torus_evoAnimCycle
+	-attachForm $torus_evoMinRad "left" 5
+	-attachNone $torus_evoMinRad "bottom" 
+	-attachNone $torus_evoMinRad "right"
+
+	-attachControl $torus_evoMaxRad "top" 5 $torus_evoMinRad
+	-attachForm $torus_evoMaxRad "left" 5
+	-attachNone $torus_evoMaxRad "bottom" 
+	-attachNone $torus_evoMaxRad "right"
+
+	-attachControl $torus_taperCenter "top" 5 $torus_evoMaxRad
+	-attachForm $torus_taperCenter "left" 5
+	-attachNone $torus_taperCenter "bottom" 
+	-attachNone $torus_taperCenter "right"
+
+	-attachControl $torus_taperCurvePos "top" 5 $torus_taperCenter
+	-attachForm $torus_taperCurvePos "left" 5
+	-attachNone $torus_taperCurvePos "bottom" 
+	-attachNone $torus_taperCurvePos "right"
+
+	-attachControl $tt_button_4 "top" 15 $torus_taperCurvePos
+	-attachForm $tt_button_4 "left" 55
+	-attachForm $tt_button_4 "bottom" 15
+	-attachNone $tt_button_4 "right"
+
+	-attachControl $tt_button_5 "top" 15 $torus_taperCurvePos
+	-attachForm $tt_button_5 "left" 205
+	-attachForm $tt_button_5 "bottom" 15
+	-attachNone $tt_button_5 "right"
+
+$torus_frameForm;
+setParent ..;
+
+//-----------------------------------------------
+//-----------------------------------------------
+//TORUS TOOLKIT PROC
+//-----------------------------------------------
+//-----------------------------------------------
+
+global proc CallEvos () {
+	float $tRad = `floatFieldGrp -query -v1 torusSpecGrp`;
+	float $tHR = `floatFieldGrp -query -v2 torusSpecGrp`;
+	int $loops = `intSliderGrp -query -v fldLoops`;
+	float $dRot = `floatSliderGrp -query -v fldRot`;
+	int $Cycle = `intSliderGrp -query -v fldCycle`;
+	float $sz = `floatSliderGrp -query -v fldSize`;
+
+	evoCurve ($tRad, $tHR, $loops, $dRot, $Cycle);
+
+}
+
+//-----------------------------------------------
+//-----------------------------------------------
+//TORUS TOOLKIT TEXT LIST PROC
+//-----------------------------------------------
+//-----------------------------------------------
+
+global proc torus_textListCheck()
+{
+	if(`objExists evoGrp` == 1)
+	{
+		$locArray = `listRelatives -c locatorGrp`;
+		$locNum = `size($locArray)`;
+
+		textScrollList -e -ra torus_textList;
+
+		for($i=1;$i<=$locNum;$i++)
+		{
+			if(`objExists ("evoCurve_" + $i)` == 1)	
+			{
+				if(`objExists ("taperSphereGrp_" + $i)` == 1)
+				{
+					textScrollList -e -append ("  ---         " + "Group " + $i + " ( Curve )" + "-taper---") torus_textList;
+				}
+				else if(`objExists ("evoExtrudeGrp_" + $i)` == 1)
+				{
+					textScrollList -e -append ("  ---         " + "Group " + $i + " ( Curve )" + "-extrude-") torus_textList;
+				}
+				else
+				{
+					textScrollList -e -append ("  ---         " + "Group " + $i + " ( Curve )" + "          ---") torus_textList;
+				}
+			}
+			else if(`objExists ("evoSphereGrp_" + $i)` == 1)	
+			{
+				textScrollList -e -append ("  ---         " + "Group " + $i + " ( Sphere )" + "         ---") torus_textList;
+			}
+			else if(`objExists ("evoTorusGrp_" + $i)` == 1)	
+			{
+				textScrollList -e -append ("  ---         " + "Group " + $i + " ( Torus )" + "          ---") torus_textList;
+			}
+			else if(`objExists ("evoPlaneGrp_" + $i)` == 1)	
+			{
+				textScrollList -e -append ("  ---         " + "Group " + $i + " ( Plane )" + "          ---") torus_textList;
+			}
+		}
+	}
+	else
+	{
+		textScrollList -e -ra torus_textList;
+	}
+}
