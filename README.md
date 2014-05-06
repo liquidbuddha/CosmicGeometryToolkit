@@ -57,16 +57,18 @@ Install Instuctions
 1) Download and unzip the Full Install archive.
 
 2) Place the following three (3) files in your Maya scripts folder, depending on the folder location for your platform, shown below
-      	lbsToolMenuFull.mel 
-      	miniKit.mel
-      	lbs_Custom_Tools_UI_LOCAL.mel
+-	lbsToolMenuFull.mel
 
-  for Mac users, the Maya scripts folder is:    HD/Users/User_Account/Library/Preferences/Autodesk/maya/scripts
-  for Windows users:                            C:\Documents and Settings\User_Account\My Documents\maya\scripts
+- miniKit.mel
+
+- lbs_Custom_Tools_UI_LOCAL.mel
+
+  For Mac users, the Maya scripts folder is:    HD/Users/User_Account/Library/Preferences/Autodesk/maya/scripts
+
+  For Windows users:                            C:\Documents and Settings\User_Account\My Documents\maya\scripts
 
 3) Place the following FOLDER in your Maya scripts folder, shown above
-      	lbsToolkit (which includes seven (7) additional folders, Phi_Tap, Evolute_Tab, etc)
-
+- lbsToolkit (which includes seven (7) additional folders, Phi_Tap, Evolute_Tab, etc)
 
 4) If there is already a userSetup.mel file in the scripts folder, copy the two lines from the lbsToolkit userSetup.mel and add to the userSetup.mel in the scripts folder.
 
