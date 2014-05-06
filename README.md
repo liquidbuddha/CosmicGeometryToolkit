@@ -51,7 +51,7 @@ Star Tab
  - automated transformation of "space brush" brush-strokes into polygons or image planes, which adds greater control for rendering of space-brush star-fields.
 
 
-----------------------------------------------------------------------------------------------------------------------
+==============================
 
 Install Instuctions:
 
