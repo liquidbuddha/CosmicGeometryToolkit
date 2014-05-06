@@ -6,49 +6,49 @@ visual effects toolkit for Autodesk Maya, enabling fast creation of toroidal evo
 miniKit
 =======
 miniKit: this version includes the following functionality
-	- customizable torus evolute tool
-	- customizable phi-spiral & vortex creation tool
-	- customizable bonus Rodin-like Evolute tool
+ - customizable torus evolute tool
+ - customizable phi-spiral & vortex creation tool
+ - customizable bonus Rodin-like Evolute tool
 
 Full Toolkit
 ============
 Full-Kit includes Seven (7) tabs, each with expanded functionality related to the tab's theme. The function-tabs include:
 
 Evolute Tab:
-	- custom toroidal evolute path creation 
-	- multi-evolute management and editing
-	- "tapered bead" option, which auto-animates a series of tapered spheres, along the evolute path. an amazing toroidal simulation tool
+ - custom toroidal evolute path creation 
+ - multi-evolute management and editing
+ - "tapered bead" option, which auto-animates a series of tapered spheres, along the evolute path. an amazing toroidal simulation tool
 
 Radiating Tab:
-	- automated creation of evolute path extrudes in series
-	- editable in instance scale
-	- auto coloration option
-	- multi array management and editing
+ - automated creation of evolute path extrudes in series
+ - editable in instance scale
+ - auto coloration option
+ - multi array management and editing
 
 Phi-Tab
-	- creation of phi curve, or vortex
-	- multi-vortex management and editing
-	- phi-conn option .. connects two 3D phi-vortex arrays
-	- connect to Jitterbug option ... connects to Jitterbugging VE models in VE tab
+ - creation of phi curve, or vortex
+ - multi-vortex management and editing
+ - phi-conn option .. connects two 3D phi-vortex arrays
+ - connect to Jitterbug option ... connects to Jitterbugging VE models in VE tab
 
 FOL Tab (Flower of Life)
-	- create a flower of life matrix of curves or extrudes to "n" layers
-	- automate it's replication in 2D, 3D, 4D, or 6D geometries
-	- multi FOL array management and editing
+ - create a flower of life matrix of curves or extrudes to "n" layers
+ - automate it's replication in 2D, 3D, 4D, or 6D geometries
+ - multi FOL array management and editing
 
 Jitterbug Tab
-	- create a jitterbugging VE or VE matrix (jitterbug is the VE breathing from compressed states, matrix unifies the triangular faces to form interconnected counter-breathing chains of jitterbugging VEs
-	- multi VE matrix management and editing
+ - create a jitterbugging VE or VE matrix (jitterbug is the VE breathing from compressed states, matrix unifies the triangular faces to form interconnected counter-breathing chains of jitterbugging VEs
+ - multi VE matrix management and editing
 
 Geo Tab (Geometry)
-	- instant creation of any platonic solid, with option to extrude
-	- scale control
-	- multi-geometry management and editing
-	- shapes include: tetrahedron, tetrahedron dual, Cube, Octahedron, Icosohedron, Dodecahedron, Vector EQ, and finally the Rhombic-dodecahedron.
-	- all geometries are created in perfect alignment with Metatron's Cube configuration, where all geometries and symmetries are unified
+ - instant creation of any platonic solid, with option to extrude
+ - scale control
+ - multi-geometry management and editing
+ - shapes include: tetrahedron, tetrahedron dual, Cube, Octahedron, Icosohedron, Dodecahedron, Vector EQ, and finally the Rhombic-dodecahedron.
+ - all geometries are created in perfect alignment with Metatron's Cube configuration, where all geometries and symmetries are unified
 
 Star Tab
-  - automated transformation of "space brush" brush-strokes into polygons or image planes, which adds greater control for rendering of space-brush star-fields.
+ - automated transformation of "space brush" brush-strokes into polygons or image planes, which adds greater control for rendering of space-brush star-fields.
 
 
 ----------------------------------------------------------------------------------------------------------------------
