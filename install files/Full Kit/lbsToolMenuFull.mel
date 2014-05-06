@@ -1,0 +1,16 @@
+global proc lbsMenuFull()
+{
+	global string $gMainWindow;
+	global string $MyMenuObj;
+
+	if (`menu -exists $MyMenuObj`)
+	{
+		deleteUI $MyMenuObj;
+	}
+
+	string $name = "lbs Tools";
+	$MyMenuObj = `menu -p $gMainWindow -to true -l $name`;
+
+	menuItem -p $MyMenuObj -l "mini kit" -c ("source \"/Users/User_Account/Library/Preferences/Autodesk/maya/scripts/lbsToolkit/toolkit_dropDown/miniKit.mel\"; ");
+	menuItem -p $MyMenuObj -l "full kit" -c ("source \"/Users/User_Account/Library/Preferences/Autodesk/maya/scripts/lbsToolkit/lbs_Custom_Tools_UI_LOCAL.mel\"; ");
+}

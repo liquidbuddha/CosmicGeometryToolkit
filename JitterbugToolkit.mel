@@ -1,0 +1,900 @@
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_rotateSystem2(int $jbGrp, int $rotType)
+{
+	if($rotType == 1)
+	{
+		setAttr ("jitterbug_" + $jbGrp + "_shell_group.rz") 54.753;
+		setAttr ("jitterbug_" + $jbGrp + "_shell_yStab_group.rz") 0;
+	}	
+	if($rotType == 2)
+	{
+		setAttr ("jitterbug_" + $jbGrp + "_shell_group.rz") 54.753;
+		setAttr ("jitterbug_" + $jbGrp + "_shell_yStab_group.rz") -54.753;
+	}
+}
+
+global proc jb_rotateSystem(){
+	int $grpNumArray2[];
+	$grpNumArray2 = `textScrollList -q -sii jb_textList`;
+	$grpNum = $grpNumArray2[0];
+
+	$rotType = `radioButtonGrp -q -sl JB_fldOrient`;
+
+	if($grpNum != 0)
+	{
+		jb_rotateSystem2($grpNum,$rotType);
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_textListUpdate(){
+	if(`objExists jitterbug_LOCKED_groups` == 1)	{		$jbArray = `listRelatives -c jitterbug_LOCKED_groups`;		$jbNum = `size($jbArray)`;		textScrollList -e -ra jb_textList;		for($i=1;$i<=$jbNum;$i++)		{			textScrollList -e -append ("  -----           " + "JB Group " + $i + "            -----") jb_textList;		}
+	}
+	else
+	{
+		textScrollList -e -ra jb_textList;
+	}}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_arm_offset(int $grpNum, int $jitterNum, int $x)
+{
+	currentTime 1;	$lbs_yTrans = -14.142147;	$lbs_zTrans = 19.999883;	$conLoc = `spaceLocator -p 0 0 0`;	select -r ("group_" + $grpNum + "_shell_" + ($x-1) + "_arm_1_face_8") $conLoc[0];	$pointCnst = `pointConstraint -offset 0 0 0 -weight 1`;	select -r $pointCnst;	doDelete;	select -r $conLoc[0];	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;	connectAttr -f ("jitterbugFace_" + $grpNum + "_8.translate") ($conLoc[0] + ".translate");	select -r $conLoc;	$conLocGrp = `group`;	xform -os -piv 0 0 0;	connectAttr -f ("jitterbug_" + $grpNum + "_shell_" + ($x-1) + "_loc.translate") ($conLocGrp + ".translate");
+
+	$lbs_ADD = `shadingNode -asUtility plusMinusAverage`;
+	setAttr ($lbs_ADD + ".operation") 1 ;	connectAttr -f ($conLocGrp + ".translate") ($lbs_ADD + ".input3D[0]");
+	connectAttr -f ($conLoc[0] + ".translate") ($lbs_ADD + ".input3D[1]");
+	$lbs_plusMin = `shadingNode -asUtility plusMinusAverage`;	setAttr ($lbs_plusMin + ".operation") 2 ;	connectAttr -f ($lbs_ADD + ".output3D") ($lbs_plusMin + ".input3D[0]");	connectAttr -f ("jitterbug_" + $grpNum + "_faceConstraint_loc2.translate") ($lbs_plusMin + ".input3D[1]");	$jb_centerLoc = `spaceLocator -p 0 ($lbs_yTrans * $x) ($lbs_zTrans * $x) `;	connectAttr -f ($lbs_plusMin + ".output3D") ($jb_centerLoc[0] + ".translate");
+
+	//-----------------------------------------------------------
+	//CREATE INSTANCE OF JITTERBUG, RENAME, AND ADD ROTATION GROUP
+	//-----------------------------------------------------------
+	
+	$jb_group = `group -em`;
+	xform -os -piv 0 $lbs_yTrans $lbs_zTrans;
+	for($i=1;$i<=8;$i++)
+	{
+		select -r ("base_offset_triFace_" + $grpNum + "_" + $i);
+		$faceDup = `duplicate -smartTransform`;
+		parent -world $faceDup;
+
+		sets -e -forceElement initialShadingGroup  $faceDup[0];
+
+		if($i % 2 == 0 )
+		{
+			sets -e -forceElement jitterbug_lambertSG1  $faceDup[0];
+		}
+		else if($i % 2 !=0)
+		{
+			sets -e -forceElement jitterbug_lambertSG2  $faceDup[0];
+		}
+
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 $faceDup[0];
+		connectAttr -f ("offset_jitterbugFace_" + $grpNum + "_" + $i + ".translate") ($faceDup[0] + ".translate");
+		connectAttr -f ("offset_jitterbugFace_" + $grpNum + "_" + $i + ".rotate") ($faceDup[0] + ".rotate");
+		parent $faceDup[0] $jb_group;
+		rename $faceDup[0] ("group_" + $grpNum + "_shell_" + $x + "_arm_1_face_" + $i);
+	}
+
+	xform -t 0 ($lbs_yTrans * ($x-1)) ($lbs_zTrans * ($x-1)) $jb_group;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 $jb_group;
+	connectAttr ($jb_centerLoc[0] + ".translate") ($jb_group + ".translate");
+			
+	rename $jb_group ("group_" + $grpNum + "_shell_" + $x + "_arm_1");
+
+
+	for($i=2;$i<=8;$i++)
+	{
+		select -r ("group_" + $grpNum + "_shell_" + $x + "_arm_1");
+		$jb_inst = `duplicate -rr -ic`;
+
+		rename $jb_inst[0] ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i);	
+				
+		for($n=0;$n<8;$n++)
+		{
+			select -r ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i);
+			pickWalk -d down;
+			for($e=0;$e<($n+1);$e++)
+			{
+				if($e>0)
+				{
+					pickWalk -d right;	
+				}
+			}
+			$jbFace = `ls -sl`;	
+			rename $jbFace ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + "_face_" + ($n+1));
+
+			if($i<5 && $i%2 == 0)
+			{
+				setAttr ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + ".ry") 90;
+			}
+			else if($i>4 && $i%2 != 0)
+			{
+				setAttr ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + ".ry") 90;
+			}
+		}
+			
+	}
+			
+	$jbShell = `group -em`;
+	xform -os -piv 0 0 0;
+
+	for($i=1;$i<=8;$i++)
+	{
+		select -r ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i);
+		$jb_rotGrp = `group`;
+		xform -os -piv 0 0 0;
+		if($i<5)
+		{
+			xform -ro 0 (90 * ($i-1)) 0 $jb_rotGrp;
+		}
+		if($i>=5)
+		{
+			xform -ro 0 (90 * ($i-5)) 180 $jb_rotGrp;
+		}
+		if( $i==2 || $i==4 || $i==5 || $i==7)
+		{
+		//	setAttr ($jb_rotGrp + ".sx") -1;
+		} 
+		parent $jb_rotGrp $jbShell;
+		rename $jb_rotGrp ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + "_rotGrp"); 			
+	}
+
+	parent $jb_centerLoc[0] ("jitterbug_" + $grpNum + "_centerLoc_group");
+	parent $conLocGrp ("jitterbug_" + $grpNum + "_faceConstraint_loc_group");
+
+	parent $jbShell ("jitterbug_" + $grpNum + "_shell_group");
+	rename $jbShell ("group_" + $grpNum + "_shell_" + $x);
+	rename $jb_centerLoc[0] ("jitterbug_" + $grpNum + "_shell_" + $x + "_loc");
+	rename $conLoc[0] ("jitterbug_" + $grpNum + "_shell_" + ($x-1) + "_face_loc");
+	rename $conLocGrp ("jitterbug_" + $grpNum + "_shell_" + ($x-1) + "_face_locGrp");
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_arm(int $grpNum, int $jitterNum, int $x)
+{
+	currentTime 1;	$lbs_yTrans = -14.142147;	$lbs_zTrans = 19.999883;	$conLoc = `spaceLocator -p 0 0 0`;	select -r ("group_" + $grpNum + "_shell_" + ($x-1) + "_arm_1_face_8") $conLoc[0];	$pointCnst = `pointConstraint -offset 0 0 0 -weight 1`;	select -r $pointCnst;	doDelete;	select -r $conLoc[0];	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;	connectAttr -f ("offset_jitterbugFace_" + $grpNum + "_8.translate") ($conLoc[0] + ".translate");	select -r $conLoc;	$conLocGrp = `group`;	xform -os -piv 0 0 0;	connectAttr -f ("jitterbug_" + $grpNum + "_shell_" + ($x-1) + "_loc.translate") ($conLocGrp + ".translate");
+
+	$lbs_ADD = `shadingNode -asUtility plusMinusAverage`;
+	setAttr ($lbs_ADD + ".operation") 1 ;	connectAttr -f ($conLocGrp + ".translate") ($lbs_ADD + ".input3D[0]");
+	connectAttr -f ($conLoc[0] + ".translate") ($lbs_ADD + ".input3D[1]");
+	$lbs_plusMin = `shadingNode -asUtility plusMinusAverage`;	setAttr ($lbs_plusMin + ".operation") 2 ;	$lbs_mult1 = `shadingNode -asUtility multiplyDivide`;	connectAttr -f ("jitterbug_" + $grpNum + "_faceConstraint_loc1.translate") ($lbs_mult1 + ".input2");	setAttr ($lbs_mult1 + ".input1X") -1;	setAttr ($lbs_mult1 + ".input1Y") -1;	setAttr ($lbs_mult1 + ".input1Z") -1;	connectAttr -f ($lbs_ADD + ".output3D") ($lbs_plusMin + ".input3D[0]");	connectAttr -f ($lbs_mult1 + ".output") ($lbs_plusMin + ".input3D[1]");	$jb_centerLoc = `spaceLocator -p 0 ($lbs_yTrans * $x) ($lbs_zTrans * $x) `;	connectAttr -f ($lbs_plusMin + ".output3D") ($jb_centerLoc[0] + ".translate");
+
+	//-----------------------------------------------------------
+	//CREATE INSTANCE OF JITTERBUG, RENAME, AND ADD ROTATION GROUP
+	//-----------------------------------------------------------
+	
+	$jb_group = `group -em`;
+	xform -os -piv 0 0 0;
+	for($i=1;$i<=8;$i++)
+	{
+		select -r ("base_triFace_" + $grpNum + "_" + $i);
+		$faceDup = `duplicate -smartTransform`;
+		parent -world $faceDup;
+	
+		sets -e -forceElement initialShadingGroup  $faceDup[0];
+
+		if($i % 2 == 0 )
+		{
+			sets -e -forceElement jitterbug_lambertSG2  $faceDup[0];
+		}
+		else if($i % 2 !=0)
+		{
+			sets -e -forceElement jitterbug_lambertSG1  $faceDup[0];
+		}
+
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 $faceDup[0];
+		connectAttr -f ("jitterbugFace_" + $grpNum + "_" + $i + ".translate") ($faceDup[0] + ".translate");
+		connectAttr -f ("jitterbugFace_" + $grpNum + "_" + $i + ".rotate") ($faceDup[0] + ".rotate");
+		parent $faceDup[0] $jb_group;
+		rename $faceDup[0] ("group_" + $grpNum + "_shell_" + $x + "_arm_1_face_" + $i);
+	}
+
+	xform -t 0 ($lbs_yTrans * $x) ($lbs_zTrans * $x) $jb_group;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0 $jb_group;
+	connectAttr ($jb_centerLoc[0] + ".translate") ($jb_group + ".translate");
+			
+	rename $jb_group ("group_" + $grpNum + "_shell_" + $x + "_arm_1");
+
+
+	for($i=2;$i<=8;$i++)
+	{
+		select -r ("group_" + $grpNum + "_shell_" + $x + "_arm_1");
+		$jb_inst = `duplicate -rr -ic`;
+
+		rename $jb_inst[0] ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i);	
+				
+		for($n=0;$n<8;$n++)
+		{
+			select -r ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i);
+			pickWalk -d down;
+			for($e=0;$e<($n+1);$e++)
+			{
+				if($e>0)
+				{
+					pickWalk -d right;	
+				}
+			}
+
+			$jbFace = `ls -sl`;	
+			rename $jbFace ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + "_face_" + ($n+1));
+
+			if($i<5 && $i%2 == 0)
+			{
+				setAttr ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + ".ry") 90;
+			}
+			else if($i>4 && $i%2 != 0)
+			{
+				setAttr ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + ".ry") 90;
+			}
+		}
+			
+	}
+			
+	$jbShell = `group -em`;
+	xform -os -piv 0 0 0;
+
+	for($i=1;$i<=8;$i++)
+	{
+		select -r ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i);
+		$jb_rotGrp = `group`;
+		xform -os -piv 0 0 0;
+		if($i<5)
+		{
+			xform -ro 0 (90 * ($i-1)) 0 $jb_rotGrp;
+		}
+		if($i>=5)
+		{
+			xform -ro 0 (90 * ($i-5)) 180 $jb_rotGrp;
+		}
+		if( $i==2 || $i==4 || $i==5 || $i==7)
+		{
+		//	setAttr ($jb_rotGrp + ".sx") -1;
+		} 
+		parent $jb_rotGrp $jbShell;
+		rename $jb_rotGrp ("group_" + $grpNum + "_shell_" + $x + "_arm_" + $i + "_rotGrp"); 			
+	}
+
+	parent $jb_centerLoc[0] ("jitterbug_" + $grpNum + "_centerLoc_group");
+	parent $conLocGrp ("jitterbug_" + $grpNum + "_faceConstraint_loc_group");
+
+	parent $jbShell ("jitterbug_" + $grpNum + "_shell_group");
+	rename $jbShell ("group_" + $grpNum + "_shell_" + $x);
+	rename $jb_centerLoc[0] ("jitterbug_" + $grpNum + "_shell_" + $x + "_loc");
+	rename $conLoc[0] ("jitterbug_" + $grpNum + "_shell_" + ($x-1) + "_face_loc");
+	rename $conLocGrp ("jitterbug_" + $grpNum + "_shell_" + ($x-1) + "_face_locGrp");
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_armLoop(int $grpNum, int $jitterNum)
+{
+	for($x=2;$x<$jitterNum;$x++)	{
+		if($x%2 == 0)
+		{
+			jb_arm($grpNum, $jitterNum, $x);
+		}
+		else
+		{
+			jb_arm_offset($grpNum, $jitterNum, $x);
+		}			}
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_offset_const(int $grpNum, int $jitterNum)
+{
+	//------------------------------	//offset jitterbug constraint group creation	//------------------------------
+
+	for($n=1;$n<=8;$n++)	{		$trans = {-3.62447e-07, -14.142147, 19.999883};		select -r ("base_offset_triFace_" + $grpNum + "_1") ;		$faceDup_1 = `duplicate -smartTransform`;		parent -world $faceDup_1;		select -r $faceDup_1;
+		if($n < 5 && $n % 2 == 0 )
+		{
+			sets -e -forceElement jitterbug_lambertSG1  $faceDup_1[0];
+		}
+		else if($n > 4 && $n % 2 !=0)
+		{
+			sets -e -forceElement jitterbug_lambertSG1  $faceDup_1[0];
+		}		rename $faceDup_1 ("group_" + $grpNum + "_shell_1_arm_" + $n + "_face_1");
+		string $faceArray[] = {("group_" + $grpNum + "_shell_1_arm_" + $n + "_face_1")};		for($i=1;$i<=7;$i++)		{			select -r ("group_" + $grpNum + "_shell_1_arm_" + $n + "_face_1");			$dup = `duplicate`;			$faceArray[$i] = $dup[0];
+			
+			
+			if($n == 2 || $n == 4 || $n == 5 || $n ==7)
+			{
+				sets -e -forceElement jitterbug_lambertSG1 ("group_" + $grpNum + "_shell_1_arm_" + $n + "_face_1");
+
+				if($i %2 != 0)
+				{
+					sets -e -forceElement jitterbug_lambertSG2 $dup[0];
+				}
+				else
+				{
+					sets -e -forceElement jitterbug_lambertSG1 $dup[0];
+				}
+			}
+			else
+			{
+				sets -e -forceElement jitterbug_lambertSG2 ("group_" + $grpNum + "_shell_1_arm_" + $n + "_face_1");
+
+				if($i %2 == 0)
+				{
+					sets -e -forceElement jitterbug_lambertSG2 $dup[0];
+				}
+				else
+				{
+					sets -e -forceElement jitterbug_lambertSG1 $dup[0];
+				}
+			}
+		}			for($i=0;$i<=7;$i++)		{				select -r $faceArray[$i];			$faceGroup = `group`;			xform -os -piv -3.62447e-07 -14.142147 19.999883 $faceGroup;			setAttr ($faceGroup + ".ry") ($i * 90);			parent -world $faceArray[$i];			select -r $faceGroup;			doDelete;		}		select -r $faceArray[4] $faceArray[5] $faceArray[6] $faceArray[7];		$faceGroup = `group`;		xform -os -piv -3.62447e-07 -14.142147 19.999883 $faceGroup;		setAttr ($faceGroup + ".rz") 180; 		setAttr ($faceGroup + ".ry") 90; 		parent -world $faceArray[4] $faceArray[5] $faceArray[6] $faceArray[7];		select -r $faceGroup;		doDelete;		select -r $faceArray;		$faceGroup = `group`;		float $trans[] = {-3.62447e-07, -14.142147, 19.999883};		xform -os -piv -3.62447e-07 -14.142147 19.999883 $faceGroup;		xform -t ($trans[0] * -1) ($trans[1] * -1) ($trans[2] * -1) $faceGroup;		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		for($i=0;$i<=7;$i++)		{			connectAttr -f ("offset_jitterbugFace_" + $grpNum + "_" + ($i + 1) + ".translate") ($faceArray[$i] + ".translate");			connectAttr -f ("offset_jitterbugFace_" + $grpNum + "_" + ($i + 1) + ".rotate") ($faceArray[$i] + ".rotate");		}		xform -t ($trans[0] * 1) ($trans[1] * 1) ($trans[2] * 1) $faceGroup;
+		select -r $faceGroup;		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		connectAttr ("jitterbug_" + $grpNum + "_shell_1_loc.translate") ($faceGroup + ".translate");
+
+		if( $n==2 || $n==4 || $n==5 || $n==7)
+		{
+			setAttr ($faceGroup + ".sx") -1;
+		}
+		if($n<=4)		{			select -r $faceGroup;			$rotGrp = `group`;			xform -os -piv 0 0 0;			setAttr ($rotGrp + ".ry") (($n-1) * 90);			rename $rotGrp ("group_" + $grpNum + "_shell_1_arm_" + $n + "_rotGrp");		}			else		{			select -r $faceGroup;			$rotGrp = `group`;			xform -os -piv 0 0 0;			setAttr ($rotGrp + ".ry") ( ($n - 5) * 90);			setAttr ($rotGrp + ".rz") 180;			rename $rotGrp ("group_" + $grpNum + "_shell_1_arm_" + $n + "_rotGrp");		}	
+		rename $faceGroup ("group_" + $grpNum + "_shell_1_arm_" + $n);
+	}
+
+	select -cl;
+	for($i=1;$i<=8;$i++)
+	{
+		select -add ("group_" + $grpNum + "_shell_1_arm_" + $i + "_rotGrp");
+	}	$shell1Grp = `group`;
+	xform -os -piv 0 0 0;
+	parent $shell1Grp ("jitterbug_" + $grpNum + "_shell_group");
+	rename $shell1Grp ("group_" + $grpNum + "_shell_1");
+
+	if($jitterNum > 2)
+	{
+		jb_armLoop($grpNum, $jitterNum);
+	}
+/*
+	$stabRotGrp = `group -em`;
+	xform -os -piv 0 0 0;
+	parent ("jitterbug_" + $grpNum + "_shell_group") $stabRotGrp;
+	parent $stabRotGrp jitterbug_group;
+	rename $stabRotGrp ("jitterbug_" + $grpNum + "_shell_yStab_group");
+*/
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_const(int $grpNum, int $jitterNum)
+{
+	currentTime 1;
+
+	$lbs_loc1 = `spaceLocator -p 0 0 0 `;	$lbs_loc2 = `spaceLocator -p 0 0 0 `;	select -r ("base_triFace_" + $grpNum + "_8");	select -add  $lbs_loc1;	ParentConstraint -sr none -st none -mo -weight 1;	select -r ("base_offset_triFace_" + $grpNum + "_3");	select -add  $lbs_loc2;	ParentConstraint -sr none -st none -mo -weight 1;	$lbs_plusMin = `shadingNode -asUtility plusMinusAverage`;	setAttr ($lbs_plusMin + ".operation") 2;	connectAttr -f ($lbs_loc1[0] + ".translate") ($lbs_plusMin + ".input3D[0]");	connectAttr -f ($lbs_loc2[0] + ".translate") ($lbs_plusMin + ".input3D[1]");	$lbs_loc3 = `spaceLocator -p -3.62447e-07 -14.142147 19.999883`;	connectAttr -f ($lbs_plusMin + ".output3D") ($lbs_loc3[0] + ".translate");
+
+
+	//----------------------------------------
+	//create jitterbug locators system
+	//----------------------------------------
+	$jb_group = `group -em`;	xform -os -piv 0 0 0;	$jb_offset_group = `group -em`;	xform -os -piv 0 0 0;	for($i=1;$i<=8;$i++)	{		$loc = `spaceLocator -p 0 0 0`;		select -r ("base_triFace_" + $grpNum + "_" + $i) $loc[0];		pointConstraint -mo -weight 1;		select -r ("base_triFace_" + $grpNum + "_" + $i) $loc[0];		orientConstraint -mo -weight 1;		parent $loc[0] $jb_group;		rename $loc[0] ("jitterbugFace_" + $grpNum + "_" + $i);		$loc_offset = `spaceLocator -p 0 0 0`;		select -r ("base_offset_triFace_" + $grpNum + "_" + $i) $loc_offset[0];		pointConstraint -mo -weight 1;		select -r ("base_offset_triFace_" + $grpNum + "_" + $i) $loc_offset[0];		orientConstraint -mo -weight 1;		parent $loc_offset[0] $jb_offset_group;		rename $loc_offset[0] ("offset_jitterbugFace_" + $grpNum + "_" + $i);	}	rename $jb_group ("jitterbug_faceLoc_group_" + $grpNum);	rename $jb_offset_group ("offset_jitterbug_faceLoc_group_" + $grpNum);
+
+	//-----------------------------
+	//jitterbug center group
+	//-----------------------------
+	select -r ("base_triFace_" + $grpNum + "_1") ;	$faceDup_1 = `duplicate -smartTransform`;	parent -world $faceDup_1;	select -r $faceDup_1;	rename $faceDup_1 ("group_" + $grpNum + "_shell_0_face_1");	string $faceArray[] = {("group_" + $grpNum + "_shell_0_face_1")};
+
+	sets -e -forceElement jitterbug_lambertSG1 ("group_" + $grpNum + "_shell_0_face_1");
+	for($i=1;$i<=7;$i++)	{		select -r ("group_" + $grpNum + "_shell_0_face_1");		$dup = `duplicate`;		$faceArray[$i] = $dup[0];
+	
+		if($i %2 != 0)
+		{
+			sets -e -forceElement jitterbug_lambertSG2 $dup[0];
+		}
+		else
+		{
+			sets -e -forceElement jitterbug_lambertSG1 $dup[0];
+		}	}	for($i=0;$i<=7;$i++)	{			select -r $faceArray[$i];		$faceGroup = `group`;		xform -os -piv 0 0 0 $faceGroup;		setAttr ($faceGroup + ".ry") ($i * 90);		parent -world $faceArray[$i];		select -r $faceGroup;		doDelete;	}	select -r $faceArray[4] $faceArray[5] $faceArray[6] $faceArray[7];	$faceGroup = `group`;	xform -os -piv 0 0 0 $faceGroup;	setAttr ($faceGroup + ".rz") 180; 	setAttr ($faceGroup + ".ry") 90; 	parent -world $faceArray[4] $faceArray[5] $faceArray[6] $faceArray[7];	select -r $faceGroup;	doDelete;	select -r $faceArray;	$faceGroup = `group`;	xform -os -piv 0 0 0 $faceGroup;	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;	for($i=0;$i<=7;$i++)	{		connectAttr -f ("jitterbugFace_" + $grpNum + "_" + ($i + 1) + ".translate") ($faceArray[$i] + ".translate");		connectAttr -f ("jitterbugFace_" + $grpNum + "_" + ($i + 1) + ".rotate") ($faceArray[$i] + ".rotate");	}	
+	select -r $faceGroup;
+	$shellGrp = `group`;
+	xform -os -piv 0 0 0;
+		rename $faceGroup ("group_" + $grpNum + "_shell_0");
+	parent $lbs_loc1[0] $lbs_loc2[0] $lbs_loc3[0] ("jitterbug_" + $grpNum + "_animGrp_LOCKED");
+	parent ("jitterbug_faceLoc_group_" + $grpNum) ("jitterbug_" + $grpNum + "_animGrp_LOCKED");
+	parent ("offset_jitterbug_faceLoc_group_" + $grpNum) ("jitterbug_" + $grpNum + "_animGrp_LOCKED");
+	setAttr ("jitterbug_" + $grpNum + "_animGrp_LOCKED.v") 0;
+
+	select -r $lbs_loc1 $lbs_loc2;
+	$faceLocGrp = `group`;
+	xform -os -piv 0 0 0;
+	rename $faceLocGrp ("jitterbug_" + $grpNum + "_faceConstraint_loc_group");
+
+	select -r $lbs_loc3;
+	$jbLocGrp = `group`;
+	xform -os -piv 0 0 0;
+	rename $jbLocGrp ("jitterbug_" + $grpNum + "_centerLoc_group");
+
+	rename $lbs_loc1 ("jitterbug_" + $grpNum + "_faceConstraint_loc1");	rename $lbs_loc2 ("jitterbug_" + $grpNum + "_faceConstraint_loc1");	rename $lbs_loc3 ("jitterbug_" + $grpNum + "_shell_1_loc");	rename $lbs_plusMin ("plusMinus_" + $grpNum);
+
+	parent $shellGrp jitterbug_group;
+	rename $shellGrp ("jitterbug_" + $grpNum + "_shell_group");
+
+	$stabRotGrp = `group -em`;
+	xform -os -piv 0 0 0;
+	parent ("jitterbug_" + $grpNum + "_shell_group") $stabRotGrp;
+	parent $stabRotGrp jitterbug_group;
+	rename $stabRotGrp ("jitterbug_" + $grpNum + "_shell_yStab_group");
+
+	if($jitterNum > 1)
+	{
+		jb_offset_const($grpNum, $jitterNum);
+		
+	}
+
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+//-----------------------------$faceType is either base_triFace_ == 0 or base_offset_triFace_ == 1
+
+proc jb_anim(string $face1, string $face2, int $jb_offset, float $jb_animCycle, float $jb_animOld, int $faceType)
+{
+	int $jbExpPos = `radioButtonGrp -q -sl JB_startingPos`;
+	if($jbExpPos == 1 && $jb_offset == 0)
+	{
+		$jb_offset = 1;
+	}
+	else if($jbExpPos == 1 && $jb_offset == 1)
+	{
+		$jb_offset = 0;
+	}
+
+	//---------------------------------
+	//SETS ANIMATION CYCLE OF JITTERBUG
+	//---------------------------------
+	
+	float $jb_anim01 = $jb_animCycle - 1;
+	float $jb_anim02 = $jb_anim01 / 8;
+
+	float $keyValue[] = `keyframe -q -vc ($face1 + ".ty")`;
+
+	float $faceFirstKey[];
+	int $keyStart = 1;
+
+	if(`size($keyValue)` != 0)
+	{
+		$faceFirstKey = `keyframe -in 0 -q ($face1 + ".ry")`;
+	}
+
+	if(`size($keyValue)` == 0)
+	{
+		setKeyframe -t 1 -v 0 ($face1 + ".translateY"); 
+		setKeyframe -t 1 -v 0 ($face1 + ".rotateY");		setKeyframe -t 1 -v 0 ($face2 + ".translateY");
+		setKeyframe -t 1 -v 0 ($face2 + ".rotateY");
+
+		setKeyframe -t 2 -v 3.382 ($face1 + ".translateY"); 		setKeyframe -t 2 -v 3.382 ($face2 + ".translateY");
+
+		setKeyframe -t 3 -v 5.977 ($face1 + ".translateY"); 		setKeyframe -t 3 -v 5.977 ($face2 + ".translateY");	
+
+		setKeyframe -t 4 -v 7.609 ($face1 + ".translateY"); 		setKeyframe -t 4 -v 7.609 ($face2 + ".translateY");
+
+		setKeyframe -t 5 -v 8.165 ($face1 + ".translateY"); 		setKeyframe -t 5 -v 8.165 ($face2 + ".translateY");
+
+		setKeyframe -t 6 -v 7.609 ($face1 + ".translateY"); 		setKeyframe -t 6 -v 7.609 ($face2 + ".translateY");
+
+		setKeyframe -t 7 -v 5.977 ($face1 + ".translateY"); 		setKeyframe -t 7 -v 5.977 ($face2 + ".translateY");
+
+		setKeyframe -t 8 -v 3.382 ($face1 + ".translateY"); 		setKeyframe -t 8 -v 3.382 ($face2 + ".translateY");
+
+		setKeyframe -t 9 -v 0 ($face1 + ".translateY"); 
+		setKeyframe -t 9 -v -120 ($face1 + ".rotateY");		setKeyframe -t 9 -v 0 ($face2 + ".translateY");
+		setKeyframe -t 9 -v 120 ($face2 + ".rotateY");
+
+		selectKey -add -k -t "0:10" ($face1 + "_translateY");		selectKey -add -k -t "0:10" ($face2 + "_translateY");
+		selectKey -add -k -t "0:10" ($face1 + "_rotateY");		selectKey -add -k -t "0:10" ($face2 + "_rotateY");		setInfinity -poi cycle;		setInfinity -pri cycle;
+	}
+	else
+	{
+		if($faceType == 0 && $faceFirstKey[0] != 1 && $jbExpPos == 2)
+		{
+			$keyStart = 0;
+		}
+		else if($faceType == 1 && $faceFirstKey[0] != 1 && $jbExpPos == 1)
+		{
+			$keyStart = 0;
+		}
+	}
+	
+	$jb_timeRange = 10;
+	if($jb_animOld != 0)
+	{
+		$jb_timeRange = $jb_animOld;
+	}
+	$keyFrameArray1 = `keyframe -time ("0:" + $jb_timeRange*2) -query -timeChange ($face1 + ".ty")`;
+	$keyFrameArray2 = `keyframe -time ("0:" + $jb_timeRange*2) -query -timeChange ($face2 + ".ty")`;
+
+	if($jb_offset == 0)
+	{
+		for($i=0;$i<=8;$i++)
+		{
+			print($i + ":: " + $keyFrameArray1[$i] + " : " + $keyFrameArray2[$i] + "\n");
+			selectKey -k -t $keyFrameArray1[$i] ($face1 + ".ty");			keyframe -animation keys -option over -absolute -timeChange (($jb_anim02*$i)+1);
+			selectKey -k -t $keyFrameArray2[$i] ($face2 + ".ty");			keyframe -animation keys -option over -absolute -timeChange (($jb_anim02*$i)+1);
+		}
+
+		if($jb_animOld > $jb_animCycle || $keyStart == 0)
+		{
+			selectKey -index 0 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange 1;
+			selectKey -index 0 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange 1;
+
+			selectKey -index 1 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange $jb_animCycle;
+			selectKey -index 1 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange $jb_animCycle;
+		}
+		else
+		{
+			selectKey -index 1 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange $jb_animCycle;
+			selectKey -index 1 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange $jb_animCycle;
+
+			selectKey -index 0 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange 1;
+			selectKey -index 0 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange 1;
+		}
+	}
+	else if($jb_offset == 1)
+	{
+		float $jb_offAnim = $jb_anim01 / 2;
+
+		for($i=0;$i<=8;$i++)
+		{
+			selectKey -k -t $keyFrameArray1[$i] ($face1 + ".ty");			keyframe -animation keys -option over -absolute -timeChange ((($jb_anim02*$i)+1)+$jb_offAnim);
+			selectKey -k -t $keyFrameArray2[$i] ($face2 + ".ty");			keyframe -animation keys -option over -absolute -timeChange ((($jb_anim02*$i)+1)+$jb_offAnim);
+		}
+
+		if($jb_animOld > $jb_animCycle || $keyStart == 0)
+		{
+			selectKey -index 0 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_offAnim+1);
+			selectKey -index 0 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_offAnim+1);
+
+			selectKey -index 1 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_animCycle+$jb_offAnim);
+			selectKey -index 1 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_animCycle+$jb_offAnim);
+
+		}
+		else
+		{
+			selectKey -index 1 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_animCycle+$jb_offAnim);
+			selectKey -index 1 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_animCycle+$jb_offAnim);
+
+			selectKey -index 0 ($face1 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_offAnim+1);
+			selectKey -index 0 ($face2 + ".ry");			keyframe -animation keys -option over -absolute -timeChange ($jb_offAnim+1);
+		}
+
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_jitterbug_offset_base(int $grpNum, int $jb_animCycle){
+//-------------------------------
+//START OFFSET JITTERBUG CREATION
+//-------------------------------
+
+	select -r ("base_triFace_grp_" + $grpNum + "_1") ("base_triFace_grp_" + $grpNum + "_2");
+	$offsetDup = `duplicate -smartTransform`;
+	parent -world $offsetDup[0] $offsetDup[1];
+
+	select -r $offsetDup[0] $offsetDup[1];
+	pickWalk -d down;
+	$offsetFaces = `ls -sl`;
+	rename $offsetFaces[0] ("base_offset_triFace_" + $grpNum + "_1");
+	rename $offsetFaces[1] ("base_offset_triFace_" + $grpNum + "_2");
+
+	//SETS JITTERBUG ANIMATION CYCLE
+	jb_anim( ("base_offset_triFace_" + $grpNum + "_1") , ("base_offset_triFace_" + $grpNum + "_2"), 1, $jb_animCycle, 0, 1);
+
+	$jb_offGroup = $offsetDup[0];
+	$jb_offGroup_rev = $offsetDup[1];
+		select -r $jb_offGroup ;	$jb_offA = `duplicate -rr -ic`;
+	select -r $jb_offA;
+	pickWalk -d down;	
+	$jb_offFaceC = `ls -sl`;
+	rename $jb_offFaceC[0] ("base_offset_triFace_" + $grpNum + "_3");	select -r $jb_offGroup_rev ;	$jb_offB = `duplicate -rr -ic`;
+	select -r $jb_offB;
+	pickWalk -d down;	
+	$jb_offFaceD = `ls -sl`;
+	rename $jb_offFaceD[0] ("base_offset_triFace_" + $grpNum + "_4");
+	select -r $jb_offGroup ;	$jb_offC = `duplicate -rr -ic`;
+	select -r $jb_offC;
+	pickWalk -d down;	
+	$jb_offFaceE = `ls -sl`;
+	rename $jb_offFaceE[0] ("base_offset_triFace_" + $grpNum + "_5");	select -r $jb_offGroup_rev ;	$jb_offD = `duplicate -rr -ic`;
+	select -r $jb_offD;
+	pickWalk -d down;	
+	$jb_offFaceF = `ls -sl`;
+	rename $jb_offFaceF[0] ("base_offset_triFace_" + $grpNum + "_6");
+
+	select -r $jb_offGroup ;	$jb_offE = `duplicate -rr -ic`;
+	select -r $jb_offE;
+	pickWalk -d down;	
+	$jb_offFaceG = `ls -sl`;
+	rename $jb_offFaceG[0] ("base_offset_triFace_" + $grpNum + "_7");	select -r $jb_offGroup_rev ;	$jb_offF = `duplicate -rr -ic`;
+	select -r $jb_offF;
+	pickWalk -d down;	
+	$jb_offFaceH = `ls -sl`;
+	rename $jb_offFaceH[0] ("base_offset_triFace_" + $grpNum + "_8");	select -r $jb_offGroup ;	$jb_off_rotGrp_A = `group`; 	select -r $jb_offGroup_rev ;	$jb_off_rotGrp_B = `group`; 	select -r $jb_offA ;	$jb_off_rotGrp_C = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 180 0 ;	select -r $jb_offB ;	$jb_off_rotGrp_D = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 180 0 ;	select -r $jb_offC ;	$jb_off_rotGrp_E = `group`; 	select -r $jb_offD ;	$jb_off_rotGrp_F = `group`; 	select -r $jb_offE ;	$jb_off_rotGrp_G = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 180 0 ;	select -r $jb_offF ;	$jb_off_rotGrp_H = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 180 0 ;	select -r $jb_off_rotGrp_A $jb_off_rotGrp_B $jb_off_rotGrp_C $jb_off_rotGrp_D ;	$jb_off_topGrp = `group`;	xform -os -piv 0 0 0;	select -r $jb_off_rotGrp_E $jb_off_rotGrp_F $jb_off_rotGrp_G $jb_off_rotGrp_H ;	$jb_off_bottomGrp = `group`;	xform -os -piv 0 0 0;	xform -ro 0 90 180 $jb_off_bottomGrp;	select -r $jb_off_topGrp $jb_off_bottomGrp ;	$jb_off_totalGrp = `group`;	xform -os -piv 0 0 0;	select -cl;
+
+	rename $jb_offGroup ("base_offset_triFace_grp_" + $grpNum + "_1");
+	rename $jb_offGroup_rev ("base_offset_triFace_grp_" + $grpNum + "_2");
+
+	rename $jb_offA[0] ("base_offset_triFace_grp_" + $grpNum + "_3");
+	rename $jb_offB[0] ("base_offset_triFace_grp_" + $grpNum + "_4");
+	rename $jb_offC[0] ("base_offset_triFace_grp_" + $grpNum + "_5");
+	rename $jb_offD[0] ("base_offset_triFace_grp_" + $grpNum + "_6");
+	rename $jb_offE[0] ("base_offset_triFace_grp_" + $grpNum + "_7");
+	rename $jb_offF[0] ("base_offset_triFace_grp_" + $grpNum + "_8");
+
+	rename $jb_off_rotGrp_A ("base_offset_rot_group_" + $grpNum + "_1");
+	rename $jb_off_rotGrp_B ("base_offset_rot_group_" + $grpNum + "_2");
+	rename $jb_off_rotGrp_C ("base_offset_rot_group_" + $grpNum + "_3");
+	rename $jb_off_rotGrp_D ("base_offset_rot_group_" + $grpNum + "_4");
+	rename $jb_off_rotGrp_E ("base_offset_rot_group_" + $grpNum + "_5"); 
+	rename $jb_off_rotGrp_F ("base_offset_rot_group_" + $grpNum + "_6");
+	rename $jb_off_rotGrp_G ("base_offset_rot_group_" + $grpNum + "_7");
+	rename $jb_off_rotGrp_H ("base_offset_rot_group_" + $grpNum + "_8");
+
+	rename $jb_off_topGrp ("base_offset_jitterbug_top_" + $grpNum);
+	rename $jb_off_bottomGrp ("base_offset_jitterbug_bottom_" + $grpNum);
+
+	rename $jb_off_totalGrp ("base_offset_jitterbug_group_" + $grpNum);
+	
+	xform -t -3.62447e-07 -14.142147 19.999883 ("base_offset_jitterbug_group_" + $grpNum);
+
+	select -r ("base_jitterbug_group_" + $grpNum) ("base_offset_jitterbug_group_" + $grpNum);
+	$animGrp = `group`;
+	xform -os -piv 0 0 0;
+	rename $animGrp ("jitterbug_" + $grpNum + "_animGrp_LOCKED");
+
+	if(`objExists jitterbug_LOCKED_groups` == 0)
+	{
+		$lockedGrp = `group -em`;
+		xform -os -piv 0 0 0;
+		rename $lockedGrp "jitterbug_LOCKED_groups";
+	}
+	
+	parent ("jitterbug_" + $grpNum + "_animGrp_LOCKED") "jitterbug_LOCKED_groups";
+
+	if(`objExists jitterbug_group` == 0)
+	{
+		$jitterbugGrp = `group -em`;
+		xform -os -piv 0 0 0;
+		rename $jitterbugGrp "jitterbug_group";
+		parent jitterbug_LOCKED_groups jitterbug_group;
+	}}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+proc jb_jitterbug_base(int $grpNum, int $jb_animCycle){//------------------------------//START JITTERBUG CREATION//------------------------------	$jb_polyFace = `polyCreateFacet -ch on -tx 1 -s 1 -p 0 0 -17.320509 -p -10 0 0 -p 10 0 0`;	polySplit -ch on -s 1 -sma 0 -ep 0 0 -ep 1 0.5 $jb_polyFace[0];	polySplit -ch on -s 1 -sma 0 -ep 3 1 -ep 4 0.666667 -ep 0 0.5 $jb_polyFace[0];
+	polySplit -ch on -s 1 -sma 0 -ep 1 0 -ep 8 9.36026e-07 -ep 2 0.5 $jb_polyFace[0];	xform -sp 0 0 -5.773498 $jb_polyFace;	xform -rp 0 0 -5.773498 $jb_polyFace;	select -r $jb_polyFace[0];	$jb_polyFace_rev = `duplicate`;
+	
+	//SETS JITTERBUG ANIMATION CYCLE
+	jb_anim($jb_polyFace[0], $jb_polyFace_rev[0], 0, $jb_animCycle, 0, 0);
+	select -r $jb_polyFace[0];	$jb_group = `group`;	xform -os -piv 0 0 0 $jb_group;	xform -ro 54.7356 0 0 $jb_group;	xform -t 0 0 10 $jb_group;
+	select -r $jb_group;
+	pickWalk -d down;	
+	$jb_faceA = `ls -sl`;
+	rename $jb_faceA[0] ("base_triFace_" + $grpNum + "_1");	select -r $jb_polyFace_rev[0];	$jb_group_rev = `group`;	xform -os -piv 0 0 0 $jb_group_rev;	xform -ro 54.7356 0 0 $jb_group_rev;	xform -t 0 0 10 $jb_group_rev;
+	select -r $jb_group_rev;
+	pickWalk -d down;	
+	$jb_faceB = `ls -sl`;
+	rename $jb_faceB[0] ("base_triFace_" + $grpNum + "_2");	select -r $jb_group ;	$jb_A = `duplicate -rr -ic`;
+	select -r $jb_A;
+	pickWalk -d down;	
+	$jb_faceC = `ls -sl`;
+	rename $jb_faceC[0] ("base_triFace_" + $grpNum + "_3");	select -r $jb_group_rev ;	$jb_B = `duplicate -rr -ic`;
+	select -r $jb_B;
+	pickWalk -d down;	
+	$jb_faceD = `ls -sl`;
+	rename $jb_faceD[0] ("base_triFace_" + $grpNum + "_4");
+	select -r $jb_group ;	$jb_C = `duplicate -rr -ic`;
+	select -r $jb_C;
+	pickWalk -d down;	
+	$jb_faceE = `ls -sl`;
+	rename $jb_faceE[0] ("base_triFace_" + $grpNum + "_5");	select -r $jb_group_rev ;	$jb_D = `duplicate -rr -ic`;
+	select -r $jb_D;
+	pickWalk -d down;	
+	$jb_faceF = `ls -sl`;
+	rename $jb_faceF[0] ("base_triFace_" + $grpNum + "_6");
+
+	select -r $jb_group ;	$jb_E = `duplicate -rr -ic`;
+	select -r $jb_E;
+	pickWalk -d down;	
+	$jb_faceG = `ls -sl`;
+	rename $jb_faceG[0] ("base_triFace_" + $grpNum + "_7");	select -r $jb_group_rev ;	$jb_F = `duplicate -rr -ic`;
+	select -r $jb_F;
+	pickWalk -d down;	
+	$jb_faceH = `ls -sl`;
+	rename $jb_faceH[0] ("base_triFace_" + $grpNum + "_8");	select -r $jb_group ;	$jb_rotGrp_A = `group`; 	select -r $jb_group_rev ;	$jb_rotGrp_B = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 90 0 ;	select -r $jb_A ;	$jb_rotGrp_C = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 180 0 ;	select -r $jb_B ;	$jb_rotGrp_D = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 270 0 ;	select -r $jb_C ;	$jb_rotGrp_E = `group`; 	select -r $jb_D ;	$jb_rotGrp_F = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 90 0 ;	select -r $jb_E ;	$jb_rotGrp_G = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 180 0 ;	select -r $jb_F ;	$jb_rotGrp_H = `group`; 	xform -os -piv 0 0 0;	rotate -r -os 0 270 0 ;	select -r $jb_rotGrp_A $jb_rotGrp_B $jb_rotGrp_C $jb_rotGrp_D ;	$jb_topGrp = `group`;	xform -os -piv 0 0 0;	select -r $jb_rotGrp_E $jb_rotGrp_F $jb_rotGrp_G $jb_rotGrp_H ;	$jb_bottomGrp = `group`;	xform -os -piv 0 0 0;	xform -ro 0 90 180 $jb_bottomGrp;	select -r $jb_topGrp $jb_bottomGrp ;	$jb_totalGrp = `group`;	xform -os -piv 0 0 0;	select -cl;
+
+	rename $jb_group ("base_triFace_grp_" + $grpNum + "_1");
+	rename $jb_group_rev ("base_triFace_grp_" + $grpNum + "_2");
+
+	rename $jb_A[0] ("base_triFace_grp_" + $grpNum + "_3");
+	rename $jb_B[0] ("base_triFace_grp_" + $grpNum + "_4");
+	rename $jb_C[0] ("base_triFace_grp_" + $grpNum + "_5");
+	rename $jb_D[0] ("base_triFace_grp_" + $grpNum + "_6");
+	rename $jb_E[0] ("base_triFace_grp_" + $grpNum + "_7");
+	rename $jb_F[0] ("base_triFace_grp_" + $grpNum + "_8");
+
+	rename $jb_rotGrp_A ("base_rot_group_" + $grpNum + "_1");
+	rename $jb_rotGrp_B ("base_rot_group_" + $grpNum + "_2");
+	rename $jb_rotGrp_C ("base_rot_group_" + $grpNum + "_3");
+	rename $jb_rotGrp_D ("base_rot_group_" + $grpNum + "_4");
+	rename $jb_rotGrp_E ("base_rot_group_" + $grpNum + "_5");
+	rename $jb_rotGrp_F ("base_rot_group_" + $grpNum + "_6");
+	rename $jb_rotGrp_G ("base_rot_group_" + $grpNum + "_7");
+	rename $jb_rotGrp_H ("base_rot_group_" + $grpNum + "_8");
+
+	rename $jb_topGrp ("base_jitterbug_top_" + $grpNum);
+	rename $jb_bottomGrp ("base_jitterbug_bottom_" + $grpNum);
+
+	rename $jb_totalGrp ("base_jitterbug_group_" + $grpNum);
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+global proc lbs_shaderCreation(int $grpNum){	//------------------------------	//START SHADER CREATION	//------------------------------	$lbs_lambert1 = `shadingNode -asShader lambert`;	$lbs_sg1 = `sets -renderable true -noSurfaceShader true -empty -name jitterbug_lambertSG1`;	connectAttr -f ($lbs_lambert1 + ".outColor") ($lbs_sg1 + ".surfaceShader");	setAttr ($lbs_lambert1 + ".color") -type double3 1 0 0 ;	$lbs_lambert2 = `shadingNode -asShader lambert`;	$lbs_sg2 = `sets -renderable true -noSurfaceShader true -empty -name jitterbug_lambertSG1`;	connectAttr -f ($lbs_lambert2 + ".outColor") ($lbs_sg2 + ".surfaceShader");	setAttr ($lbs_lambert2 + ".color") -type double3 0 0 1 ;	select -r ("base_triFace_" + $grpNum + "_1") ("base_triFace_" + $grpNum + "_3") ("base_triFace_" + $grpNum + "_5") ("base_triFace_" + $grpNum + "_7");	select -add ("base_offset_triFace_" + $grpNum + "_2") ("base_offset_triFace_" + $grpNum + "_4") ("base_offset_triFace_" + $grpNum + "_6") ("base_offset_triFace_" + $grpNum + "_8");
+	$lbs_selection1 = `ls -sl`;	sets -e -forceElement $lbs_sg1 $lbs_selection1;	select -r ("base_triFace_" + $grpNum + "_2") ("base_triFace_" + $grpNum + "_4") ("base_triFace_" + $grpNum + "_6") ("base_triFace_" + $grpNum + "_8");
+	select -add ("base_offset_triFace_" + $grpNum + "_1") ("base_offset_triFace_" + $grpNum + "_3") ("base_offset_triFace_" + $grpNum + "_5") ("base_offset_triFace_" + $grpNum + "_7");
+	$lbs_selection2 = `ls -sl`;	sets -e -forceElement $lbs_sg2 $lbs_selection2;	rename $lbs_lambert1 ("jitterbug_" + $grpNum + "_redLambert");	rename $lbs_lambert2 ("jitterbug_" + $grpNum + "_blueLambert");	select -cl;}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+global proc jb_stabRotLocal(int $grpNum, int $jb_stabCheck, int $jb_animCycle)
+{
+	if($grpNum != 0 && $jb_stabCheck != 0)
+	{
+		CBdeleteConnection ("jitterbug_" + $grpNum + "_shell_yStab_group.ry");
+		setAttr ("jitterbug_" + $grpNum + "_shell_yStab_group.ry") 0;
+
+		setKeyframe -t 1 -v 0 ("jitterbug_" + $grpNum + "_shell_yStab_group.ry");
+		setKeyframe -t $jb_animCycle -v -120 ("jitterbug_" + $grpNum + "_shell_yStab_group.ry");
+		select -cl;
+		selectKey -add -k -t ("0:" + $jb_animCycle) ("jitterbug_" + $grpNum + "_shell_yStab_group.ry");
+		setInfinity -poi cycle;		setInfinity -pri cycle;
+	}
+	if($grpNum != 0 && $jb_stabCheck == 0)
+	{
+		CBdeleteConnection ("jitterbug_" + $grpNum + "_shell_yStab_group.ry");
+		setAttr ("jitterbug_" + $grpNum + "_shell_yStab_group.ry") 0;
+	}
+}
+
+global proc jb_creationOptions(){
+//	hyperShadePanelMenuCommand("hyperShadePanel1", "deleteUnusedNodes");
+
+	$tori_autoKey = `autoKeyframe -q -state`;
+	if($tori_autoKey == 1)
+	{
+		autoKeyframe -e -state 0;
+	}
+	$jitterNum = `intSliderGrp -q -v JB_fldInstances`;	$jb_rotateCheck = `radioButtonGrp -query -sl JB_fldOrient`;
+	$jb_animCycle = `intSliderGrp -q -v JB_animCycle`;
+	$jb_stabCheck = `checkBoxGrp -q -v1 JB_stabRot`;
+
+	$i=1;
+	if(`objExists base_jitterbug_group_1` == 1)
+	{
+		while(`objExists ("base_jitterbug_group_" + $i)` == 1)
+		{
+			$i++;
+		}
+	}
+	$grpNum = $i;
+	jb_jitterbug_base($grpNum, $jb_animCycle);
+	jb_jitterbug_offset_base($grpNum, $jb_animCycle);
+	if(`objExists ("jitterbug_" + $grpNum + "_redLambert")` == 0 && `objExists ("jitterbug_" + $grpNum + "_blueLambert")` == 0)
+	{
+		lbs_shaderCreation($grpNum);
+	}
+	jb_const($grpNum, $jitterNum);
+	jb_rotateSystem2($grpNum, $jb_rotateCheck);
+	jb_stabRotLocal($grpNum, $jb_stabCheck, $jb_animCycle);
+	jb_textListUpdate();
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+global proc jb_editTextList(){
+	$grpNumArray = `textScrollList -q -sii jb_textList`;
+	$grpNum = $grpNumArray[0];
+
+	if(`objExists jitterbug_LOCKED_groups` == 1 && $grpNum != 0)
+	{
+		select -r ("jitterbug_" + $grpNum + "_shell_yStab_group");	
+		$shellNumList = `listRelatives -c ("jitterbug_" + $grpNum + "_shell_group")`;
+		$shellNum = `size($shellNumList)`;
+
+		intSliderGrp -e -v $shellNum JB_fldInstances;
+
+		selectKey -clear;
+		if(`selectKey -add -k -t 1 ("base_triFace_" + $grpNum + "_1.ry")` == 1)
+		{		
+			$animCycle = `keyframe -index 1 -q ("base_triFace_" + $grpNum + "_1.ry")`;
+			intSliderGrp -e -v $animCycle[0] JB_animCycle;
+			radioButtonGrp -e -sl 2 JB_startingPos;
+		}
+		else
+		{		
+			$animCycle = `keyframe -index 1 -q ("base_offset_triFace_" + $grpNum + "_1.ry")`;
+			intSliderGrp -e -v $animCycle[0] JB_animCycle;
+			radioButtonGrp -e -sl 1 JB_startingPos;
+		}
+
+		$rotType = `getAttr ("jitterbug_" + $grpNum + "_shell_yStab_group.rz")`;
+		if( $rotType == 0 )
+		{
+			radioButtonGrp -e -sl 1 JB_fldOrient;
+		}
+		else
+		{
+			radioButtonGrp -e -sl 2 JB_fldOrient;
+		}
+
+		float $yStab[] = `keyframe -index 1 -q ("jitterbug_" + $grpNum + "_shell_yStab_group.ry")`;
+		if( `size($yStab)` == 0)
+		{
+			checkBoxGrp -e -v1 0 JB_stabRot;
+		}
+		else
+		{
+			checkBoxGrp -e -v1 1 JB_stabRot;
+		}
+	}
+	else
+	{
+		select -cl;
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+global proc jb_animUpdate(){
+	int $grpNum[];
+	$grpNum = `textScrollList -q -sii jb_textList`;
+	if(`objExists jitterbug_LOCKED_groups` == 1 && $grpNum[0] != 0)
+	{	
+		currentTime 1;
+		$jb_animOld = `keyframe -index 1 -q ("base_triFace_" + $grpNum[0] + "_1.ry")`;
+		$jb_animCycle = `intSliderGrp -q -v JB_animCycle`;
+	//	float $jb_animCycle = $jb_anim;
+
+		select -r ("base_triFace_" + $grpNum[0] + "_1");
+		$face1 = `ls -sl`;
+
+		select -r ("base_triFace_" + $grpNum[0] + "_2");
+		$face2 = `ls -sl`;
+
+		jb_anim($face1[0], $face2[0], 0, $jb_animCycle, $jb_animOld[0], 0);
+
+		select -r ("base_offset_triFace_" + $grpNum[0] + "_1");
+		$face1 = `ls -sl`;
+
+		select -r ("base_offset_triFace_" + $grpNum[0] + "_2");
+		$face2 = `ls -sl`;
+
+		jb_anim($face1[0], $face2[0], 1, $jb_animCycle, $jb_animOld[0], 1);
+
+		jb_stabRotProc();
+	}
+}
+
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------------------------------
+
+global proc jb_stabRotProc()
+{
+	int $grpNum[];
+	$grpNum = `textScrollList -q -sii jb_textList`;
+	if(`objExists jitterbug_LOCKED_groups` == 1 && $grpNum[0] != 0)
+	{
+		$jb_animCycle = `intSliderGrp -q -v JB_animCycle`;
+		$jb_stabCheck = `checkBoxGrp -q -v1 JB_stabRot`;
+		jb_stabRotLocal($grpNum[0], $jb_stabCheck, $jb_animCycle);
+	}
+}

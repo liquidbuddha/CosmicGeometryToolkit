@@ -1,0 +1,14 @@
+global proc lbsMenu()
+{
+	global string $gMainWindow;
+	global string $MyMiniMenuObj;
+
+	if (`menu -exists $MyMiniMenuObj`)
+	{
+		deleteUI $MyMiniMenuObj;
+	}
+
+	string $name = "lbs Tools mini";
+	$MyMiniMenuObj = `menu -p $gMainWindow -to true -l $name`;
+	menuItem -p $MyMiniMenuObj -l "mini kit" -c ("source \"miniKit.mel\"; ");
+}

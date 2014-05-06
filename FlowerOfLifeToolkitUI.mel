@@ -1,0 +1,257 @@
+string $lbs_flowerOfLife = `formLayout
+	-nd 100 flowerOfLifeForm`;
+
+string $fol_radiusSlider = `floatSliderGrp
+	-label "Circle Radius" 
+	-field true
+	-min .001
+	-max 10
+	-fmn .0001
+	-fmx 100
+	-pre 4
+	-value 1
+	-cc fol_multiEdit
+	fol_radiusSld`;
+
+string $fol_layerSlider = `intSliderGrp
+	-label "FOL layers"
+	-field true
+	-min 1
+	-max 10
+	-fmx 500
+	-value 1
+	-cc fol_multiEdit
+	fol_layerSld`;
+
+string $fol_curveRadio = `radioButtonGrp
+	-numberOfRadioButtons 2
+	-l "type of curve: "
+	-labelArray2 "circle" "linear curve"
+	-cw3 150 60 80 
+	-sl 1
+	-cc fol_curveRadioEdit
+	fol_curveRadio`;
+
+string $fol_curveSideSlider = `intSliderGrp
+	-l "number of sides: "
+	-field true
+	-v 3
+	-min 3
+	-max 64
+	-en 0
+	-cc fol_multiEdit
+	fol_curveSideSlider`;
+
+string $fol_extrudeCheck = `checkBoxGrp
+	-l "create extrude: "
+	-en 1
+	-v1 0
+	-cc "fol_extEdit"	
+	fol_extrudeCheck`;
+
+string $fol_extRadiusSlider = `floatSliderGrp
+	-label "Extrude Radius" 
+	-field true
+	-en 0
+	-min .001
+	-max 10
+	-fmn .0001
+	-fmx 100
+	-pre 4
+	-value .015
+	-cc "fol_extEdit"
+	fol_extRadiusSld`;
+
+string $fol_extrudeRadio = `radioButtonGrp
+	-numberOfRadioButtons 2
+	-l "type of extrude curve: "
+	-labelArray2 "circle" "linear curve"
+	-cw3 150 60 80
+	-sl 1
+	-en 0
+	-onc "fol_extEdit"
+	fol_extrudeRadio`;
+
+string $fol_extSideSlider = `intSliderGrp
+	-l "number of sides: "
+	-field true
+	-v 3
+	-min 3
+	-max 64
+	-en 0
+	-cc "fol_extEdit"
+	fol_extSideSlider`;
+
+string $fol_UtessSlider = `intSliderGrp
+	-l "U Tessellation"
+	-field true
+	-v 3
+	-min 1
+	-max 30
+	-en 0
+	-cc fol_extTessGlob
+	fol_UtessSlider`;
+
+string $fol_VtessSlider = `intSliderGrp
+	-l "V Tessellation"
+	-field true
+	-v 3
+	-min 1
+	-max 30
+	-en 0
+	-cc fol_extTessGlob
+	fol_VtessSlider`;
+
+string $fol_dimRadio = `radioButtonGrp
+	-numberOfRadioButtons 4
+	-l "Dimension: "
+	-labelArray4 "2d" "3d" "4d" "6d"
+	-cw5 150 40 40 40 40
+	-sl 1
+	-onc fol_multiEdit
+	fol_dimRadio`;
+	
+string $fol_locVisCheck = `checkBoxGrp
+	-l "locator visibility: "
+	-en 1
+	-v1 0
+	-cc fol_locVisEdit
+	fol_locVisCheck`;
+
+string $fol_createButton = `button
+	-l "Create Flower of Life"
+	-en 1
+	-c "folCreate_options"
+	fol_createBut`;
+
+string $fol_createRadio = `radioButtonGrp
+	-numberOfRadioButtons 2
+	-l "Mode"
+	-labelArray2 "Edit" "Create"
+	-sl 2
+	fol_editRadio`;
+
+string $fol_textList = `textScrollList
+	-w 290
+	-h 180
+	-sc "fol_editTextList"
+	-fn "boldLabelFont"
+	fol_textList`;
+
+$fol_sep1 = `separator
+	-w 400
+	fol_sep1`;
+
+$fol_sep2 = `separator
+	-w 400
+	fol_sep2`;
+
+$fol_sep3 = `separator
+	-w 300
+	fol_sep3`;
+
+$fol_sep4 = `separator
+	-w 400
+	fol_sep4`;
+
+//LAYOUT OF UI ELEMENTS
+
+formLayout -edit
+
+	-attachForm $fol_radiusSlider "top" 25
+	-attachForm $fol_radiusSlider "left" 30
+	-attachNone $fol_radiusSlider "bottom" 
+	-attachNone $fol_radiusSlider "right" 
+
+	-attachControl $fol_layerSlider "top" 7 $fol_radiusSlider
+	-attachForm $fol_layerSlider "left" 30
+	-attachNone $fol_layerSlider "bottom" 
+	-attachNone $fol_layerSlider "right" 
+
+	-attachControl $fol_sep1 "top" 7 $fol_layerSlider
+	-attachForm $fol_sep1 "left" 40
+	-attachNone $fol_sep1 "bottom" 
+	-attachNone $fol_sep1 "right" 
+
+	-attachControl $fol_curveRadio "top" 15 $fol_sep1
+	-attachForm $fol_curveRadio "left" 50
+	-attachNone $fol_curveRadio "bottom" 
+	-attachNone $fol_curveRadio "right" 
+
+	-attachControl $fol_curveSideSlider "top" 15 $fol_curveRadio
+	-attachForm $fol_curveSideSlider "left" 30
+	-attachNone $fol_curveSideSlider "bottom" 
+	-attachNone $fol_curveSideSlider "right" 
+
+	-attachControl $fol_sep2 "top" 15 $fol_curveSideSlider
+	-attachForm $fol_sep2 "left" 40
+	-attachNone $fol_sep2 "bottom" 
+	-attachNone $fol_sep2 "right"
+
+	-attachControl $fol_extrudeCheck "top" 15 $fol_sep2
+	-attachForm $fol_extrudeCheck "left" 40
+	-attachNone $fol_extrudeCheck "bottom" 
+	-attachNone $fol_extrudeCheck "right"
+
+	-attachControl $fol_extRadiusSlider "top" 15 $fol_extrudeCheck
+	-attachForm $fol_extRadiusSlider "left" 30
+	-attachNone $fol_extRadiusSlider "bottom" 
+	-attachNone $fol_extRadiusSlider "right"
+
+	-attachControl $fol_extrudeRadio "top" 15 $fol_extRadiusSlider
+	-attachForm $fol_extrudeRadio "left" 50
+	-attachNone $fol_extrudeRadio "bottom" 
+	-attachNone $fol_extrudeRadio "right"
+
+	-attachControl $fol_extSideSlider "top" 15 $fol_extrudeRadio
+	-attachForm $fol_extSideSlider "left" 30
+	-attachNone $fol_extSideSlider "bottom" 
+	-attachNone $fol_extSideSlider "right" 
+
+	-attachControl $fol_sep3 "top" 15 $fol_extSideSlider
+	-attachForm $fol_sep3 "left" 90
+	-attachNone $fol_sep3 "bottom" 
+	-attachNone $fol_sep3 "right"
+
+	-attachControl $fol_UtessSlider "top" 10 $fol_sep3
+	-attachForm $fol_UtessSlider "left" 10
+	-attachNone $fol_UtessSlider "bottom" 
+	-attachNone $fol_UtessSlider "right" 
+
+	-attachControl $fol_VtessSlider "top" 15 $fol_UtessSlider
+	-attachForm $fol_VtessSlider "left" 10
+	-attachNone $fol_VtessSlider "bottom" 
+	-attachNone $fol_VtessSlider "right" 
+
+	-attachControl $fol_sep4 "top" 10 $fol_VtessSlider
+	-attachForm $fol_sep4 "left" 40
+	-attachNone $fol_sep4 "bottom" 
+	-attachNone $fol_sep4 "right"
+
+	-attachControl $fol_dimRadio "top" 15 $fol_sep4
+	-attachForm $fol_dimRadio "left" 25
+	-attachNone $fol_dimRadio "bottom" 
+	-attachNone $fol_dimRadio "right"
+
+	-attachControl $fol_locVisCheck "top" 15 $fol_dimRadio
+	-attachForm $fol_locVisCheck "left" 40
+	-attachNone $fol_locVisCheck "bottom" 
+	-attachNone $fol_locVisCheck "right" 
+
+	-attachControl $fol_createButton "top" 30 $fol_locVisCheck
+	-attachForm $fol_createButton "left" 180
+	-attachNone $fol_createButton "bottom" 
+	-attachNone $fol_createButton "right" 
+
+	-attachControl $fol_createRadio "top" 10 $fol_createButton
+	-attachForm $fol_createRadio "left" 25
+	-attachNone $fol_createRadio "bottom" 
+	-attachNone $fol_createRadio "right" 
+
+	-attachControl $fol_textList "top" 5 $fol_createRadio
+	-attachForm $fol_textList "left" 95
+	-attachNone $fol_textList "bottom" 
+	-attachNone $fol_textList "right" 
+
+$lbs_flowerOfLife;
+setParent ..;

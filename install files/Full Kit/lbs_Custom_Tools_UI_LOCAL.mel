@@ -1,0 +1,484 @@
+//-----------------------------------------------
+//location to load scripts from
+//-----------------------------------------------
+string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scripts";
+
+//-----------------------------------------------
+//check if sourced scripts exist in correct folder"
+//-----------------------------------------------	
+
+	$lbsEVO_path = ($scriptLoc + "/lbsToolkit/Evolute_Tab/torusToolkit.mel");
+	$lbsPHI_path = ($scriptLoc + "/lbsToolkit/Phi_Tab/PhiToolkit.mel");
+	$lbsPhiCONN_path = ($scriptLoc + "/lbsToolkit/Phi_Tab/PhiToolkit_Conn.mel");
+	$lbsSTAR_path = ($scriptLoc + "/lbsToolkit/StarReplace_Tab/StarReplaceToolkit.mel");
+	$lbsJITTERBUG_path = ($scriptLoc + "/lbsToolkit/Jitterbug_Tab/JitterbugToolkit.mel");
+	$lbsRADIATINGTORI_path = ($scriptLoc + "/lbsToolkit/RadiatingTori_Tab/RadiatingToriToolkit.mel");
+	$lbsGEOMETRY_path = ($scriptLoc + "/lbsToolkit/Geometry_Tab/GeometriesToolkit.mel");
+	$lbsFOL_path = ($scriptLoc + "/lbsToolkit/FlowerOfLife_Tab/FlowerOfLifeToolkit.mel");
+	$lbsFOL_EXT_path = ($scriptLoc + "/lbsToolkit/FlowerOfLife_Tab/FlowerOfLife_EXT_Toolkit.mel");
+//	$lbsFOL_EXT_path = ("/Volumes/" + $scriptLoc + "/lbsToolkit/FlowerOfLife_Tab/FlowerOfLife_EXT_Toolkit.mel");
+
+	$lbs_sourceEVO = `getFileList -fs $lbsEVO_path`;
+	if($lbs_sourceEVO[0] == "torusToolkit.mel")
+	{
+		string $sourceTorus = "source \""+$lbsEVO_path+"\"";	
+		eval $sourceTorus;
+	}
+	else
+	{
+		error("\n" + "---torusToolkit.mel not found" + "\n");
+	}
+	
+	$lbs_sourcePHI = `getFileList -fs $lbsPHI_path`;
+	if($lbs_sourcePHI[0] == "PhiToolkit.mel")
+	{
+		string $sourcePhi = "source \""+$lbsPHI_path+"\"";
+		eval $sourcePhi;
+	}
+	else
+	{
+		error("\n" + "---PhiToolkit.mel not found" + "\n");
+	}
+
+	$lbs_sourcePhiCONN = `getFileList -fs $lbsPhiCONN_path`;
+	if($lbs_sourcePhiCONN[0] == "PhiToolkit_Conn.mel")
+	{
+		string $sourcePhi = "source \""+$lbsPhiCONN_path+"\"";
+		eval $sourcePhi;
+	}
+	else
+	{
+		error("\n" + "---PhiToolkit_Conn.mel not found" + "\n");
+	}
+
+	$lbs_sourceSTAR = `getFileList -fs $lbsSTAR_path`;
+	if($lbs_sourceSTAR[0] == "StarReplaceToolkit.mel")
+	{
+		string $sourceStar = "source \""+$lbsSTAR_path+"\"";
+		eval $sourceStar;
+	}
+	else
+	{
+		error("\n" + "---StarReplaceToolkit.mel not found" + "\n");
+	}
+
+	$lbs_sourceJITTERBUG = `getFileList -fs $lbsJITTERBUG_path`;
+	if($lbs_sourceJITTERBUG[0] == "JitterbugToolkit.mel")
+	{
+		string $sourceJitterbug = "source \""+$lbsJITTERBUG_path+"\"";
+		eval $sourceJitterbug;
+	}
+	else
+	{
+		error("\n" + "---JitterbugToolkit.mel not found" + "\n");
+	}
+
+	$lbs_sourceRADIATINGTORI = `getFileList -fs $lbsRADIATINGTORI_path`;
+	if($lbs_sourceRADIATINGTORI[0] == "RadiatingToriToolkit.mel")
+	{
+		string $sourceRadiating = "source \""+$lbsRADIATINGTORI_path+"\"";
+		eval $sourceRadiating;
+	}
+	else
+	{
+		error("\n" + "---RadiatingToolkit.mel not found" + "\n");
+	}
+
+	$lbs_sourceGEOMETRY = `getFileList -fs $lbsGEOMETRY_path`;
+	if($lbs_sourceGEOMETRY[0] == "GeometriesToolkit.mel")
+	{
+		string $sourceGeometries = "source \""+$lbsGEOMETRY_path+"\"";
+		eval $sourceGeometries;
+	}
+	else
+	{
+		error("\n" + "---GeometriesToolkit.mel not found" + "\n");
+	}
+
+	$lbs_sourceFOL = `getFileList -fs $lbsFOL_path `;
+	if($lbs_sourceFOL[0] == "FlowerOfLifeToolkit.mel")
+	{
+		string $sourceFlowerOfLife = "source \""+$lbsFOL_path+"\"";
+		eval $sourceFlowerOfLife;
+	}
+	else
+	{
+		error("\n" + "---FlowerOfLifeToolkit.mel not found" + "\n");
+	}
+
+	$lbs_sourceFOL_EXT = `getFileList -fs $lbsFOL_EXT_path `;
+	if($lbs_sourceFOL_EXT[0] == "FlowerOfLife_EXT_Toolkit.mel")
+	{
+		string $sourceFlowerOfLife_EXT = "source \""+$lbsFOL_EXT_path+"\"";
+		eval $sourceFlowerOfLife_EXT;
+	}
+	else
+	{
+		error("\n" + "---FlowerOfLife_EXT_Toolkit.mel not found" + "\n");
+	}
+
+//-----------------------------------------------
+//SCRIPT WINDOW creation
+//-----------------------------------------------
+
+	if(`window -ex lbs_scriptsWindow`) deleteUI lbs_scriptsWindow;
+
+	$lbs_scriptWin = `window 
+		-title "liquidbuddha.studios - Custom Tools" 
+		-s 1
+		-w 10
+		-h 10
+		-rtf 0
+		lbs_scriptsWindow`;
+
+	$lbs_mainForm = `formLayout 
+		-nd 100 winForm`;
+
+	$lbs_columnLayout = `columnLayout 
+		-adjustableColumn true
+		-cat "left" 20
+		lbs_columnLayout`;
+
+       $lbs_newSceneButton = `button 
+		-h 25 
+		-w 460
+		-label "New Scene" 
+		-command "file -f -new; playbackOptions -e -min 1.00 -max 100; torus_updateTextList;"`;
+	setParent ..;
+
+	$lbs_tabs = `tabLayout
+		-imw 0
+		-w 500
+		-h 315
+		-sc "resizeTab"
+		-dcc "rollupWindow"
+		winTab`;
+
+	formLayout -edit
+		-attachForm $lbs_tabs "top" 25
+		-attachForm $lbs_tabs "left" 0
+		-attachNone $lbs_tabs "bottom"
+		-attachNone $lbs_tabs "right" 
+		$lbs_mainForm;
+
+//--------------------------------------------------
+//TORUS TOOLKIT TAB CREATION
+//--------------------------------------------------
+
+	$lbsEVO_UI_path = ($scriptLoc + "/lbsToolkit/Evolute_Tab/torusToolkitUI.mel");
+
+	$lbs_sourceEVO_UI = `getFileList -fs $lbsEVO_UI_path`;
+	if($lbs_sourceEVO_UI[0] == "torusToolkitUI.mel")
+	{
+		string $sourceTorusUI = "source \""+$lbsEVO_UI_path+"\"";
+		eval $sourceTorusUI;
+	}
+	else
+	{
+		error("\n" + "---torusToolkitUI.mel not found" + "\n");
+	}
+
+//--------------------------------------------------
+//RADIATING TORI TAB CREATION
+//--------------------------------------------------
+
+	$lbsRADIATINGTORI_UI_path = ($scriptLoc + "/lbsToolkit/RadiatingTori_Tab/RadiatingToriToolkitUI.mel");
+
+	$lbs_sourceRADIATINGTORI_UI = `getFileList -fs $lbsRADIATINGTORI_UI_path`;
+	if($lbs_sourceRADIATINGTORI_UI[0] == "RadiatingToriToolkitUI.mel")
+	{
+		string $sourceRadiatingToriUI = "source \""+$lbsRADIATINGTORI_UI_path+"\"";
+		eval $sourceRadiatingToriUI;
+	}
+	else
+	{
+		error("\n" + "---RadiatingToriToolkitUI.mel not found" + "\n");
+	}
+
+//--------------------------------------------------
+//PHI TOOLKIT TAB CREATION
+//--------------------------------------------------
+
+	$lbsPHI_UI_path = ($scriptLoc + "/lbsToolkit/Phi_Tab/PhiToolkitUI.mel");
+
+	$lbs_sourcePHI_UI = `getFileList -fs $lbsPHI_UI_path `;
+	if($lbs_sourcePHI_UI[0] == "PhiToolkitUI.mel")
+	{
+		string $sourcePhiUI = "source \""+$lbsPHI_UI_path+"\"";
+		eval $sourcePhiUI;
+	}
+	else
+	{
+		error("\n" + "---PhiToolkitUI.mel not found" + "\n");
+	}
+
+//--------------------------------------------------
+//PHI CONN TAB CREATION
+//--------------------------------------------------
+
+	$lbsPhiCONN_UI_path = ($scriptLoc + "/lbsToolkit/Phi_Tab/PhiToolkit_ConnUI.mel");
+
+	$lbs_sourcePhiCONN_UI = `getFileList -fs $lbsPhiCONN_UI_path `;
+	if($lbs_sourcePhiCONN_UI[0] == "PhiToolkit_ConnUI.mel")
+	{
+		string $sourcePhiConnUI = "source \""+$lbsPhiCONN_UI_path+"\"";
+		eval $sourcePhiConnUI;
+	}
+	else
+	{
+		error("\n" + "---PhiToolkit_ConnUI.mel not found" + "\n");
+	}
+
+//--------------------------------------------------
+//FLOWER OF LIFE TAB CREATION
+//--------------------------------------------------
+
+	$lbsFOL_UI_path = ($scriptLoc + "/lbsToolkit/FlowerOfLife_Tab/FlowerOfLifeToolkitUI.mel");
+
+	$lbs_sourceFOL_UI = `getFileList -fs $lbsFOL_UI_path `;
+	if($lbs_sourceFOL_UI[0] == "FlowerOfLifeToolkitUI.mel")
+	{
+		string $sourceFlowerOfLifeUI = "source \""+$lbsFOL_UI_path+"\"";
+		eval $sourceFlowerOfLifeUI;
+	}
+	else
+	{
+		error("\n" + "---FlowerOfLifeToolkitUI.mel not found" + "\n");
+	}
+
+//--------------------------------------------------
+//JITTERBUG TAB CREATION
+//--------------------------------------------------
+
+	$lbsJITTERBUG_UI_path = ($scriptLoc + "/lbsToolkit/Jitterbug_Tab/JitterbugToolkitUI.mel");
+
+	$lbs_sourceJITTERBUG_UI = `getFileList -fs $lbsJITTERBUG_UI_path`;
+	if($lbs_sourceJITTERBUG_UI[0] == "JitterbugToolkitUI.mel")
+	{
+		string $sourceJitterbugUI = "source \""+$lbsJITTERBUG_UI_path+"\"";
+		eval $sourceJitterbugUI;
+	}
+	else
+	{
+		error("\n" + "---JitterbugToolkitUI.mel not found" + "\n");
+	}
+
+//--------------------------------------------------
+//GEOMETRIES TAB CREATION
+//--------------------------------------------------
+
+	$lbsGEOMETRY_UI_path = ($scriptLoc + "/lbsToolkit/Geometry_Tab/GeometriesToolkitUI.mel");
+
+	$lbs_sourceGEOMETRY_UI = `getFileList -fs $lbsGEOMETRY_UI_path `;
+	if($lbs_sourceGEOMETRY_UI[0] == "GeometriesToolkitUI.mel")
+	{
+		string $sourceGeometryUI = "source \""+$lbsGEOMETRY_UI_path+"\"";
+		eval $sourceGeometryUI;
+	}
+	else
+	{
+		error("\n" + "---GeometriesToolkitUI.mel not found" + "\n");
+	}
+
+//--------------------------------------------------
+//PAINT EFFECTS STAR REPLACE TAB CREATION
+//--------------------------------------------------
+
+	$lbsSTAR_UI_path = ($scriptLoc + "/lbsToolkit/StarReplace_Tab/StarReplaceToolkitUI.mel");
+
+	$lbs_sourceSTAR_UI = `getFileList -fs $lbsSTAR_UI_path `;
+	if($lbs_sourceSTAR_UI[0] == "StarReplaceToolkitUI.mel")
+	{
+		string $sourceStarUI = "source \""+$lbsSTAR_UI_path+"\"";
+		eval $sourceStarUI;
+	}
+	else
+	{
+		error("\n" + "---StarReplaceToolkitUI.mel not found" + "\n");
+	}
+
+
+//-----------------------------------------------
+//rename tabs
+//-----------------------------------------------
+
+	tabLayout -e
+		-tl torusToolkitForm "Evolute" winTab;
+	tabLayout -e
+		-tl jitterbugForm "Jitterbug" winTab;
+	tabLayout -e 
+		-tl radiatingToriForm "Radiating" winTab;
+	tabLayout -e
+		-tl phiForm "Phi" winTab;
+	tabLayout -e 
+		-tl starReplaceForm "Star" winTab;
+	tabLayout -e 
+		-tl geometriesForm "Geo." winTab;
+	tabLayout -e
+		-tl flowerOfLifeForm "F.O.L." winTab;
+
+	windowPref -r lbs_scriptsWindow;
+	window -e -h 740 -w 510 lbs_scriptsWindow;
+	tabLayout -e -h 740 -w 510 winTab;
+	torus_textListCheck;
+	showWindow $lbs_scriptWin;
+
+	if(`objExists jitterbug_LOCKED_groups` == 1)
+	{
+		checkBoxGrp -e -en 1 tt_JBcheck;
+		checkBoxGrp -e -en 1 pt_JBcheck;
+	}
+	else{
+		checkBoxGrp -e -en 0 tt_JBcheck;
+		checkBoxGrp -e -en 1 pt_JBcheck;
+	}
+
+//-----------------------------------------------
+//resizes window when a tab is selected
+//-----------------------------------------------
+
+	global proc resizeTab()
+	{
+		$selectedTab = `tabLayout -q -st winTab`;
+	
+		if($selectedTab == "torusToolkitForm")
+		{
+			if(`objExists jitterbug_LOCKED_groups` == 1)
+			{
+				checkBoxGrp -e -en 1 tt_JBcheck;
+			}
+			else{
+				checkBoxGrp -e -en 0 tt_JBcheck;
+			}
+
+			$jbCheck = `checkBoxGrp -q -v1 tt_JBcheck`;	
+			$frameCheck = `frameLayout -q -cl torus_frame`;
+
+			if($jbCheck == 1 && $frameCheck == 0)
+			{
+		    		window -e -h 1030 -w 795 lbs_scriptsWindow;
+				tabLayout -e -h 1030 -w 795 winTab;
+			}
+			else if($jbCheck == 1 && $frameCheck == 1)
+			{
+		    		window -e -h 740 -w 795 lbs_scriptsWindow;
+				tabLayout -e -h 740 -w 795 winTab;
+			}
+			else if($jbCheck == 0 && $frameCheck == 0)
+			{
+		    		window -e -h 1075 -w 500 lbs_scriptsWindow;
+				tabLayout -e -h 1075 -w 500 winTab;
+			}
+			else
+			{
+		    		window -e -h 740 -w 500 lbs_scriptsWindow;
+				tabLayout -e -h 740 -w 500 winTab;
+			}
+
+			tt_jbExp;
+			torus_textListCheck;
+		}
+
+		if($selectedTab == "jitterbugForm")
+		{
+	    		window -e -h 465 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 465 -w 500 winTab;
+			jb_textListCheck;
+		}
+
+		if($selectedTab == "radiatingToriForm")
+		{
+	    		window -e -h 1075 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 1075 -w 500 winTab;
+			rt_textListCheck;
+		}
+	
+		if($selectedTab == "phiForm")
+		{
+			if(`objExists jitterbug_LOCKED_groups` == 1)
+			{
+				checkBoxGrp -e -en 1 pt_JBcheck;
+			}
+			else
+			{
+				checkBoxGrp -e -en 0 pt_JBcheck;
+			}
+
+			$jbCheck = `checkBoxGrp -q -v1 pt_JBcheck`;
+
+			if($jbCheck == 1)
+			{	
+	 			window -e -h 820 -w 795 lbs_scriptsWindow;
+				tabLayout -e -h 820 -w 795 winTab;
+			}
+			else
+			{
+	 			window -e -h 820 -w 500 lbs_scriptsWindow;
+				tabLayout -e -h 820 -w 500 winTab;
+			}
+			pt_textListCheck;
+		}
+	
+		if($selectedTab == "starReplaceForm")
+		{
+	    		window -e -h 560 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 560 -w 500 winTab;
+		}
+
+		if($selectedTab == "geometriesForm")
+		{
+	   		window -e -h 630 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 630 -w 500 winTab;
+			geo_textListCheck;
+		}
+		
+		if($selectedTab == "flowerOfLifeForm")
+		{
+	   		window -e -h 860 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 860 -w 500 winTab;
+			fol_updateTextListGlb;
+		}
+	}
+
+	global proc torusFrameCol()
+	{
+		$jbCheck = `checkBoxGrp -q -v1 tt_JBcheck`;	
+		$frameCheck = `frameLayout -q -cl torus_frame`;
+
+		if($jbCheck == 1 && $frameCheck == 0)
+		{
+	   	 	window -e -h 1075 -w 795 lbs_scriptsWindow;
+			tabLayout -e -h 1075 -w 795 winTab;
+		}
+		else if($jbCheck == 1 && $frameCheck == 1)
+		{
+	    		window -e -h 740 -w 795 lbs_scriptsWindow;
+			tabLayout -e -h 740 -w 795 winTab;
+		}
+		else if($jbCheck == 0 && $frameCheck == 0)
+		{
+	    		window -e -h 1075 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 1075 -w 500 winTab;
+		}
+		else
+		{
+	    		window -e -h 740 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 740 -w 500 winTab;
+		}
+
+	}
+
+//-----------------------------------------------
+//resizes window when a tab is selected
+//-----------------------------------------------
+
+	global proc rollupWindow()
+	{
+		$winHeight = `window -q -h lbs_scriptsWindow`;
+		$tabHeight = `tabLayout -q -h winTab`;
+		if($winHeight != 50 || $tabHeight != 50)
+		{
+			window -e -h 50 -w 500 lbs_scriptsWindow;
+			tabLayout -e -h 50 -w 500 winTab;
+		}
+	}

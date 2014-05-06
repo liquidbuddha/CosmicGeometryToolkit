@@ -1,0 +1,53 @@
+//source "/Volumes/RENDrACTIVE/_Shared_Resources/lbsToolkit/Evolute_Tab/evoIterate_UIopen.mel";
+
+/*
+	LOOPS & ROTATION ITERATION WORKFLOW
+
+	-Create New Scene
+	-Set Render Width and Height globals
+	-Create Evolute with the toolkit
+	-Position TOP camera to view whole evolute
+	-Set Project (set down one level of main project)
+		-Ex. if you are wanting all maya/image files in /LoopsProject, set project as /LoopsProject/scenes
+			you can name scenes anything you like
+		maya scenes will be placed in scenes folder
+		image files will be placed in /LoopsProject
+	-Source evoIterate.mel in command line
+		source "/Volumes/RENDrACTIVE/_Shared_Resources/lbsToolkit/Evolute_Tab/evoIterate_UIopen.mel";
+	-with the Toolkit open and the Render View open run evoLoopsIterate from the command line
+		int $loopsStart =	min number of loops
+		int $loopsEnd =		max number of loops
+		int $loopsI =		number loops increases by each iteration
+		float $rotStart = 	min rotation
+		float $rotEnd = 	max rotation
+		float $rotI =		number rotation increases by each iteration
+
+		Ex. evoLoopsIterateUI( 1,5,1, 10,20,.2);
+*/
+
+global proc evoLoopsIterateUI( int $loopsStart, int $loopsEnd, int $loopsI, float $rotStart, float $rotEnd, float $rotI ){
+
+	radioButtonGrp -e -sl 1 editRadio;
+	textScrollList -e -sii 1 torus_textList;
+
+	for( $loopsLoop = $loopsStart; $loopsLoop <= $loopsEnd; $loopsLoop += $loopsI ){
+
+   		intSliderGrp -e -v $loopsLoop fldLoops;
+		
+		float $rotLoop = $rotStart;
+		while( $rotLoop <= $rotEnd ){
+
+			floatSliderGrp -e -v $rotLoop fldRot;
+    			evoUpdate;
+    			$fileName = ("evo_LOOPS_" + $loopsLoop + "_ROTATION_" + $rotLoop);
+    
+    			file -rename $fileName;
+    			file -save -type "mayaAscii";
+
+			renderWindowRenderCamera snapshot renderView top;
+			renderWindowSaveImageCallback "renderView" $fileName "JPEG";
+
+			$rotLoop += $rotI;
+		}
+	}
+}
