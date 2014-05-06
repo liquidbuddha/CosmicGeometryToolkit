@@ -1,14 +1,7 @@
 Cosmic Geometry Toolkit by liquidbuddha.studios
 ===============================================
 
-Visual effects toolkit for Autodesk Maya, enabling fast creation of toroidal evolutionary wavefronts, phi-spirals, flower of life patters, jitterbugging vector equlibrium, geometric primatives, and more.  The toolkit is available in two flavors, the minikit and full-kit.
-
-miniKit
-=======
-miniKit: this version includes the following functionality
- - customizable torus evolute tool
- - customizable phi-spiral & vortex creation tool
- - customizable bonus Rodin-like Evolute tool
+Visual effects toolkit for Autodesk Maya, enabling fast creation of toroidal evolutionary wavefronts, phi-spirals, flower of life patters, jitterbugging vector equlibrium, geometric primatives, and more.  The toolkit is available in two flavors, the full-kit and the minikit.
 
 Full Toolkit
 ============
@@ -50,14 +43,20 @@ Geo Tab (Geometry)
 Star Tab
  - automated transformation of "space brush" brush-strokes into polygons or image planes, which adds greater control for rendering of space-brush star-fields.
 
+miniKit
+=======
+miniKit: this version includes the following functionality
+ - customizable torus evolute tool
+ - customizable phi-spiral & vortex creation tool
+ - customizable bonus Rodin-like Evolute tool
 
-==============================
 
-Install Instuctions:
 
+Install Instuctions
+===================
 1) Download and unzip the Full Install archive.
 
-2) Place the following files in your Maya scripts folder, shown above
+2) Place the following three (3) files in your Maya scripts folder, depending on the folder location for your platform, shown below
       	lbsToolMenuFull.mel 
       	miniKit.mel
       	lbs_Custom_Tools_UI_LOCAL.mel
@@ -66,7 +65,7 @@ Install Instuctions:
   for Windows users:                            C:\Documents and Settings\User_Account\My Documents\maya\scripts
 
 3) Place the following FOLDER in your Maya scripts folder, shown above
-      	lbsToolkit (which includes seven additional folders, Phi_Tap, Evolute_Tab, etc)
+      	lbsToolkit (which includes seven (7) additional folders, Phi_Tap, Evolute_Tab, etc)
 
 
 4) If there is already a userSetup.mel file in the scripts folder, copy the two lines from the lbsToolkit userSetup.mel and add to the userSetup.mel in the scripts folder.
@@ -75,4 +74,5 @@ Install Instuctions:
 
 6) Relaunch Maya
 
-Additional instructions for miniKit installations, and adding the toolkit to the Maya shelf, are included in the "Instructions" folder.
+
+*Additional instructions for miniKit installations, and adding the toolkit to the Maya shelf, are included in the "Instructions" folder.
