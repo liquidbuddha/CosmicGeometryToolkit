@@ -67,14 +67,22 @@ Install Instuctions
 
   For Windows users:                            C:\Documents and Settings\User_Account\My Documents\maya\scripts
 
-3) Place the following FOLDER in your Maya scripts folder, shown above
+3) Using a text editor, modify the following two lines from the lbsToolMenuFull.mel & miniKit.mel file, replacing "User_Account" with the path appropriate for file system.
+
+For Mac users, it's a simple name change.  For Windows users, you may need to add "C:\" and adjust the "/" to "\". 
+
+	  menuItem -p $MyMenuObj -l "mini kit" -c ("source \"/Users/User_Account/Library/Preferences/Autodesk/maya/scripts/lbsToolkit/toolkit_dropDown/miniKit.mel\"; ");
+	  menuItem -p $MyMenuObj -l "full kit" -c ("source \"/Users/User_Account/Library/Preferences/Autodesk/maya/scripts/lbsToolkit/lbs_Custom_Tools_UI_LOCAL.mel\"; ");
+
+
+4) Place the following FOLDER in your Maya scripts folder, shown above
 - lbsToolkit (which includes seven (7) additional folders, Phi_Tap, Evolute_Tab, etc)
 
-4) If there is already a userSetup.mel file in the scripts folder, copy the two lines from the lbsToolkit userSetup.mel and add to the userSetup.mel in the scripts folder.
+5) If there is already a userSetup.mel file in the scripts folder, copy the two lines from the lbsToolkit userSetup.mel and add to the userSetup.mel in the scripts folder.
 
-5) If there is not a userSetup.mel file in the scripts folder, place the lbsTookit userSetup.mel into the scripts folder.
+6) If there is not a userSetup.mel file in the scripts folder, place the lbsTookit userSetup.mel into the scripts folder.
 
-6) Relaunch Maya
+7) Relaunch Maya
 
 
 *Additional instructions for miniKit installations, and adding the toolkit to the Maya shelf, are included in the "Instructions" folder.
