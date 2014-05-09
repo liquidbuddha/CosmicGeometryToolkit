@@ -88,7 +88,7 @@ For Mac users, it's a simple name change.  For Windows users, you may need to ad
 8) Relaunch Maya
 
 --------------
-If you are not using Maya2011, you will need to adjust line 208, in the Star_replace.MEL to reflect your version of Maya, and the path tho the Brushes.
+If you are not using Maya2011, you will need to adjust line 208, in the "StarReplaceToolkit.mel" to reflect your version of Maya, and the path tho the Brushes.
 
 	source "/Applications/Autodesk/maya2011/Maya.app/Contents/brushes/galactic/space.mel";
 --------------
