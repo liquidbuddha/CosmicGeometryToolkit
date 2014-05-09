@@ -67,7 +67,7 @@ Install Instuctions
 
   For Windows users:                            C:\Documents and Settings\User_Account\My Documents\maya\scripts
 
-3) Using a text editor, modify the following two lines from the lbsToolMenuFull.mel & miniKit.mel file, replacing "User_Account" with the path appropriate for file system.
+3) Using a text editor, modify the following two lines from the lbsToolMenuFull.mel & miniKit.mel files, replacing "User_Account" with the path appropriate for your file system.
 
 For Mac users, it's a simple name change.  For Windows users, you may need to add "C:\" and adjust the "/" to "\". 
 
