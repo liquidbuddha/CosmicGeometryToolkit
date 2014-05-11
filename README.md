@@ -78,7 +78,7 @@ For Mac users, it's a simple name change.  For Windows users, you may need to ad
 
 	string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scripts";
 
-5) CREATE the following FOLDER in your Maya scripts folder, shown above
+5) CREATE A NEW FOLDER in your Maya scripts folder (location shown above), and rename it...
 - lbsToolkit
 
 Place the following seven (7) folders into the lbsTookit folder...
