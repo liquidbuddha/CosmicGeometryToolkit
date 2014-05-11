@@ -52,7 +52,7 @@ miniKit: this version includes the following functionality
 
 
 
-Install Instuctions
+Install Instructions
 ===================
 1) Download and unzip the Full Install archive.
 
