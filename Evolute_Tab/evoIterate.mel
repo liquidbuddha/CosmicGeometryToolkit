@@ -1,64 +1,264 @@
-//source "/Volumes/RENDrACTIVE/_Shared_Resources/lbsToolkit/Evolute_Tab/evoIterate.mel";
-//evoLoopsIterate(10,.5, 22,23,1, 90,180,20);
-
-
 /*
 	EVO ITERATE WALK THROUGH
 
 	-create new scene
 	-set project
 	-run from command line
-		source "/Volumes/RENDrACTIVE/_Shared_Resources/lbsToolkit/Evolute_Tab/evoIterate.mel";
+		source "/Volumes/MY_PATH/lbsToolkit/Evolute_Tab/evoIterate.mel";
 		evoLoopsIterate(float evo radius, float height ratio, int loops start, int loops end, int loops num to increase by each iteration
 			float rotation start, float rotation end, float roation num to increase by each iteration);
 	-maya scenes and jpg files will be placed in the same folder
 
+make sure to adjust >>>   
+	source "/Volumes/MY_PATH/lbsToolkit/Evolute_Tab/evoIterate.mel";
+
+For example, load this code and then run this from the command line
+	evoLoopsIterate(10,.5, 22,23,1, 90,180,20);
 
 */
 
-proc evoCurveCreate(int $grpNum){	string  $allObjects[];	$evoCurve = `curve -p 0 0 0` ;	$x = 1;	select -r ("waveLoc_" + ($grpNum+1) + "_Shape*");	string  $obj;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ) {
-		if ( `nodeType $obj` == "locator" ){
-			float $tx[] = `getAttr $obj.lpx`;			float $ty[] = `getAttr $obj.lpy`;			float $tz[] = `getAttr $obj.lpz`;			curve -a -p  $tx[0] $ty[0] $tz[0] $evoCurve;		}		$x++;	}//----------------------------------------------------------------------//	create a cluster around the curve.cv and constrain to WaveLocators. //----------------------------------------------------------------------	select -r ("waveLoc_" + ($grpNum+1) + "_*");	select -d ("waveLoc_" + ($grpNum+1) + "_Shape*");	$x = 1;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ){
-		if ( `nodeType $obj` != "locator" ){
-			select -cl;			string $nm = ("C_" + ($grpNum+1) + "_" + $x);			cluster -n $nm ($evoCurve + ".cv[" + $x + "]");			$nm = $nm + "Handle";			pointConstraint -offset 0 0 0 -weight 1 $obj $nm;		}		$x++;	}//----------------------------------------------------------------------//	final CV handling//----------------------------------------------------------------------	float $sz = `size $allObjects`;	string $nm = ("C_" + ($grpNum+1) + "_" + $x);	cluster -n $nm ($evoCurve + ".cv[0]");	$nm = $nm + "Handle";	pointConstraint -offset 0 0 0 -weight 1 $obj $nm;	closeCurve -ch 1 -ps 0 -rpo 1 -bb 0.9 -bki 1 -p 0.1 $evoCurve;//----------------------------------------------------------------------//	parenting pass//----------------------------------------------------------------------	select -r ("waveLoc_" + ($grpNum+1) + "_*");	select -d ("waveLoc_" + ($grpNum+1) + "_Shape*");	$x = 1;	$allObjects = `ls -sl`;	for ( $obj in $allObjects ){
-		if ($x == 1){			string $nm = ("C_" + ($grpNum+1) + "_" + $x + "Handle");			parent  $nm $obj;		}
-		$x++;
-		if ( `nodeType $obj` != "locator" ){
-			string $nm = ("C_" + ($grpNum+1) + "_" + $x + "Handle");			parent  $nm $obj;		}	}	rename $evoCurve ("evoCurve_" + ($grpNum+1));	select -cl;	if(`objExists curveGrp` == 0){
-		$curveGrp = `group -em`; 		xform -os -piv 0 0 0;		parent ("evoCurve_" + ($grpNum+1)) $curveGrp;		parent $curveGrp evoGrp;		rename $curveGrp "curveGrp";	}	else{
-		parent ("evoCurve_" + ($grpNum+1)) curveGrp;	}}
+proc evoCurveCreate(int $grpNum){
 
-//----------------------------------------------------------------------//START OF EVOCURVE PROCEDURE//----------------------------------------------------------------------
-proc string evoCurve (float $tRad, float $HR, int $NumLoops, float $CentRot){//----------------------------------------------------------------------// variables & declarations//----------------------------------------------------------------------	float $AxisRot;	float $i;	float $x = 1;	float $CurrentRot;	float $WRad;	float $speed = 100;
-//----------------------------------------------------------------------//	formulas//----------------------------------------------------------------------	$i = (($NumLoops + 1) * 360 / $CentRot);	$AxisRot = $NumLoops * 360/($i);	$WRad =  ($tRad*$HR) + $tRad;
+	string  $allObjects[];
+	$evoCurve = `curve -p 0 0 0` ;
+	$x = 1;
+
+	select -r ("waveLoc_" + ($grpNum+1) + "_Shape*");
+
+	string  $obj;
+	$allObjects = `ls -sl`;
+	for ( $obj in $allObjects ) {
+
+		if ( `nodeType $obj` == "locator" ){
+
+			float $tx[] = `getAttr $obj.lpx`;
+			float $ty[] = `getAttr $obj.lpy`;
+			float $tz[] = `getAttr $obj.lpz`;
+			curve -a -p  $tx[0] $ty[0] $tz[0] $evoCurve;
+		}
+		$x++;
+	}
+
+//----------------------------------------------------------------------
+//	create a cluster around the curve.cv and constrain to WaveLocators. 
+//----------------------------------------------------------------------
+
+	select -r ("waveLoc_" + ($grpNum+1) + "_*");
+	select -d ("waveLoc_" + ($grpNum+1) + "_Shape*");
+
+	$x = 1;
+
+	$allObjects = `ls -sl`;
+	for ( $obj in $allObjects ){
+
+		if ( `nodeType $obj` != "locator" ){
+
+			select -cl;
+			string $nm = ("C_" + ($grpNum+1) + "_" + $x);
+			cluster -n $nm ($evoCurve + ".cv[" + $x + "]");
+			$nm = $nm + "Handle";
+			pointConstraint -offset 0 0 0 -weight 1 $obj $nm;
+		}
+		$x++;
+	}
+
+//----------------------------------------------------------------------
+//	final CV handling
+//----------------------------------------------------------------------
+
+	float $sz = `size $allObjects`;
+	string $nm = ("C_" + ($grpNum+1) + "_" + $x);
+	cluster -n $nm ($evoCurve + ".cv[0]");
+	$nm = $nm + "Handle";
+	pointConstraint -offset 0 0 0 -weight 1 $obj $nm;
+	closeCurve -ch 1 -ps 0 -rpo 1 -bb 0.9 -bki 1 -p 0.1 $evoCurve;
+
+//----------------------------------------------------------------------
+//	parenting pass
+//----------------------------------------------------------------------
+
+	select -r ("waveLoc_" + ($grpNum+1) + "_*");
+	select -d ("waveLoc_" + ($grpNum+1) + "_Shape*");
+
+	$x = 1;
+
+	$allObjects = `ls -sl`;
+	for ( $obj in $allObjects ){
+
+		if ($x == 1){
+			string $nm = ("C_" + ($grpNum+1) + "_" + $x + "Handle");
+			parent  $nm $obj;
+		}
+
+		$x++;
+
+		if ( `nodeType $obj` != "locator" ){
+
+			string $nm = ("C_" + ($grpNum+1) + "_" + $x + "Handle");
+			parent  $nm $obj;
+		}
+	}
+
+	rename $evoCurve ("evoCurve_" + ($grpNum+1));
+
+	select -cl;
+
+	if(`objExists curveGrp` == 0){
+
+		$curveGrp = `group -em`; 
+		xform -os -piv 0 0 0;
+		parent ("evoCurve_" + ($grpNum+1)) $curveGrp;
+		parent $curveGrp evoGrp;
+		rename $curveGrp "curveGrp";
+	}
+	else{
+
+		parent ("evoCurve_" + ($grpNum+1)) curveGrp;
+	}
+}
+
+
+//----------------------------------------------------------------------
+//START OF EVOCURVE PROCEDURE
+//----------------------------------------------------------------------
+
+proc string evoCurve (float $tRad, float $HR, int $NumLoops, float $CentRot){
+
+//----------------------------------------------------------------------
+// variables & declarations
+//----------------------------------------------------------------------
+
+	float $AxisRot;
+	float $i;
+	float $x = 1;
+	float $CurrentRot;
+	float $WRad;
+	float $speed = 100;
+
+//----------------------------------------------------------------------
+//	formulas
+//----------------------------------------------------------------------
+
+	$i = (($NumLoops + 1) * 360 / $CentRot);
+	$AxisRot = $NumLoops * 360/($i);
+	$WRad =  ($tRad*$HR) + $tRad;
 
 	$confirm = 1;
 
 
 
 	if($confirm == 1){
-		string $notes;		$notes = "Torus Radius/HR: " + $tRad + " / " + $HR + "\n";		$notes = $notes + "Number of loops: " + $NumLoops + "\n";		$notes = $notes + "Rotation: " + $CentRot + "\n";		$notes = $notes + "frames per cycle: " + $speed + "\n";		$centerLoc = `spaceLocator -p 0 0 0`;		setAttr ($centerLoc[0] + ".localScaleX") .1;		setAttr ($centerLoc[0] + ".localScaleY") .1;		setAttr ($centerLoc[0] + ".localScaleZ") .1;		$rotateLoc = `spaceLocator -p 0 0 0`;		xform -t $tRad 0 0;		CenterPivot;		setAttr ($rotateLoc[0] + ".localScaleX") .1;		setAttr ($rotateLoc[0] + ".localScaleY") .1;		setAttr ($rotateLoc[0] + ".localScaleZ") .1;		$waveLoc = `spaceLocator -p 0 0 0`;		xform -t $WRad 0 0;		CenterPivot;		setAttr ($waveLoc[0] + ".localScaleX") .7;		setAttr ($waveLoc[0] + ".localScaleY") .7;		setAttr ($waveLoc[0] + ".localScaleZ") .7;		parent $waveLoc[0] $rotateLoc[0];		parent $rotateLoc[0] $centerLoc[0];		$locGroup = `group $centerLoc[0]`;	//----------------------------------------------------------------------	//		part 2	//		setup animation keyframes, and setDrivenKeys for other nodes	//----------------------------------------------------------------------	//----------------------------------------------------------------------	//	setup the initial keyframes for RotateLocator1	//----------------------------------------------------------------------	
+
+		string $notes;
+		$notes = "Torus Radius/HR: " + $tRad + " / " + $HR + "\n";
+		$notes = $notes + "Number of loops: " + $NumLoops + "\n";
+		$notes = $notes + "Rotation: " + $CentRot + "\n";
+		$notes = $notes + "frames per cycle: " + $speed + "\n";
+
+		$centerLoc = `spaceLocator -p 0 0 0`;
+		setAttr ($centerLoc[0] + ".localScaleX") .1;
+		setAttr ($centerLoc[0] + ".localScaleY") .1;
+		setAttr ($centerLoc[0] + ".localScaleZ") .1;
+
+		$rotateLoc = `spaceLocator -p 0 0 0`;
+		xform -t $tRad 0 0;
+		CenterPivot;
+		setAttr ($rotateLoc[0] + ".localScaleX") .1;
+		setAttr ($rotateLoc[0] + ".localScaleY") .1;
+		setAttr ($rotateLoc[0] + ".localScaleZ") .1;
+
+		$waveLoc = `spaceLocator -p 0 0 0`;
+		xform -t $WRad 0 0;
+		CenterPivot;
+		setAttr ($waveLoc[0] + ".localScaleX") .7;
+		setAttr ($waveLoc[0] + ".localScaleY") .7;
+		setAttr ($waveLoc[0] + ".localScaleZ") .7;
+
+		parent $waveLoc[0] $rotateLoc[0];
+		parent $rotateLoc[0] $centerLoc[0];
+		$locGroup = `group $centerLoc[0]`;
+
+	//----------------------------------------------------------------------
+	//		part 2
+	//		setup animation keyframes, and setDrivenKeys for other nodes
+	//----------------------------------------------------------------------
+
+	//----------------------------------------------------------------------
+	//	setup the initial keyframes for RotateLocator1
+	//----------------------------------------------------------------------
+	
 		$tori_autoKey = `autoKeyframe -q -state`;
 		if($tori_autoKey == 1){
 
 			autoKeyframe -e -state 0;
 		}
-		currentTime 1;	//----------------------------------------------------------------------	//DUPLICATE LOCATORS AND ROTATE INTO STARTING POSITION	//----------------------------------------------------------------------		for($x=1;$x<$i;$x++){
-			select -r $centerLoc[0];			duplicate;			rotate 0 ($CentRot * $x) 0;			pickWalk -d down;			pickWalk -d right;			rotate -r 0 0 ($AxisRot * $x);		}
-	//----------------------------------------------------------------------	//RENAME LOCATORS AND GROUP	//CONNECT ROTATE LOCATORS .rotateZ	//----------------------------------------------------------------------		$grpNum = 0;		$groupArray = `listRelatives -c $locGroup`;		$groupSize = `size($groupArray)`;		for($e=0;$e<$groupSize;$e++){
-			select -r $groupArray[$e];			rename ("centerLoc_" + ($grpNum+1) + "_" + ($e+1));			pickWalk -d down;			pickWalk -d right;			rename ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1));			pickWalk -d down;			pickWalk -d right;			rename ("waveLoc_" + ($grpNum+1) + "_" + ($e+1));
+
+		currentTime 1;
+
+	//----------------------------------------------------------------------
+	//DUPLICATE LOCATORS AND ROTATE INTO STARTING POSITION
+	//----------------------------------------------------------------------
+
+		for($x=1;$x<$i;$x++){
+
+			select -r $centerLoc[0];
+			duplicate;
+			rotate 0 ($CentRot * $x) 0;
+
+			pickWalk -d down;
+			pickWalk -d right;
+			rotate -r 0 0 ($AxisRot * $x);
+		}
+
+	//----------------------------------------------------------------------
+	//RENAME LOCATORS AND GROUP
+	//CONNECT ROTATE LOCATORS .rotateZ
+	//----------------------------------------------------------------------
+
+		$grpNum = 0;
+
+		$groupArray = `listRelatives -c $locGroup`;
+		$groupSize = `size($groupArray)`;
+
+		for($e=0;$e<$groupSize;$e++){
+
+			select -r $groupArray[$e];
+			rename ("centerLoc_" + ($grpNum+1) + "_" + ($e+1));
+
+			pickWalk -d down;
+			pickWalk -d right;
+			rename ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1));
+
+			pickWalk -d down;
+			pickWalk -d right;
+			rename ("waveLoc_" + ($grpNum+1) + "_" + ($e+1));
 
 		//----------------------------------------------------------------------
 		//set driven keys for rotate and wave locators
 		//----------------------------------------------------------------------
-					if($e>0){
-				setAttr ("rotateLoc_" + ($grpNum+1) + "_1.rotate") -type "double3" 0 0 0;				$CurrentRot = `getAttr ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz")` + 360;				setDrivenKeyframe -currentDriver ("rotateLoc_" + ($grpNum+1) + "_1.rz") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz");						setAttr ("rotateLoc_" + ($grpNum+1) + "_1.rz") 360;				setAttr -k 0 ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz") $CurrentRot;				setDrivenKeyframe -currentDriver ("rotateLoc_" + ($grpNum+1) + "_1.rz") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz");				connectAttr ("rotateLoc_" + ($grpNum+1) + "_1.tx") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".tx");				connectAttr ("waveLoc_" + ($grpNum+1) + "_1.tx") ("waveLoc_" + ($grpNum+1) + "_" + ($e+1) + ".tx");			}		}
+		
+			if($e>0){
+
+				setAttr ("rotateLoc_" + ($grpNum+1) + "_1.rotate") -type "double3" 0 0 0;
+				$CurrentRot = `getAttr ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz")` + 360;
+
+				setDrivenKeyframe -currentDriver ("rotateLoc_" + ($grpNum+1) + "_1.rz") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz");
+		
+				setAttr ("rotateLoc_" + ($grpNum+1) + "_1.rz") 360;
+				setAttr -k 0 ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz") $CurrentRot;
+				setDrivenKeyframe -currentDriver ("rotateLoc_" + ($grpNum+1) + "_1.rz") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".rz");
+
+				connectAttr ("rotateLoc_" + ($grpNum+1) + "_1.tx") ("rotateLoc_" + ($grpNum+1) + "_" + ($e+1) + ".tx");
+				connectAttr ("waveLoc_" + ($grpNum+1) + "_1.tx") ("waveLoc_" + ($grpNum+1) + "_" + ($e+1) + ".tx");
+			}
+		}
 
 
 		setKeyframe -t 1 -v 0 ("rotateLoc_" + ($grpNum+1) + "_1.rz"); 
 		setKeyframe -t $speed -v 360 ("rotateLoc_" + ($grpNum+1) + "_1.rz");
 		setInfinity -poi cycle ("rotateLoc_" + ($grpNum+1) + "_1.rz");
-				rename $locGroup ("locatorGroup_" + ($grpNum+1));
+		
+		rename $locGroup ("locatorGroup_" + ($grpNum+1));
 		select -r ("locatorGroup_" + ($grpNum+1));
 
 		addAttr -ln "heightRatio"  -at double -min 0.001 ("locatorGroup_" + ($grpNum+1));
@@ -78,14 +278,36 @@ proc evoCurveCreate(int $grpNum){	string  $allObjects[];	$evoCurve = `curve -
 		setAttr -lock true ("locatorGroup_" + ($grpNum+1) + ".radius");
 
 		xform -cp;
-		select -cl;		if(`objExists locatorGrp` == 0){
-			$locGrp = `group -em`; 			xform -os -piv 0 0 0;			parent ("locatorGroup_" + ($grpNum+1)) $locGrp;				select -r $locGrp;			$torusGrp = `group`;			xform -os -piv 0 0 0;			setAttr ($locGrp + ".v") 0;			rename $locGrp "locatorGrp";			rename $torusGrp "evoGrp";		}		else{
-			parent ("locatorGroup_" + ($grpNum+1)) locatorGrp;		}
+
+		select -cl;
+
+		if(`objExists locatorGrp` == 0){
+
+			$locGrp = `group -em`; 
+			xform -os -piv 0 0 0;
+
+			parent ("locatorGroup_" + ($grpNum+1)) $locGrp;
+	
+			select -r $locGrp;
+			$torusGrp = `group`;
+			xform -os -piv 0 0 0;
+
+			setAttr ($locGrp + ".v") 0;
+
+			rename $locGrp "locatorGrp";
+			rename $torusGrp "evoGrp";
+		}
+		else{
+
+			parent ("locatorGroup_" + ($grpNum+1)) locatorGrp;
+		}
 
 	
-		evoCurveCreate($grpNum);	}
+		evoCurveCreate($grpNum);
+	}
 
-	return "\n evolute curve complete";}
+	return "\n evolute curve complete";
+}
 
 global proc evoLoopsIterate( float $tRad, float $HR, int $loopsStart, int $loopsEnd, int $loopsI, float $rotStart, float $rotEnd, float $rotI ) {
 	
