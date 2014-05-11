@@ -102,4 +102,18 @@ If you are not using Maya2011, you will need to adjust line 208, in the "StarRep
 	source "/Applications/Autodesk/maya2011/Maya.app/Contents/brushes/galactic/space.mel";
 --------------
 
+More Info:
+==========
 *Additional instructions for miniKit installations, and adding the toolkit to the Maya shelf, are included in the "Instructions" folder.
+
+When the MEL code is loaded in Maya, you can also create many things from the command line. The evolute command is:
+
+evoCurve (float $tRad, float $HR, int $NumLoops, float $CentRot)
+- $tRad is the Torus Radius
+- $HR is the Height Ratio of the Torus. HR of 1 is a horn torus. .5 is a typical donut, .1 looks like a bicycle tire
+- $NumLooks is the number of "loops" around the torus surface. One loop traverses the radial plane, and axial plan once.
+- $CentRot is the center rotation between each step. Useful rance is 10-30 degres. Less than 10 creates a lot of overhead geometry, but may be useful for some. Also, over-rotating (using a CentRot of over 60 degrees yields some very interesting anomolies!
+
+evoCurve (10, 1, 6, 15);	    // a six loop horn torus evolute curve, with a radius of 10
+
+Also, be sure to explore the Evolute_Tab's "Evolterate.mel" code, with which you can create multiple evolute curves, with itterative parameters.
