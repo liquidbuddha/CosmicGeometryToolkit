@@ -54,7 +54,7 @@ miniKit: this version includes the following functionality
 
 Install Instructions
 ===================
-1) Download and unzip the Full Install archive.
+1) Download and unzip the github archive.
 
 2) Place the following three (3) files in your Maya scripts folder, depending on the folder location for your platform, shown below
 -	lbsToolMenuFull.mel
