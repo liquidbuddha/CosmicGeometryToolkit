@@ -1,5 +1,3 @@
-//source "/Volumes/RENDrACTIVE/_Shared_Resources/lbsToolkit/Evolute_Tab/evoIterate_UIopen.mel";
-
 /*
 	LOOPS & ROTATION ITERATION WORKFLOW
 
@@ -13,7 +11,7 @@
 		maya scenes will be placed in scenes folder
 		image files will be placed in /LoopsProject
 	-Source evoIterate.mel in command line
-		source "/Volumes/RENDrACTIVE/_Shared_Resources/lbsToolkit/Evolute_Tab/evoIterate_UIopen.mel";
+		source "/Volumes/My_PATH/lbsToolkit/Evolute_Tab/evoIterate_UIopen.mel";
 	-with the Toolkit open and the Render View open run evoLoopsIterate from the command line
 		int $loopsStart =	min number of loops
 		int $loopsEnd =		max number of loops
@@ -23,6 +21,9 @@
 		float $rotI =		number rotation increases by each iteration
 
 		Ex. evoLoopsIterateUI( 1,5,1, 10,20,.2);
+		
+ be sure to adjust >>>
+	source "/Volumes/User_PATH/lbsToolkit/Evolute_Tab/evoIterate_UIopen.mel";
 */
 
 global proc evoLoopsIterateUI( int $loopsStart, int $loopsEnd, int $loopsI, float $rotStart, float $rotEnd, float $rotI ){
