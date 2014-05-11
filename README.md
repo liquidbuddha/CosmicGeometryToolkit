@@ -79,7 +79,15 @@ For Mac users, it's a simple name change.  For Windows users, you may need to ad
 	string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scripts";
 
 5) Place the following FOLDER in your Maya scripts folder, shown above
-- lbsToolkit (which includes seven (7) additional folders, Phi_Tap, Evolute_Tab, etc)
+- lbsToolkit 
+	This folder includes seven (7) additional folders...
+- Evolute_Tab
+- Phi_Tab
+- FlowerOfLife_Tab
+- RadiatingTori_Tab
+- Jitterbug_Tab
+- Geometry_Tab
+- StarReplace_Tab
 
 6) If there is already a userSetup.mel file in the scripts folder, copy the two lines from the lbsToolkit userSetup.mel and add to the userSetup.mel in the scripts folder.
 
