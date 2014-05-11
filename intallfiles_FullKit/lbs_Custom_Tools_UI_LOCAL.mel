@@ -1,10 +1,11 @@
 //-----------------------------------------------
-//location to load scripts from
+//  location to load scripts from
 //-----------------------------------------------
-string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scripts";
+
+string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scripts";
 
 //-----------------------------------------------
-//check if sourced scripts exist in correct folder"
+//  check if sourced scripts exist in correct folder
 //-----------------------------------------------	
 
 	$lbsEVO_path = ($scriptLoc + "/lbsToolkit/Evolute_Tab/torusToolkit.mel");
@@ -118,7 +119,7 @@
 	}
 
 //-----------------------------------------------
-//SCRIPT WINDOW creation
+//  SCRIPT WINDOW creation
 //-----------------------------------------------
 
 	if(`window -ex lbs_scriptsWindow`) deleteUI lbs_scriptsWindow;
@@ -162,7 +163,7 @@
 		$lbs_mainForm;
 
 //--------------------------------------------------
-//TORUS TOOLKIT TAB CREATION
+//  TORUS TOOLKIT TAB CREATION
 //--------------------------------------------------
 
 	$lbsEVO_UI_path = ($scriptLoc + "/lbsToolkit/Evolute_Tab/torusToolkitUI.mel");
@@ -179,7 +180,7 @@
 	}
 
 //--------------------------------------------------
-//RADIATING TORI TAB CREATION
+//  RADIATING TORI TAB CREATION
 //--------------------------------------------------
 
 	$lbsRADIATINGTORI_UI_path = ($scriptLoc + "/lbsToolkit/RadiatingTori_Tab/RadiatingToriToolkitUI.mel");
@@ -213,7 +214,7 @@
 	}
 
 //--------------------------------------------------
-//PHI CONN TAB CREATION
+//  PHI CONN TAB CREATION
 //--------------------------------------------------
 
 	$lbsPhiCONN_UI_path = ($scriptLoc + "/lbsToolkit/Phi_Tab/PhiToolkit_ConnUI.mel");
@@ -230,7 +231,7 @@
 	}
 
 //--------------------------------------------------
-//FLOWER OF LIFE TAB CREATION
+//  FLOWER OF LIFE TAB CREATION
 //--------------------------------------------------
 
 	$lbsFOL_UI_path = ($scriptLoc + "/lbsToolkit/FlowerOfLife_Tab/FlowerOfLifeToolkitUI.mel");
@@ -247,7 +248,7 @@
 	}
 
 //--------------------------------------------------
-//JITTERBUG TAB CREATION
+//  JITTERBUG TAB CREATION
 //--------------------------------------------------
 
 	$lbsJITTERBUG_UI_path = ($scriptLoc + "/lbsToolkit/Jitterbug_Tab/JitterbugToolkitUI.mel");
@@ -264,7 +265,7 @@
 	}
 
 //--------------------------------------------------
-//GEOMETRIES TAB CREATION
+//  GEOMETRIES TAB CREATION
 //--------------------------------------------------
 
 	$lbsGEOMETRY_UI_path = ($scriptLoc + "/lbsToolkit/Geometry_Tab/GeometriesToolkitUI.mel");
@@ -281,7 +282,7 @@
 	}
 
 //--------------------------------------------------
-//PAINT EFFECTS STAR REPLACE TAB CREATION
+//  PAINT EFFECTS STAR REPLACE TAB CREATION
 //--------------------------------------------------
 
 	$lbsSTAR_UI_path = ($scriptLoc + "/lbsToolkit/StarReplace_Tab/StarReplaceToolkitUI.mel");
@@ -299,7 +300,7 @@
 
 
 //-----------------------------------------------
-//rename tabs
+// rename tabs
 //-----------------------------------------------
 
 	tabLayout -e
@@ -334,7 +335,7 @@
 	}
 
 //-----------------------------------------------
-//resizes window when a tab is selected
+// resizes window when a tab is selected
 //-----------------------------------------------
 
 	global proc resizeTab()
@@ -469,7 +470,7 @@
 	}
 
 //-----------------------------------------------
-//resizes window when a tab is selected
+// resizes window when a tab is selected
 //-----------------------------------------------
 
 	global proc rollupWindow()
