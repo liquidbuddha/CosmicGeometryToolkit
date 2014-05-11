@@ -78,10 +78,10 @@ For Mac users, it's a simple name change.  For Windows users, you may need to ad
 
 	string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scripts";
 
-5) Place the following FOLDER in your Maya scripts folder, shown above
+5) CREATE the following FOLDER in your Maya scripts folder, shown above
 - lbsToolkit
 
-This folder includes seven (7) additional folders...
+Place the following seven (7) folders into the lbsTookit folder...
 - Evolute_Tab
 - Phi_Tab
 - FlowerOfLife_Tab
