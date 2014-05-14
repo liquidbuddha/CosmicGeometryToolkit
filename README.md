@@ -9,40 +9,40 @@ Full Toolkit
 ============
 Full-Kit includes Seven (7) tabs, each with expanded functionality related to the tab's theme. The function-tabs include:
 
-Evolute Tab:
+Evolute Tab: [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/evolute-tab-creating-an-animated-toroidal-evolutionary-wavefront/]
  - custom toroidal evolute path creation 
  - multi-evolute management and editing
  - "tapered bead" option, which auto-animates a series of tapered spheres, along the evolute path. an amazing toroidal simulation tool
 
-Radiating Tab:
+Radiating Tab: [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/radiating-tab-creating-stacked-evolutionary-radiating-systems/]
  - automated creation of evolute path extrudes in series
  - editable in instance scale
  - auto coloration option
  - multi array management and editing
 
-Phi-Tab
+Phi-Tab: [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/phi-tab-creating-animated-phi-spiral-vortex-systems/]
  - creation of phi curve, or vortex
  - multi-vortex management and editing
  - phi-conn option .. connects two 3D phi-vortex arrays
  - connect to Jitterbug option ... connects to Jitterbugging VE models in VE tab
 
-FOL Tab (Flower of Life)
+FOL Tab (Flower of Life) : [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/fol-tab-creating-flower-of-life-patterns-in-multi-dimentions/]
  - create a flower of life matrix of curves or extrudes to "n" layers
  - automate it's replication in 2D, 3D, 4D, or 6D geometries
  - multi FOL array management and editing
 
-Jitterbug Tab
+Vector Equilibrium Tab: [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/vector-equilbrium-tab/ ]
  - create a jitterbugging VE or VE matrix (jitterbug is the VE breathing from compressed states, matrix unifies the triangular faces to form interconnected counter-breathing chains of jitterbugging VEs
  - multi VE matrix management and editing
 
-Geo Tab (Geometry)
+Geo Tab (Geometry):[http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/geometry-tab-c…-relationships/] 
  - instant creation of any platonic solid, with option to extrude
  - scale control
  - multi-geometry management and editing
  - shapes include: tetrahedron, tetrahedron dual, Cube, Octahedron, Icosohedron, Dodecahedron, Vector EQ, and finally the Rhombic-dodecahedron.
  - all geometries are created in perfect alignment with Metatron's Cube configuration, where all geometries and symmetries are unified
 
-Star Tab
+Star Tab: [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/star-replace-tab/]
  - automated transformation of "space brush" brush-strokes into polygons or image planes, which adds greater control for rendering of space-brush star-fields.
 
 miniKit
