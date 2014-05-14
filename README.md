@@ -31,7 +31,7 @@ FOL Tab (Flower of Life) : [http://www.liquidbuddha.com/project-cosmic-geometry-
  - automate it's replication in 2D, 3D, 4D, or 6D geometries
  - multi FOL array management and editing
 
-Vector Equilibrium Tab: [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/vector-equilbrium-tab/ ]
+Vector Equilibrium [Jitterbug] Tab: [http://www.liquidbuddha.com/project-cosmic-geometry-toolkit/vector-equilbrium-tab/ ]
  - create a jitterbugging VE or VE matrix (jitterbug is the VE breathing from compressed states, matrix unifies the triangular faces to form interconnected counter-breathing chains of jitterbugging VEs
  - multi VE matrix management and editing
 
