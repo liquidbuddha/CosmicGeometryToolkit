@@ -318,7 +318,9 @@ string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scrip
 	tabLayout -e
 		-tl flowerOfLifeForm "F.O.L." winTab;
 
-	windowPref -r lbs_scriptsWindow;
+	if (`windowPref -exists lbs_scriptsWindow`) {
+		windowPref -r lbs_scriptsWindow;
+	}
 	window -e -h 740 -w 510 lbs_scriptsWindow;
 	tabLayout -e -h 740 -w 510 winTab;
 	torus_textListCheck;
