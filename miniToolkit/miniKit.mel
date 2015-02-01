@@ -529,7 +529,7 @@ proc phi_creation(int $nCurves, float $sNode, float $pNode, int $pDepth, int $ph
 		xform -os -piv 0 0 0;
 		rename $phiGrp phiCurve_Grp;
 
-		rename $phiCurve phiCurveGrp_1;
+		rename $phiCurve "phiCurveGrp_1";
 		$phiCurve = "phiCurveGrp_1";
 	}
 
