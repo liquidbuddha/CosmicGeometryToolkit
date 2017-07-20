@@ -1,6 +1,6 @@
 if(`window -ex miniKitWin`) deleteUI miniKitWin;
 
-$miniKitWindow = `window
+$miniKitWin = `window
 	-title "liquidbuddha.studios - miniKit"
 	-s 1
 	-w 10

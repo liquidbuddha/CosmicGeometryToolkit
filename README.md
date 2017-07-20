@@ -67,11 +67,11 @@ Install Instructions
 
   For Mac users, the Maya scripts folder is:    HD/Users/User_Account/Library/Preferences/Autodesk/maya/scripts
 
-  For Windows users:                            C:\Documents and Settings\User_Account\My Documents\maya\scripts
+  For Windows users:                            C:/Documents and Settings/User_Account/My Documents/maya/scripts
 
 3) Using a text editor, modify the following two lines from the lbsToolMenuFull.mel & miniKit.mel files, replacing "User_Account" with the path appropriate for your file system.
 
-For Mac users, it's a simple name change.  For Windows users, you may need to add "C:\" and adjust the "/" to "\". 
+For Mac users, it's a simple name change.  For Windows users, you may need to add absolute path including "C:/" (use forward slashes). 
 
 	  menuItem -p $MyMenuObj -l "mini kit" -c ("source \"/Users/User_Account/Library/Preferences/Autodesk/maya/scripts/lbsToolkit/toolkit_dropDown/miniKit.mel\"; ");
 	  menuItem -p $MyMenuObj -l "full kit" -c ("source \"/Users/User_Account/Library/Preferences/Autodesk/maya/scripts/lbsToolkit/lbs_Custom_Tools_UI_LOCAL.mel\"; ");

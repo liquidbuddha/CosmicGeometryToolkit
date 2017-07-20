@@ -124,7 +124,7 @@ string $scriptLoc = "/Users/User_Account/Library/Preferences/Autodesk/maya/scrip
 
 	if(`window -ex lbs_scriptsWindow`) deleteUI lbs_scriptsWindow;
 
-	$lbs_scriptWin = `window 
+	$lbs_scriptsWindow = `window 
 		-title "liquidbuddha.studios - Custom Tools" 
 		-s 1
 		-w 10
